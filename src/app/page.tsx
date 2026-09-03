@@ -1,69 +1,47 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex-1 px-6 py-8 md:px-10">
+      <header className="glass rounded-pill mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+        <span className="text-lg font-bold tracking-tight">[NAME]</span>
+        <nav className="hidden gap-6 text-sm text-muted md:flex">
+          <span>Discover</span>
+          <span>Brands</span>
+          <span>Lookbooks</span>
+          <span>Drops</span>
+        </nav>
+        <button className="rounded-pill bg-ink px-4 py-2 text-sm font-medium text-white">
+          Bag (0)
+        </button>
+      </header>
+
+      <section className="mx-auto mt-8 grid max-w-6xl gap-5 md:grid-cols-2">
+        <div className="rounded-lg bg-lime p-8 md:p-12">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60">
+            Editor&apos;s choice
           </p>
+          <h1 className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+            Find your next favorite clothing brand.
+          </h1>
+          <button className="rounded-pill mt-10 bg-ink px-5 py-3 text-sm font-medium text-white">
+            Start exploring
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="rounded-lg bg-teal p-8 text-cream md:p-12">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cream/60">
+            Brand of the week
+          </p>
+          <h2 className="mt-6 text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+            Coming soon.
+          </h2>
+          <button className="rounded-pill mt-10 bg-lime px-5 py-3 text-sm font-medium text-ink">
+            Follow brand
+          </button>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <p className="mx-auto mt-8 max-w-6xl text-sm text-muted">
+        Scaffold is live. Design system tokens are in <code>src/app/globals.css</code>.
+      </p>
+    </main>
   );
 }
