@@ -32,6 +32,7 @@ export const SITE = {
     "small batch clothing",
     "find new clothing brands",
     "type how you feel shopping",
+    "Kindred", "Kindred clothing", "Kindred shop", "Kindred marketplace",
   ],
 } as const;
 
@@ -180,8 +181,8 @@ export const ldScript = (obj: unknown) => JSON.stringify(obj);
 
 export const ROUTE_META: Record<string, SeoInput> = {
   "/": {
-    title: "Find your next favourite clothing brand",
-    description: "Kindred is a marketplace for independent clothing brands. Type how you feel, filter by materials and values, and buy from many small labels in one bag and one checkout.",
+    title: "Kindred · Independent clothing brand marketplace",
+    description: "Kindred is the marketplace for independent clothing brands. Discover small labels you'd never find on Amazon or Instagram alone; buy from many in one bag, one checkout, one place.",
     path: "/",
   },
   "/explore": {

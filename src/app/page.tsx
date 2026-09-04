@@ -87,8 +87,8 @@ function HomeInner() {
             {/* hero */}
             <div className="relative flex overflow-hidden rounded-[26px] bg-cream min-h-[250px] md:h-[330px]">
               <div className="flex w-full md:w-[44%] flex-col justify-center p-6 md:p-10">
-                <div className="text-[11px] md:text-[12px] font-medium text-ink/55">{hero.kicker}</div>
-                <h1 className="mt-2 md:mt-3 text-[30px] md:text-[46px] leading-[1.02]">{hero.t1}<br />{hero.t2}</h1>
+                <h1 className="sr-only">Kindred — Independent clothing brand marketplace</h1><div className="text-[11px] md:text-[12px] font-medium text-ink/55">{hero.kicker}</div>
+                <h2 className="mt-2 md:mt-3 text-[30px] md:text-[46px] leading-[1.02]">{hero.t1}<br />{hero.t2}</h2>
                 <Link href={hero.href} className="mt-4 md:mt-6 self-start rounded-pill bg-ink px-5 md:px-[26px] py-[11px] md:py-[14px] text-[11px] md:text-[12px] font-semibold text-paper">{hero.cta}</Link>
                 <div className="mt-4 md:mt-6 text-[10px] text-ink/42">{hero.foot}</div>
               </div>
