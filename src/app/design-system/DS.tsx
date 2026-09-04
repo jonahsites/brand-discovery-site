@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button, Chip, IconCircle, QtyStepper, Placeholder } from "@/components/ui";
 
-const SW = [["Paper", "#F6F4EF"], ["Cream", "#EDE8DE"], ["Sand", "#DCD5C7"], ["Ink", "#121A24"], ["Sage", "#7C8C6F"], ["Card", "#FFFFFF"]];
+const SW = [["Paper", "#F6F4EF"], ["Cream", "#EDE8DE"], ["Sand", "#DCD5C7"], ["Ink", "#121A24"], ["Sage", "#4D6B52"], ["Rust", "#B85A3C"], ["Indigo", "#2A3A52"], ["Clay", "#D99D6F"], ["Moss", "#D6D9CE"]];
 const Card = ({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) => (
   <section className={`rounded-[28px] bg-paper p-8 shadow-[0_26px_60px_-34px_rgba(18,26,36,.45)] ${wide ? "lg:col-span-2" : ""}`}><div className="label mb-[18px]">{title}</div>{children}</section>
 );
@@ -11,7 +11,7 @@ export default function DS() {
   const [q, setQ] = useState(1);
   return (
     <div className="grid gap-[22px] lg:grid-cols-2">
-      <Card title="Type — Plus Jakarta Sans" wide>
+      <Card title="Type — Instrument Serif + Plus Jakarta Sans" wide>
         <h1 className="text-[62px] leading-none">Get up to<br />50% off</h1>
         <p className="mt-4 max-w-[430px] text-[15px] leading-[1.7] text-ink/62">Headlines run tight and heavy at −4.5% tracking. Body sits at 400 with generous leading. Labels are 10px, 600, uppercase, wide.</p>
         <div className="mt-6 flex flex-wrap gap-[38px] border-t border-ink/10 pt-[22px]"><span className="text-[30px] font-extrabold tracking-[-.035em]">Display 30/800</span><span className="text-[18px] font-bold tracking-[-.02em]">Title 18/700</span><span className="text-[13px] font-medium">Body 13/500</span><span className="label self-center">Label</span></div>
