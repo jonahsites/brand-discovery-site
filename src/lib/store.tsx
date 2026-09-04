@@ -116,7 +116,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [state.bagOpen, state.searchOpen]);
 
-  const up = useCallback((fn: (p: State) => Partial<State>) => setState((p) => ({ ...p, ...fn(p) })), []);
+  // Skip the re-render when a reducer returns an empty patch, so effects that call these never loop.
+  const up = useCallback((fn: (p: State) => Partial<State>) => setState((p) => { const patch = fn(p); return Object.keys(patch).length ? { ...p, ...patch } : p; }), []);
+  // Stable references for functions that are used inside effects.
+  const markViewed = useCallback((slug: string) => up((p) => (p.recent[0] === slug ? {} : { recent: [slug, ...p.recent.filter((s) => s !== slug)].slice(0, 12) })), [up]);
+  const recordView = useCallback((brand: string) => up((p) => ({ views: { ...p.views, [brand]: (p.views[brand] ?? 0) + 1 } })), [up]);
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const brands = useMemo(() => allBrands(state.customBrands), [state.customBrands]);
@@ -208,14 +212,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
     toggleWaitlist: (slug) => up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })),
     setFeatured: (featured) => up(() => ({ featured })),
-    markViewed: (slug) => up((p) => (p.recent[0] === slug ? {} : { recent: [slug, ...p.recent.filter((s) => s !== slug)].slice(0, 12) })),
+    markViewed,
     setRedeem: (redeem) => up(() => ({ redeem: Math.max(0, Math.min(redeem, points)) })),
     toast: (text, href) => { const id = uid(); up((p) => ({ toasts: [...p.toasts, { id, text, href }] })); setTimeout(() => setState((p) => ({ ...p, toasts: p.toasts.filter((t) => t.id !== id) })), 2600); },
     dismissToast: (id) => up((p) => ({ toasts: p.toasts.filter((t) => t.id !== id) })),
     createBoard: (name, product) => { const id = uid(); up((p) => ({ boards: [...p.boards, { id, name: name.trim() || "Untitled", products: product ? [product] : [] }] })); return id; },
     toggleInBoard: (id, product) => up((p) => ({ boards: p.boards.map((b) => (b.id === id ? { ...b, products: toggleIn(b.products, product) } : b)) })),
     deleteBoard: (id) => up((p) => ({ boards: p.boards.filter((b) => b.id !== id) })),
-    recordView: (brand) => up((p) => ({ views: { ...p.views, [brand]: (p.views[brand] ?? 0) + 1 } })),
+    recordView,
     resetDemo: () => { try { localStorage.removeItem(LS); } catch {} setState({ ...DEFAULTS, bagOpen: false, searchOpen: false, toasts: [] }); },
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -16,7 +16,8 @@ const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
   const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views } = useApp();
   const router = useRouter();
-  useEffect(() => { if (hydrated) recordView(slug); }, [slug, hydrated, recordView]);
+  const counted = useRef<string | null>(null);
+  useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
