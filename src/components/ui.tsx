@@ -31,7 +31,7 @@ export function Button({ variant = "primary", size = "md", full, className, ...r
   return (
     <button
       className={clsx(
-        "press inline-flex items-center justify-center gap-2 rounded-pill font-semibold whitespace-nowrap",
+        "press inline-flex min-w-0 items-center justify-center gap-2 rounded-pill font-semibold whitespace-nowrap",
         size === "sm" && "px-4 py-2 text-[12px]",
         size === "md" && "px-6 py-3 text-[13.5px]",
         size === "lg" && "px-8 py-4 text-[14.5px]",
