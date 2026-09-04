@@ -203,8 +203,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
-    addToBag: (product, variant, qty = 1) => { track("add_to_bag", { product, qty }); up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }); },
-    setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
+    addToBag: (product, variant, qty = 1) => {
+      // Never queue past stock. If a shopper somehow lands on a sold-out piece and hits Add, skip.
+      const prod = products.find((x) => x.slug === product);
+      if (!prod || prod.stock === 0) return;
+      const cap = typeof prod.stock === "number" ? prod.stock : Infinity;
+      track("add_to_bag", { product, qty });
+      up((p) => {
+        const key = product + "|" + variant;
+        const ex = p.bag.find((b) => b.key === key);
+        const nextQty = Math.min(cap, (ex?.qty ?? 0) + qty);
+        return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: nextQty } : b)) : [...p.bag, { key, product, variant, qty: nextQty }] };
+      });
+    },
+    setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => {
+      if (b.key !== key) return b;
+      const prod = products.find((x) => x.slug === b.product);
+      const cap = typeof prod?.stock === "number" ? prod.stock : Infinity;
+      return { ...b, qty: Math.max(1, Math.min(cap, qty)) };
+    }) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
     clearBag: () => up(() => ({ bag: [], promoCode: undefined, giftCode: undefined })),
     toggleFollow: (slug) => { const sb = getSupabase(); const on = state.follows.includes(slug); up((p) => ({ follows: toggleIn(p.follows, slug) })); if (sb) { (async () => { const { data } = await sb.auth.getUser(); if (!data.user) return; if (on) await sb.from("follows").delete().eq("user_id", data.user.id).eq("brand_slug", slug); else await sb.from("follows").upsert({ user_id: data.user.id, brand_slug: slug }); })().catch(() => {}); } },
