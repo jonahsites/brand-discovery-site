@@ -30,7 +30,7 @@ export default function Sell() {
     shipsFrom: "", shipsTo: [] as string[], story: "", tint: 0,
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
-  const tog = (k: "styles" | "moods" | "gender" | "categories" | "materials" | "values" | "shipsTo", v: string) => set(k, f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v]);
+  const tog = (k: "styles" | "moods" | "gender" | "categories" | "materials" | "values" | "shipsTo", v: string) => setF((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
   const slug = useMemo(() => slugify(f.name), [f.name]);
   const taken = brands.some((b) => b.slug === slug);
 

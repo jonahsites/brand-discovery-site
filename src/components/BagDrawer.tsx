@@ -24,7 +24,7 @@ export default function BagDrawer() {
             <div className="mb-[10px] flex items-center gap-[9px]">
               <Avatar init={g.brand.init} tint={g.brand.tint} ink={g.brand.ink} size={28} />
               <span className="flex-1 text-[12.5px] font-semibold">{g.brand.name}</span>
-              <span className="mono text-[10.5px] text-black/45">{shipEstimate(g.brand.slug)}</span>
+              <span className="mono text-[10.5px] text-black/45">{shipEstimate(g.brand.slug, g.brand.shipsFrom)}</span>
             </div>
             {g.items.map((it) => (
               <div key={it.key} className="flex items-center gap-3 py-2">

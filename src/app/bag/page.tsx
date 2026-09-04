@@ -22,7 +22,7 @@ export default function BagPage() {
             <div key={g.brand.slug} className="card mb-4 rounded-lg p-4 md:p-[22px]">
               <div className="mb-[6px] flex items-center gap-[11px] border-b border-black/7 pb-[18px]">
                 <Avatar init={g.brand.init} tint={g.brand.tint} ink={g.brand.ink} size={36} />
-                <div className="flex-1"><Link href={`/brand/${g.brand.slug}`} className="text-[14px] font-semibold">{g.brand.name}</Link><div className="mono text-[11.5px] text-black/42">{shipEstimate(g.brand.slug)}</div></div>
+                <div className="flex-1"><Link href={`/brand/${g.brand.slug}`} className="text-[14px] font-semibold">{g.brand.name}</Link><div className="mono text-[11.5px] text-black/42">{shipEstimate(g.brand.slug, g.brand.shipsFrom)}</div></div>
                 <span className="rounded-pill bg-offwhite px-[14px] py-[7px] text-[12px] font-medium">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span>
               </div>
               {g.items.map((it) => (

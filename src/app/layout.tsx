@@ -6,6 +6,7 @@ import TopNav from "@/components/TopNav";
 import MobileTabBar from "@/components/MobileTabBar";
 import BagDrawer from "@/components/BagDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
+import Footer from "@/components/Footer";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <AppProvider>
           <TopNav />
-          <div className="flex-1 pb-28 md:pb-0">{children}</div>
+          <div className="flex-1 pb-28 md:pb-0">{children}<Footer /></div>
           <MobileTabBar />
           <BagDrawer />
           <SearchOverlay />

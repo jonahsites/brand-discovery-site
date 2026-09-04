@@ -73,11 +73,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => {
+    // setTimeout rather than requestAnimationFrame: rAF never fires in a background tab, which would leave the app un-hydrated.
+    const id = setTimeout(() => {
       try { const raw = localStorage.getItem(LS); if (raw) { const s = JSON.parse(raw) as Partial<Persisted>; setState((p) => ({ ...p, ...s })); } } catch {}
       setHydrated(true);
-    });
-    return () => cancelAnimationFrame(id);
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
   useEffect(() => {
     if (!hydrated) return;

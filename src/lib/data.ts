@@ -119,10 +119,10 @@ export const SHIP_OPTS: Record<string, { from: string; opts: ShipOpt[] }> = {
   "neutral-ground": { from: "Copenhagen", opts: [{ label: "Standard", meta: "2–4 days · $7.00", cost: 7 }, { label: "Express", meta: "1–2 days · $16.00", cost: 16 }] },
   "nomad": { from: "Melbourne", opts: [{ label: "Standard", meta: "8–12 days · $18.00", cost: 18 }, { label: "Express", meta: "4–6 days · $34.00", cost: 34 }] },
 };
-export const shipEstimate = (slug: string) => {
+export const shipEstimate = (slug: string, fallbackFrom = "Workshop") => {
   const s = SHIP_OPTS[slug];
-  const o = s.opts[0];
-  return `${s.from} · ${o.meta.split(" · ")[0]}`;
+  if (!s) return `${fallbackFrom} · 5–8 days`;
+  return `${s.from} · ${s.opts[0].meta.split(" · ")[0]}`;
 };
 
 export const LOOKS = [
