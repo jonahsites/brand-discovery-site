@@ -21,7 +21,7 @@ const input = inputCls;
 export default function Sell() {
   const router = useRouter();
   const { upsertBrand, setSession, brands } = useApp();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(-1);
   const [f, setF] = useState({
     name: "", city: "", country: "", founded: String(new Date().getFullYear()), website: "", tagline: "",
     styles: [] as string[], moods: [] as string[], gender: ["Unisex"] as string[],
@@ -69,6 +69,17 @@ export default function Sell() {
           <Link href="/" className="text-[19px] font-extrabold tracking-[-.035em]">Kindred</Link>
           <div className="mono text-[11px] text-black/45">Brand account · {completeness}% complete</div>
         </div>
+        {step === -1 ? (
+          <div className="glass rounded-lg p-6 md:p-12" style={{ backdropFilter: "blur(34px)" }}>
+            <div className="label mb-4">Sell on Kindred</div>
+            <h1 className="mb-4 max-w-[640px] text-[32px] md:text-[48px] font-bold leading-[1.02] tracking-[-.045em]">Shoppers here come to find brands like yours. Not to compare you to Zara.</h1>
+            <p className="mb-8 max-w-[560px] text-[15px] md:text-[16px] leading-[1.6] text-black/62">Kindred is a marketplace for independent clothing labels. You answer one honest onboarding about what you make and who it&apos;s for; we turn that into filters, search results, and a page shoppers actually read. You keep your own shipping and your own customers.</p>
+            <div className="mb-8 grid gap-3 sm:grid-cols-3">
+              {[["No listing fee", "for your first 90 days, then 8% per order. No monthly plan."], ["Paid every Friday", "held only until each parcel scans. You ship from your workshop."], ["Found by feeling", "shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-white/80 p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-black/60">{b}</div></div>)}
+            </div>
+            <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-black/50">{brands.length} brands live · {brands.filter((b) => b.followers < 1000).length} of them under 1k followers</span></div>
+          </div>
+        ) : (
         <div className="glass rounded-lg p-5 md:p-10" style={{ backdropFilter: "blur(34px)" }}>
           <div className="mb-7 flex gap-[6px]">
             {STEPS.map((s, i) => <button key={s} onClick={() => i <= step && setStep(i)} className="flex-1 text-left"><div className={clsx("mb-2 h-1 rounded-pill", i <= step ? "bg-black" : "bg-black/12")} /><div className={clsx("hidden md:block text-[10.5px] font-semibold uppercase tracking-[.12em]", i === step ? "text-ink" : i < step ? "text-black/55" : "text-black/30")}>{s}</div></button>)}
@@ -130,10 +141,11 @@ export default function Sell() {
 
           <div className="mt-8 flex flex-col md:flex-row md:items-center gap-3">
             {step < 6 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>Continue</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>Launch brand page</Button>}
-            {step > 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-black/50">Back</button>}
+            {step >= 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-black/50">Back</button>}
             <span className="text-[12.5px] text-black/45 md:ml-auto">{!valid[step] && step < 6 ? "Fill in the required bits to continue" : step === 6 && completeness < 100 ? "Some steps are incomplete" : ""}</span>
           </div>
         </div>
+        )}
         <p className="mt-5 text-center text-[12px] text-black/45">No listing fee for your first 90 days · Kindred keeps 8% per order after that.</p>
       </div>
     </div>

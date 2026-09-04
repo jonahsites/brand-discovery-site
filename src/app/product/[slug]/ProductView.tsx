@@ -1,16 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { ACCORDIONS, COLORS, REVIEWS, SIZES, money } from "@/lib/data";
-import { sizesBetween } from "@/lib/catalog";
+import { searchCatalog, sizesBetween } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos } = useApp();
+  useEffect(() => { markViewed(slug); }, [slug, markViewed]);
   const p = products.find((x) => x.slug === slug);
   const b = p ? brands.find((x) => x.slug === p.brand) : undefined;
   const sizes = p?.sizes?.length ? p.sizes : b ? sizesBetween(b.sizeRange) : SIZES;
@@ -25,7 +26,8 @@ export default function ProductView({ slug }: { slug: string }) {
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-black/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
   const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
-  const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).concat(products.filter((x) => x.brand !== b.slug)).slice(0, 4);
+  const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
+  const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;
   const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); };
   const saved = isSaved(p.slug);
@@ -77,7 +79,8 @@ export default function ProductView({ slug }: { slug: string }) {
       </div>
 
       <SectionHead title={`More from ${b.name}`} action="Visit brand" href={`/brand/${b.slug}`} />
-      <div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{more.map((x) => <ProductCard key={x.slug} p={x} showBrand={x.brand !== b.slug} />)}</div>
+      <div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{more.map((x) => <ProductCard key={x.slug} p={x} showBrand={false} />)}{more.length === 0 && <div className="col-span-full text-[13px] text-black/50">This is {b.name}&apos;s only piece so far.</div>}</div>
+      {similar.length > 0 && <><SectionHead title="Similar from other brands" sub={`Matched on ${p.category.toLowerCase()} and ${b.moods.slice(0, 2).join(", ")}`} action="Explore" href={`/explore?q=${encodeURIComponent(p.category + " " + b.moods.slice(0, 2).join(" "))}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{similar.map((x) => <ProductCard key={x.slug} p={x} />)}</div></>}
 
       <div className="grid gap-5 md:gap-8 lg:grid-cols-[340px_1fr] items-start">
         <div className="rounded-lg bg-navy p-7 md:p-[30px] text-offwhite">

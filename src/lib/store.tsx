@@ -15,7 +15,7 @@ type Persisted = {
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
-  lookbooks: Lookbook[]; waitlist: string[]; featured?: string;
+  lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number;
 };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
 
@@ -23,7 +23,7 @@ type BagGroup = { brand: Brand; items: (BagItem & { p: Product; unit: number; to
 type Ctx = State & {
   hydrated: boolean;
   brands: Brand[]; products: Product[];
-  bagCount: number; bagGroups: BagGroup[]; subtotal: number; shipTotal: number; discount: number; total: number;
+  bagCount: number; bagGroups: BagGroup[]; subtotal: number; shipTotal: number; discount: number; promoDiscount: number; credit: number; total: number;
   priceOf: (p: Product) => ReturnType<typeof effectivePrice>;
   addToBag: (product: string, variant: string, qty?: number) => void;
   setQty: (key: string, qty: number) => void; removeItem: (key: string) => void; clearBag: () => void;
@@ -49,6 +49,7 @@ type Ctx = State & {
   upsertLookbook: (l: Lookbook) => void; deleteLookbook: (slug: string) => void;
   renameShopper: (name: string) => void;
   toggleWaitlist: (slug: string) => void; setFeatured: (slug?: string) => void;
+  markViewed: (slug: string) => void; setRedeem: (points: number) => void;
   notifications: { id: string; kind: "drop" | "price" | "order" | "message"; title: string; body: string; href: string; at: string }[];
 };
 
@@ -78,7 +79,7 @@ const DEFAULTS: Persisted = {
     { id: "post-os-1", brand: "onda-studio", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
-  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [],
+  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0,
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -129,9 +130,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const subtotal = bagGroups.reduce((s, g) => s + g.items.reduce((a, i) => a + i.total, 0), 0);
     const shipTotal = bagGroups.reduce((s, g) => s + g.shipCost, 0);
     const code = state.promoCode ? state.promos.find((pr) => pr.active && pr.code.toLowerCase() === state.promoCode!.toLowerCase()) : undefined;
-    const discount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
-    return { bagGroups, subtotal, shipTotal, discount, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
-  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, brands]);
+    const promoDiscount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
+    const credit = Math.min(state.redeem / 100, Math.max(0, subtotal + shipTotal - promoDiscount));
+    const discount = promoDiscount + credit;
+    return { bagGroups, subtotal, shipTotal, discount, promoDiscount, credit, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
+  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, state.redeem, brands]);
   const allLookbooks = useMemo(() => [...state.lookbooks, ...LOOKBOOKS.filter((l) => !state.lookbooks.some((c) => c.slug === l.slug))], [state.lookbooks]);
   const notifications = useMemo(() => {
     const out: Ctx["notifications"] = [];
@@ -141,7 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const t of state.threads) { const last = t.messages[t.messages.length - 1]; const b = brands.find((x) => x.slug === t.brand); if (last && b && ((state.session.role === "brand") !== (last.from === "brand"))) out.push({ id: "m-" + t.id, kind: "message", title: state.session.role === "brand" ? `${t.shopper} messaged you` : `${b.name} replied`, body: last.text, href: `/messages?t=${t.id}`, at: last.at }); }
     return out.sort((a, b) => b.at.localeCompare(a.at));
   }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
-  const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal), 0), [state.orders]);
+  const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal) - Math.round((o.credit ?? 0) * 100), 0), [state.orders]);
 
   const value: Ctx = {
     ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
@@ -169,9 +172,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const order: Order = {
         id: "UN-" + String(40912 + state.orders.length + 1), placedAt: new Date().toISOString(), status: "Placed", promo: state.promoCode,
         items: derived.bagGroups.flatMap((g) => g.items.map((i) => ({ product: i.p.slug, name: i.p.name, brand: g.brand.slug, variant: i.variant, qty: i.qty, unit: i.unit }))),
-        subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total,
+        subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit,
       };
-      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined }));
+      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, redeem: 0 }));
       return order;
     },
     setOrderStatus: (id, status) => up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })),
@@ -199,6 +202,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
     toggleWaitlist: (slug) => up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })),
     setFeatured: (featured) => up(() => ({ featured })),
+    markViewed: (slug) => up((p) => (p.recent[0] === slug ? {} : { recent: [slug, ...p.recent.filter((s) => s !== slug)].slice(0, 12) })),
+    setRedeem: (redeem) => up(() => ({ redeem: Math.max(0, Math.min(redeem, points)) })),
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

@@ -19,7 +19,8 @@ function HomeInner() {
   const sp = useSearchParams();
   const [feed, setFeed] = useState(sp.get("feed") ?? "For you");
   const now = useNow();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured } = useApp();
+  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, recent } = useApp();
+  const recentP = recent.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p).slice(0, 4);
   const arva = brands.find((b) => b.slug === featured) ?? brands.find((b) => b.slug === "studio-arva") ?? brands[0];
   const onda = brands.find((b) => b.slug === "onda-studio") ?? brands[1];
   const pick = useMemo(() => dailyPick(products), [products]);
@@ -93,7 +94,7 @@ function HomeInner() {
                 <div className="flex-1">
                   <div className="label mb-[14px] !text-black/48">Brand of the week</div>
                   <h2 className="mb-3 text-[30px] md:text-[40px] font-bold leading-[1.02] tracking-[-.04em]">{arva.slug === "studio-arva" ? "Minimalism for the messy." : arva.tagline}</h2>
-                  <p className="mb-[22px] max-w-[390px] text-[14.5px] leading-[1.55] text-black/66">{arva.slug === "studio-arva" ? `${arva.name} cuts heavyweight cotton in a two-person ${arva.city} workshop. ${products.filter((p) => p.brand === arva.slug).length} pieces, no seasons.` : `${arva.name}, ${arva.city}. ${arva.story?.split(". ")[0] ?? ""}${arva.story ? "." : ""} ${products.filter((p) => p.brand === arva.slug).length} pieces.`}</p>
+                  <p className="mb-[22px] max-w-[390px] text-[14.5px] leading-[1.55] text-black/66">{arva.slug === "studio-arva" ? `${arva.name} cuts heavyweight cotton in a two-person ${arva.city} workshop. ${products.filter((p) => p.brand === arva.slug).length} pieces, no seasons.` : `${arva.name}, ${arva.city}. ${(arva.story?.split(/(?<=\.)\s/)[0] ?? "").replace(/\.$/, "")}. ${products.filter((p) => p.brand === arva.slug).length} piece${products.filter((p) => p.brand === arva.slug).length === 1 ? "" : "s"}.`}</p>
                   <div className="flex flex-wrap items-center gap-[10px]"><Link href={`/brand/${arva.slug}`}><Button>Shop the drop</Button></Link><Link href={`/brand/${arva.slug}?tab=About`}><Button variant="ghost">Read the story</Button></Link></div>
                 </div>
                 <div className="relative h-[240px] w-full md:h-[300px] md:w-[320px] flex-none rounded-xl bg-white"><Placeholder src={products.find((p) => p.brand === arva.slug && p.image)?.image} label="Hero product shot" className="absolute inset-[22px] rounded-[9px]" /><Link href={`/product/${products.find((p) => p.brand === arva.slug)?.slug ?? "heavyweight-crew"}`} className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-pill bg-black text-[16px] text-white">↗</Link></div>
@@ -125,6 +126,7 @@ function HomeInner() {
                 <div className="flex items-center justify-between border-t border-black/7 pt-4"><div className="flex gap-[18px] text-[13px] font-medium text-black/55"><span>♡ 1,204</span><span>◇ Save</span><span>↗ Share</span></div><div className="mono text-[12px] text-black/35">3 products tagged</div></div>
               </div>
 
+              {recentP.length > 0 && <><SectionHead title="Recently viewed" /><div className="mb-[34px] grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{recentP.map((p) => <ProductCard key={p.slug} p={p} />)}</div></>}
               <SectionHead title="Curated for you" sub={`Based on ${styleTags.slice(0, 2).join(" and ") || "your style profile"}`} action="See all" href="/explore" />
               <div className="mb-[34px] grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{curated.map((p) => <ProductCard key={p.slug} p={p} />)}</div>
             </>

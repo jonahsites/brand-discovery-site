@@ -19,7 +19,7 @@ export type Brand = {
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
 export type OrderItem = { product: string; name: string; brand: string; variant: string; qty: number; unit: number };
-export type Order = { id: string; placedAt: string; items: OrderItem[]; subtotal: number; shipping: number; total: number; status: "Placed" | "Packed" | "In transit" | "Delivered"; promo?: string };
+export type Order = { id: string; placedAt: string; items: OrderItem[]; subtotal: number; shipping: number; total: number; status: "Placed" | "Packed" | "In transit" | "Delivered"; promo?: string; credit?: number };
 export type Review = { id: string; product: string; name: string; init: string; tint: string; stars: number; fit: 1 | 2 | 3; body: string; size: string; at: string };
 
 export const BRANDS: Brand[] = [
