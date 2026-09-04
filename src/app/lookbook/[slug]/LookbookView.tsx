@@ -12,7 +12,7 @@ export default function LookbookView({ slug }: { slug: string }) {
   const [spot, setSpot] = useState(0);
   const l = allLookbooks.find((x) => x.slug === slug);
   const b = l ? brands.find((x) => x.slug === l.brand) : undefined;
-  if (!l || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No lookbook here." : "Loading…"}</h1>{hydrated && <Link href="/lookbooks" className="font-semibold text-ink">All lookbooks →</Link>}</Page>;
+  if (!l || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[36px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{hydrated ? "No lookbook here." : "Loading…"}</h1>{hydrated && <Link href="/lookbooks" className="font-semibold text-ink">All lookbooks →</Link>}</Page>;
   const { looks, shoppable } = lookCount(l);
   const shopAll = () => { l.frames.forEach((f) => { const p = f.product && products.find((x) => x.slug === f.product); if (p) addToBag(p.slug, `${(p.sizes ?? ["M"])[0]} · ${(p.colors ?? ["Default"])[0]}`); }); openBag(); };
   return (
@@ -20,7 +20,7 @@ export default function LookbookView({ slug }: { slug: string }) {
       <div className="mb-6 md:mb-[34px] flex flex-col md:flex-row md:items-end justify-between gap-5">
         <div className="max-w-[620px]">
           <Label className="mb-3 md:mb-[14px]">{b.name} · {l.season}</Label>
-          <h1 className="mb-3 md:mb-[14px] text-[34px] md:text-[62px] font-extrabold leading-[.98] tracking-[-.045em]">{l.title}</h1>
+          <h1 className="mb-3 md:mb-[14px] text-[42px] md:text-[72px] leading-[.95] tracking-[-.02em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{l.title}</h1>
           <p className="text-[15px] md:text-[16px] leading-[1.6] text-ink/60">{l.blurb}</p>
         </div>
         <div className="flex flex-none gap-[10px]"><Button size="lg" onClick={shopAll}>Shop all {shoppable}</Button><Link href={`/brand/${b.slug}`} className="grid h-12 w-12 place-items-center rounded-pill bg-white soft text-[16px]">↗</Link></div>
