@@ -92,20 +92,28 @@ test("brand onboarding creates a live brand page and dashboard", async ({ page }
   await expect(page.getByRole("heading", { name: "Test Atelier" })).toBeVisible();
 });
 
-test("first visit requires an account; onboarding lands on Discover", async ({ page }) => {
+test("first visit with no account redirects to /signup and preserves the next path", async ({ page }) => {
   await page.addInitScript(() => { try { localStorage.removeItem("kindred.v2"); sessionStorage.setItem("e2e-reset", "1"); } catch {} });
   await page.goto("/explore");
-  await expect(page).toHaveURL(/\/signup/);
-  await page.getByPlaceholder("Jules Renard").fill("Ada Okafor");
-  await page.locator('input[type="email"]').fill("ada@example.com");
-  await page.locator('input[type="password"]').fill("hunter22");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/onboarding/);
-  for (const s of ["Workwear", "Vintage revival", "Archive"]) await page.getByRole("button", { name: s, exact: true }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Start browsing" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/signup\?next=%2Fexplore/);
+  await expect(page.getByRole("heading", { name: /Join Kindred/ })).toBeVisible();
+});
+
+test("signed-in but not onboarded goes to /onboarding", async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "New User", email: "new@kindred.shop", provider: "email", signedIn: true, createdAt: new Date().toISOString() }, onboarded: false }));
+      sessionStorage.setItem("e2e-reset", "1");
+    } catch {}
+  });
   await page.goto("/brands");
-  await expect(page.getByText("For you").first()).toBeVisible();
+  await expect(page).toHaveURL(/\/onboarding/);
+});
+
+test("forgot password page renders and requires an email", async ({ page }) => {
+  await page.goto("/forgot-password");
+  await expect(page.getByRole("heading", { name: /Forgot your password/i })).toBeVisible();
+  await page.locator('input[type="email"]').fill("not-an-email");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText(/doesn't look right/i)).toBeVisible();
 });

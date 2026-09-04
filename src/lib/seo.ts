@@ -218,6 +218,9 @@ export const ROUTE_META: Record<string, SeoInput> = {
   "/checkout": { title: "Checkout", description: "Kindred checkout.", path: "/checkout", noIndex: true },
   "/messages": { title: "Messages", description: "Your conversations with brands.", path: "/messages", noIndex: true },
   "/dashboard": { title: "Brand dashboard", description: "Your Kindred brand dashboard.", path: "/dashboard", noIndex: true },
+  "/verify-email": { title: "Check your email", description: "Confirm your Kindred email address.", path: "/verify-email", noIndex: true },
+  "/forgot-password": { title: "Forgot your password", description: "Reset your Kindred password.", path: "/forgot-password", noIndex: true },
+  "/reset-password": { title: "Reset your password", description: "Set a new Kindred password.", path: "/reset-password", noIndex: true },
   "/design-system": { title: "Design system", description: "The Kindred v2 design system.", path: "/design-system", noIndex: true },
 };
 

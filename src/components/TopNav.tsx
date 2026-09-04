@@ -9,7 +9,7 @@ export default function TopNav() {
   const { bagCount, openBag, openSearch, session, notifications } = useApp();
   const [notif, setNotif] = useState(false);
   const path = usePathname();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup") return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password") return null;
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const links = [["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]];
   return (

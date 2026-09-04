@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const path = usePathname();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup") return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password") return null;
   const cols = [
     ["Platform", [["About Kindred", "/design-system"], ["Sell on Kindred", "/sell"], ["Brand dashboard", "/dashboard"], ["Design system", "/design-system"]]],
     ["Shop", [["Brands", "/brands"], ["Explore", "/explore"], ["Lookbooks", "/lookbooks"], ["Your bag", "/bag"], ["Gift cards", "/gift"], ["Style profile", "/onboarding"]]],

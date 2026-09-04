@@ -37,7 +37,7 @@ function LoginInner() {
       <Or />
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div><Label className="mb-[6px] !text-[9.5px]">Email address</Label><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={authInput} /></div>
-        <div><Label className="mb-[6px] !text-[9.5px]">Password</Label><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={authInput} /></div>
+        <div><div className="mb-[6px] flex items-baseline justify-between"><Label className="!text-[9.5px]">Password</Label><Link href="/forgot-password" className="text-[10.5px] font-semibold text-ink/50 hover:text-ink">Forgot?</Link></div><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={authInput} /></div>
         {err && <div className="text-[12px] text-sage">{err}</div>}
         <button type="submit" disabled={busy} className="press mt-1 w-full rounded-sm bg-ink py-[11px] text-[12.5px] font-semibold text-paper disabled:opacity-50">{busy ? "Signing in…" : "Continue with Email"}</button>
       </form>

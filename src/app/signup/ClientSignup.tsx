@@ -34,6 +34,7 @@ function SignupInner() {
     const r = await signUp({ name: name.trim(), email: localEmail, password: provider === "email" ? password : undefined, provider });
     setBusy(false);
     if (!r.ok) return setErr(r.error);
+    if (r.needsConfirmation) { router.replace("/verify-email"); return; }
     router.replace(`/onboarding${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   };
 

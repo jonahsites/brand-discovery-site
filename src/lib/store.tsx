@@ -10,7 +10,7 @@ import { allBrands, allProducts, effectivePrice } from "./catalog";
 export type { BagItem, BagGroup, BagLine } from "./cart";
 import type { BagItem } from "./cart";
 export type Session = { role: "shopper" | "brand"; name: string; brand?: string };
-export type Account = { name: string; email: string; provider: "email" | "x" | "apple" | "google"; signedIn: boolean; createdAt: string };
+export type Account = { name: string; email: string; provider: "email" | "x" | "apple" | "google"; signedIn: boolean; createdAt: string; pendingConfirmation?: boolean };
 
 type Persisted = {
   bag: BagItem[]; follows: string[]; saved: string[]; ship: Record<string, number>;
@@ -49,7 +49,7 @@ type Ctx = State & {
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
   referralCode: string; applyReferral: (code: string) => boolean;
-  signUp: (a: { name: string; email: string; password?: string; provider: Account["provider"] }) => Promise<{ ok: true } | { ok: false; error: string }>; logIn: (email: string, password?: string) => Promise<{ ok: true } | { ok: false; error: string }>; logOut: () => Promise<void>; completeOnboarding: () => Promise<void>;
+  signUp: (a: { name: string; email: string; password?: string; provider: Account["provider"] }) => Promise<{ ok: true; needsConfirmation?: boolean } | { ok: false; error: string }>; logIn: (email: string, password?: string) => Promise<{ ok: true } | { ok: false; error: string }>; logOut: () => Promise<void>; completeOnboarding: () => Promise<void>; requestPasswordReset: (email: string) => Promise<{ ok: true } | { ok: false; error: string }>;
   buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
@@ -118,6 +118,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // `look` is written resolved so the inline <head> script can apply it before hydration.
     try { localStorage.setItem(LS, JSON.stringify(persist)); } catch {}
   }, [state, hydrated]);
+  // Supabase session sync: on first load pull the current session (so a reload keeps you signed
+  // in), then listen for auth changes and mirror them into the local account.
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    let alive = true;
+    const pull = async (userId: string) => {
+      // Best-effort: profile flags, style tags, sizes, follows, saves. Ignore errors — the local
+      // state stays intact if any of these fail (offline, RLS not applied yet, etc.).
+      const [prof, tags, sz, fol, sav] = await Promise.all([
+        sb.from("profiles").select("onboarded").eq("id", userId).maybeSingle(),
+        sb.from("style_tags").select("tag").eq("user_id", userId),
+        sb.from("sizes").select("tops, waist, shoe").eq("user_id", userId).maybeSingle(),
+        sb.from("follows").select("brand_slug").eq("user_id", userId),
+        sb.from("saves").select("product_slug").eq("user_id", userId),
+      ]);
+      if (!alive) return;
+      setState((p) => ({
+        ...p,
+        onboarded: prof.data?.onboarded ?? p.onboarded,
+        styleTags: tags.data?.length ? tags.data.map((r: { tag: string }) => r.tag) : p.styleTags,
+        sizes: sz.data ? { tops: sz.data.tops ?? p.sizes.tops, waist: sz.data.waist ?? p.sizes.waist, shoe: sz.data.shoe ?? p.sizes.shoe } : p.sizes,
+        follows: fol.data ? fol.data.map((r: { brand_slug: string }) => r.brand_slug) : p.follows,
+        saved: sav.data ? sav.data.map((r: { product_slug: string }) => r.product_slug) : p.saved,
+      }));
+    };
+    const applySession = async () => {
+      const { data } = await sb.auth.getSession();
+      if (!alive) return;
+      const user = data.session?.user;
+      if (user) {
+        const meta = (user.user_metadata ?? {}) as { name?: string };
+        setState((p) => ({ ...p, account: { name: meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0], email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false } }));
+        pull(user.id).catch(() => {});
+      } else {
+        setState((p) => (p.account?.signedIn ? { ...p, account: { ...p.account!, signedIn: false } } : p));
+      }
+    };
+    applySession();
+    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+      if (!alive) return;
+      const user = session?.user;
+      if (!user) { setState((p) => (p.account?.signedIn ? { ...p, account: { ...p.account!, signedIn: false } } : p)); return; }
+      const meta = (user.user_metadata ?? {}) as { name?: string };
+      setState((p) => ({ ...p, account: { name: meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0], email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false } }));
+      pull(user.id).catch(() => {});
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = state.bagOpen || state.searchOpen ? "hidden" : "";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setState((p) => ({ ...p, bagOpen: false, searchOpen: false })); };
@@ -156,9 +206,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
     clearBag: () => up(() => ({ bag: [], promoCode: undefined, giftCode: undefined })),
-    toggleFollow: (slug) => up((p) => ({ follows: toggleIn(p.follows, slug) })),
+    toggleFollow: (slug) => { const sb = getSupabase(); const on = state.follows.includes(slug); up((p) => ({ follows: toggleIn(p.follows, slug) })); if (sb) { (async () => { const { data } = await sb.auth.getUser(); if (!data.user) return; if (on) await sb.from("follows").delete().eq("user_id", data.user.id).eq("brand_slug", slug); else await sb.from("follows").upsert({ user_id: data.user.id, brand_slug: slug }); })().catch(() => {}); } },
     isFollowing: (s) => state.follows.includes(s),
-    toggleSaved: (slug) => up((p) => ({ saved: toggleIn(p.saved, slug) })),
+    toggleSaved: (slug) => { const sb = getSupabase(); const on = state.saved.includes(slug); up((p) => ({ saved: toggleIn(p.saved, slug) })); if (sb) { (async () => { const { data } = await sb.auth.getUser(); if (!data.user) return; if (on) await sb.from("saves").delete().eq("user_id", data.user.id).eq("product_slug", slug); else await sb.from("saves").upsert({ user_id: data.user.id, product_slug: slug }); })().catch(() => {}); } },
     isSaved: (s) => state.saved.includes(s),
     setShip: (brand, idx) => up((p) => ({ ship: { ...p.ship, [brand]: idx } })),
     openBag: (v = true) => up((p) => ({ bagOpen: v, searchOpen: v ? false : p.searchOpen })),
@@ -194,12 +244,19 @@ signUp: async ({ name, email, password, provider }) => {
       const clean = { name: name.trim(), email: email.trim().toLowerCase() };
       const sb = getSupabase();
       if (sb && provider === "email" && password) {
-        const { error } = await sb.auth.signUp({ email: clean.email, password, options: { data: { name: clean.name } } });
+        const { data, error } = await sb.auth.signUp({ email: clean.email, password, options: { data: { name: clean.name }, emailRedirectTo: `${location.origin}/login` } });
         if (error) return { ok: false, error: error.message };
-      } else if (sb && provider !== "email") {
+        // Supabase returns a user with no session when email-confirmation is on.
+        const needsConfirmation = !data.session && !!data.user;
+        up((p) => ({ account: { name: clean.name, email: clean.email, provider, signedIn: !needsConfirmation, createdAt: new Date().toISOString(), pendingConfirmation: needsConfirmation }, onboarded: false, styleTags: [], session: { ...p.session, role: "shopper", name: clean.name } }));
+        return { ok: true, needsConfirmation };
+      }
+      if (sb && provider !== "email") {
         const { error } = await sb.auth.signInWithOAuth({ provider: provider === "x" ? "twitter" : provider, options: { redirectTo: `${location.origin}/onboarding` } });
         if (error) return { ok: false, error: error.message };
+        return { ok: true }; // navigation goes to the provider
       }
+      // Local demo mode.
       up((p) => ({ account: { name: clean.name, email: clean.email, provider, signedIn: true, createdAt: new Date().toISOString() }, onboarded: false, styleTags: [], session: { ...p.session, role: "shopper", name: clean.name } }));
       return { ok: true };
     },
@@ -210,7 +267,7 @@ signUp: async ({ name, email, password, provider }) => {
         const { data, error } = await sb.auth.signInWithPassword({ email: clean, password });
         if (error) return { ok: false, error: error.message };
         const meta = (data.user?.user_metadata ?? {}) as { name?: string };
-        up((p) => ({ account: { name: meta.name ?? clean.split("@")[0], email: clean, provider: "email", signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString() }, session: { ...p.session, name: meta.name ?? p.session.name } }));
+        up((p) => ({ account: { name: meta.name ?? p.account?.name ?? clean.split("@")[0], email: clean, provider: "email", signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false }, session: { ...p.session, name: meta.name ?? p.session.name } }));
         return { ok: true };
       }
       const a = state.account;
@@ -218,7 +275,14 @@ signUp: async ({ name, email, password, provider }) => {
       up((p) => ({ account: { ...p.account!, signedIn: true }, session: { ...p.session, name: p.account!.name } }));
       return { ok: true };
     },
-    logOut: async () => { const sb = getSupabase(); if (sb) await sb.auth.signOut(); up((p) => (p.account ? { account: { ...p.account, signedIn: false } } : {})); },
+    logOut: async () => { const sb = getSupabase(); if (sb) await sb.auth.signOut(); up((p) => (p.account ? { account: { ...p.account, signedIn: false, pendingConfirmation: false } } : {})); },
+    requestPasswordReset: async (email) => {
+      const sb = getSupabase();
+      if (!sb) return { ok: false, error: "Password reset needs Supabase; see docs/supabase-setup.md." };
+      const { error } = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${location.origin}/reset-password` });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
     completeOnboarding: async () => {
       const sb = getSupabase();
       if (sb) {
@@ -227,6 +291,8 @@ signUp: async ({ name, email, password, provider }) => {
           await sb.from("profiles").update({ onboarded: true }).eq("id", data.user.id);
           if (state.styleTags.length) await sb.from("style_tags").upsert(state.styleTags.map((tag) => ({ user_id: data.user!.id, tag })), { onConflict: "user_id,tag" });
           await sb.from("sizes").upsert({ user_id: data.user.id, ...state.sizes });
+          if (state.follows.length) await sb.from("follows").upsert(state.follows.map((brand_slug) => ({ user_id: data.user!.id, brand_slug })), { onConflict: "user_id,brand_slug" });
+          if (state.saved.length) await sb.from("saves").upsert(state.saved.map((product_slug) => ({ user_id: data.user!.id, product_slug })), { onConflict: "user_id,product_slug" });
         }
       }
       up(() => ({ onboarded: true }));
