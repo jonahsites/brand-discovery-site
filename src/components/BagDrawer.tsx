@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useApp } from "@/lib/store";
 import { money, shipEstimate } from "@/lib/data";
 import { Avatar, Placeholder, QtyStepper, Button } from "./ui";
+import { IconClose } from "./Icon";
 
 export default function BagDrawer() {
   const { bagOpen, openBag, bagGroups, bagCount, subtotal, shipTotal, total, setQty } = useApp();
@@ -16,7 +17,7 @@ export default function BagDrawer() {
             <div className="text-[22px] font-bold tracking-[-.03em]">Your bag</div>
             <div className="mono mt-[3px] text-[11.5px] text-ink/45">{bagCount} pieces · {bagGroups.length} brands</div>
           </div>
-          <button onClick={() => openBag(false)} aria-label="Close" className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-white soft text-[15px]">✕</button>
+          <button onClick={() => openBag(false)} aria-label="Close" className="press grid h-[38px] w-[38px] place-items-center rounded-md bg-white soft text-ink/70"><IconClose size={16} /></button>
         </div>
         {bagGroups.length === 0 && <div className="rounded-md bg-white p-6 text-center soft text-[13.5px] text-ink/55">Your bag is empty. <Link href="/explore" className="font-semibold text-ink" onClick={() => openBag(false)}>Explore brands →</Link></div>}
         {bagGroups.map((g) => (

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { IconArrow } from "./Icon";
 
 /** Fades in past 900px of scroll. Ink pill in the bottom-right. */
 export default function BackToTop() {
@@ -21,8 +22,7 @@ export default function BackToTop() {
         // Sit above the mobile tab bar and the sticky bag/checkout bars.
         " bottom-[86px] right-4 md:bottom-6 md:right-6"
       }
-    >
-      ↑
+    ><IconArrow className="-rotate-90" size={18} />
     </button>
   );
 }

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useApp } from "@/lib/store";
+import { IconClose } from "./Icon";
 
 export default function Toaster() {
   const { toasts, dismissToast, openSearch, searchOpen, bagOpen } = useApp();
@@ -20,7 +21,7 @@ export default function Toaster() {
         <div key={t.id} className="card pointer-events-auto flex items-center gap-3 rounded-pill py-[10px] pl-4 pr-2 text-[13px] font-medium">
           <span>{t.text}</span>
           {t.href && <Link href={t.href} onClick={() => dismissToast(t.id)} className="rounded-pill bg-ink px-3 py-[6px] text-[11.5px] font-semibold text-paper">View</Link>}
-          <button onClick={() => dismissToast(t.id)} aria-label="Dismiss" className="grid h-7 w-7 place-items-center rounded-pill text-[12px] text-ink/45">✕</button>
+          <button onClick={() => dismissToast(t.id)} aria-label="Dismiss" className="grid h-7 w-7 place-items-center rounded-md text-ink/50 hover:text-ink"><IconClose size={14} /></button>
         </div>
       ))}
     </div>
