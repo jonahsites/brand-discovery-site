@@ -10,9 +10,9 @@ export default function TopNav() {
   const { bagCount, openBag, openSearch, session, notifications } = useApp();
   const [notif, setNotif] = useState(false);
   const path = usePathname();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password") return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password" || path === "/feed") return null;
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const links = [["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]];
+  const links = [["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/feed", "Feed"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]];
   return (
     <header className="glass-bar sticky top-0 z-40 h-[56px] md:h-[64px]">
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-8">

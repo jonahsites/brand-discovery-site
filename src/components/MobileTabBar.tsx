@@ -8,7 +8,7 @@ import { IconDiscover, IconExplore, IconSearch, IconHeart } from "@/components/I
 export default function MobileTabBar() {
   const path = usePathname();
   const { openSearch, session } = useApp();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password") return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell") || path === "/login" || path === "/signup" || path === "/verify-email" || path === "/forgot-password" || path === "/reset-password" || path === "/feed") return null;
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const on = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   const c = (h: string) => clsx("grid h-11 w-11 place-items-center rounded-md", on(h) ? "text-ink" : "text-ink/40");
