@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
-import { LOOKBOOKS, RECENTS, TREND_TAGS, money, brandMeta, type Brand, type Product } from "@/lib/data";
+import { RECENTS, TREND_TAGS, money, brandMeta, lookCount, type Brand, type Product } from "@/lib/data";
 import { searchCatalog } from "@/lib/catalog";
 import { Avatar, Placeholder, Label } from "./ui";
 import { FollowButton } from "./BrandCard";
@@ -20,7 +20,7 @@ type Intent = { summary: string; brandSlugs: string[]; productSlugs: string[]; m
 type AI = { q: string; intent: Intent } | null;
 
 function SearchPanel() {
-  const { openSearch, brands, products, promos, priceOf } = useApp();
+  const { openSearch, brands, products, promos, priceOf, allLookbooks } = useApp();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [aiRes, setAiRes] = useState<AI>(null);
@@ -51,7 +51,7 @@ function SearchPanel() {
   const hitBrands: Brand[] = ai ? ai.brandSlugs.map((s) => bmap.get(s)).filter((x): x is Brand => !!x) : local.brands.map((h) => h.item);
   const hitProducts: Product[] = ai ? ai.productSlugs.map((s) => pmap.get(s)).filter((x): x is Product => !!x) : local.products.map((h) => h.item);
   const why = ai ? ai.moods : local.terms;
-  const looks = typed ? LOOKBOOKS.filter((l) => (l.title + (bmap.get(l.brand)?.name ?? "")).toLowerCase().includes(q.toLowerCase())) : [];
+  const looks = typed ? allLookbooks.filter((l) => (l.title + (bmap.get(l.brand)?.name ?? "")).toLowerCase().includes(q.toLowerCase())) : [];
   const close = () => openSearch(false);
   const goExplore = () => { router.push(`/explore?q=${encodeURIComponent(q)}`); close(); };
 
@@ -114,7 +114,7 @@ function SearchPanel() {
               ))}
               {hitProducts.length === 0 && <div className="col-span-full text-[13px] text-black/45">No products match. Try describing the moment instead of the item.</div>}
             </div>
-            {looks.length > 0 && <><Label className="mb-[14px]">Lookbooks · {looks.length}</Label><div className="grid gap-[14px] sm:grid-cols-3">{looks.map((l) => { const dark = l.bg === "#1C3247"; return <Link key={l.slug} href={`/lookbook/${l.slug}`} onClick={close} className="flex h-[130px] flex-col justify-between rounded-[12px] p-5" style={{ background: l.bg, color: dark ? "#F6F7F9" : "#1A1A1A" }}><span className="text-[15px] font-semibold tracking-[-.02em]">{l.title}</span><span className="mono text-[11px]" style={{ opacity: 0.6 }}>{bmap.get(l.brand)?.name} · {l.looks} looks</span></Link>; })}</div></>}
+            {looks.length > 0 && <><Label className="mb-[14px]">Lookbooks · {looks.length}</Label><div className="grid gap-[14px] sm:grid-cols-3">{looks.map((l) => { const dark = l.bg === "#1C3247"; return <Link key={l.slug} href={`/lookbook/${l.slug}`} onClick={close} className="flex h-[130px] flex-col justify-between rounded-[12px] p-5" style={{ background: l.bg, color: dark ? "#F6F7F9" : "#1A1A1A" }}><span className="text-[15px] font-semibold tracking-[-.02em]">{l.title}</span><span className="mono text-[11px]" style={{ opacity: 0.6 }}>{bmap.get(l.brand)?.name} · {lookCount(l).looks} looks</span></Link>; })}</div></>}
           </div>
         )}
       </div>

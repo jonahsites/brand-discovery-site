@@ -3,13 +3,13 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { CATEGORY_OPTIONS, COLORS, DASH, SIZE_LADDER, money, type Drop, type Product, type Promo } from "@/lib/data";
+import { CATEGORY_OPTIONS, COLORS, DASH, SIZE_LADDER, money, lookCount, type Drop, type Product, type Promo, type LookFrame } from "@/lib/data";
 import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Button, Label, Placeholder, inputCls } from "@/components/ui";
 
-const NAV = ["Overview", "Products", "Promos", "Drops", "Orders", "Messages", "Settings"];
+const NAV = ["Overview", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Settings"];
 
 export default function Dashboard() { return <Suspense><DashInner /></Suspense>; }
 
@@ -56,6 +56,7 @@ function DashInner() {
           {nav === "Products" && <Products brand={brand.slug} mine={mine} />}
           {nav === "Promos" && <Promos brand={brand.slug} mine={mine} myPromos={myPromos} />}
           {nav === "Drops" && <Drops brand={brand.slug} mine={mine} myDrops={myDrops} />}
+          {nav === "Lookbooks" && <LookbookBuilder brand={brand.slug} mine={mine} />}
           {nav === "Orders" && <Orders brand={brand.slug} myOrders={myOrders} seeded={seeded} />}
           {nav === "Messages" && <div className="card rounded-lg p-6 text-[13.5px] text-black/60">{threads.filter((t) => t.brand === brand.slug).length} conversation{threads.filter((t) => t.brand === brand.slug).length === 1 ? "" : "s"}. <Link href="/messages" className="font-semibold text-navy">Open inbox →</Link></div>}
           {nav === "Settings" && <Settings brand={brand.slug} />}
@@ -248,6 +249,7 @@ function Settings({ brand }: { brand: string }) {
   const [saved, setSaved] = useState(false);
   return (
     <div className="card max-w-[760px] rounded-lg p-5 md:p-[26px]">
+      <div className="mb-5 flex items-center justify-between rounded-md bg-offwhite px-4 py-3"><div><div className="text-[13.5px] font-semibold">Verified badge</div><div className="text-[12px] text-black/55">{b.verified ? "You're verified. Shoppers see the ✓ next to your name." : b.verification === "pending" ? "Application received. We review within 5 working days." : "Prove you make what you sell. We check a workshop photo and one order."}</div></div>{!b.verified && b.verification !== "pending" && <Button size="sm" onClick={() => upsertBrand({ ...b, verification: "pending" })}>Apply</Button>}{b.verification === "pending" && <span className="rounded-pill bg-sky px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]">Pending</span>}</div>
       <div className="flex flex-col gap-4">
         <div><Label className="mb-2">Tagline</Label><input className={inputCls} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>
         <div><Label className="mb-2">Website</Label><input className={inputCls} value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></div>
@@ -258,6 +260,46 @@ function Settings({ brand }: { brand: string }) {
         <div><Label className="mb-2">Values</Label><input className={inputCls} value={f.values} onChange={(e) => setF({ ...f, values: e.target.value })} /></div>
         <div><Label className="mb-2">Story</Label><textarea className={clsx(inputCls, "min-h-[140px] resize-y leading-[1.6]")} value={f.story} onChange={(e) => setF({ ...f, story: e.target.value })} /></div>
         <div className="flex items-center gap-3"><Button onClick={() => { upsertBrand({ ...b, tagline: f.tagline.trim(), story: f.story.trim(), website: f.website.trim() || undefined, logo: f.logo.trim() || undefined, cover: f.cover.trim() || undefined, styles: split(f.styles), moods: split(f.moods), materials: split(f.materials), values: split(f.values) }); setSaved(true); setTimeout(() => setSaved(false), 1500); }}>Save changes</Button>{saved && <span className="text-[12.5px] font-medium text-navy">Saved ✓</span>}</div>
+      </div>
+    </div>
+  );
+}
+
+const EMPTY_FRAME: LookFrame = { h: 420, x: 50, y: 45 };
+function LookbookBuilder({ brand, mine }: { brand: string; mine: Product[] }) {
+  const { allLookbooks, upsertLookbook, deleteLookbook } = useApp();
+  const books = allLookbooks.filter((l) => l.brand === brand);
+  const [f, setF] = useState({ title: "", season: "", blurb: "", bg: "#C7DCEF", frames: [{ ...EMPTY_FRAME }, { ...EMPTY_FRAME, h: 320 }, { ...EMPTY_FRAME, h: 480 }] as LookFrame[] });
+  const setFrame = (i: number, patch: Partial<LookFrame>) => setF((p) => ({ ...p, frames: p.frames.map((fr, j) => (j === i ? { ...fr, ...patch } : fr)) }));
+  const save = () => { if (!f.title.trim()) return; const slug = slugify(`${f.title}-${brand.split("-")[0]}`); upsertLookbook({ slug, brand, title: f.title.trim(), season: f.season.trim() || "No season", blurb: f.blurb.trim(), bg: f.bg, frames: f.frames.filter((fr) => fr.image || fr.product || fr.label), createdAt: new Date().toISOString() }); setF({ title: "", season: "", blurb: "", bg: "#C7DCEF", frames: [{ ...EMPTY_FRAME }, { ...EMPTY_FRAME, h: 320 }, { ...EMPTY_FRAME, h: 480 }] }); };
+  return (
+    <div className="grid gap-5 xl:grid-cols-[1fr_460px] items-start">
+      <div className="flex flex-col gap-3">
+        {books.map((l) => { const c = lookCount(l); const dark = l.bg === "#1C3247"; return <div key={l.slug} className="flex items-center justify-between gap-4 rounded-lg p-5" style={{ background: l.bg, color: dark ? "#F6F7F9" : "#1A1A1A" }}><div><div className="mb-1 text-[10px] font-semibold uppercase tracking-[.14em] opacity-60">{l.season}</div><div className="text-[20px] font-bold tracking-[-.03em]">{l.title}</div><div className="mono text-[11px] opacity-60">{c.looks} looks · {c.shoppable} shoppable</div></div><div className="flex gap-2"><Link href={`/lookbook/${l.slug}`} className="rounded-pill bg-white/80 px-3 py-[6px] text-[11.5px] font-semibold text-ink">View</Link>{l.createdAt && <button onClick={() => deleteLookbook(l.slug)} className="rounded-pill bg-white/60 px-3 py-[6px] text-[11.5px] font-semibold text-ink/60">✕</button>}</div></div>; })}
+        {books.length === 0 && <div className="card rounded-lg p-8 text-center text-[13px] text-black/50">No lookbooks yet. Build one on the right: each frame can carry an image URL and one shoppable hotspot.</div>}
+      </div>
+      <div className="card rounded-lg p-5 md:p-6">
+        <div className="mb-4 text-[16px] font-semibold tracking-[-.02em]">New lookbook</div>
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3"><div><Label className="mb-2">Title</Label><input className={inputCls} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="Off the shipyard." /></div><div><Label className="mb-2">Season</Label><input className={inputCls} value={f.season} onChange={(e) => setF({ ...f, season: e.target.value })} placeholder="Autumn 26" /></div></div>
+          <div><Label className="mb-2">One or two lines</Label><input className={inputCls} value={f.blurb} onChange={(e) => setF({ ...f, blurb: e.target.value })} placeholder="Eleven looks shot across two cold mornings." /></div>
+          <div><Label className="mb-2">Cover colour</Label><div className="flex gap-2">{["#C7DCEF", "#DBE1EF", "#1C3247", "#456F94"].map((c) => <button key={c} onClick={() => setF({ ...f, bg: c })} className="h-8 w-8 rounded-pill" style={{ background: c, boxShadow: f.bg === c ? "0 0 0 2px #F6F7F9,0 0 0 3.5px #1A1A1A" : undefined }} />)}</div></div>
+          <Label>Frames</Label>
+          {f.frames.map((fr, i) => (
+            <div key={i} className="rounded-md bg-offwhite p-3">
+              <div className="mb-2 flex items-center justify-between"><span className="text-[12px] font-semibold">Frame {i + 1}</span><button onClick={() => setF({ ...f, frames: f.frames.filter((_, j) => j !== i) })} className="text-[11px] text-black/45">Remove</button></div>
+              <input className={clsx(inputCls, "mb-2 !py-2 !text-[13px]")} value={fr.image ?? ""} onChange={(e) => setFrame(i, { image: e.target.value || undefined })} placeholder="Image URL" />
+              <div className="flex flex-wrap gap-2">
+                <select className={clsx(inputCls, "!w-auto !py-2 !text-[12px]")} value={fr.product ?? ""} onChange={(e) => setFrame(i, { product: e.target.value || undefined })}><option value="">No hotspot</option>{mine.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}</select>
+                <label className="flex items-center gap-1 text-[11px] text-black/55">x <input type="range" min={5} max={95} value={fr.x ?? 50} onChange={(e) => setFrame(i, { x: Number(e.target.value) })} className="w-16 accent-black" /></label>
+                <label className="flex items-center gap-1 text-[11px] text-black/55">y <input type="range" min={5} max={95} value={fr.y ?? 45} onChange={(e) => setFrame(i, { y: Number(e.target.value) })} className="w-16 accent-black" /></label>
+                <label className="flex items-center gap-1 text-[11px] text-black/55">h <input type="range" min={240} max={600} step={20} value={fr.h} onChange={(e) => setFrame(i, { h: Number(e.target.value) })} className="w-16 accent-black" /></label>
+              </div>
+            </div>
+          ))}
+          <button onClick={() => setF({ ...f, frames: [...f.frames, { ...EMPTY_FRAME }] })} className="rounded-md border-[1.5px] border-dashed border-black/16 py-3 text-[12.5px] font-medium text-black/55">+ Add frame</button>
+          <Button onClick={save} disabled={!f.title.trim()} className={clsx(!f.title.trim() && "opacity-40")}>Publish lookbook</Button>
+        </div>
       </div>
     </div>
   );

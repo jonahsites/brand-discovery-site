@@ -14,7 +14,7 @@ export type Brand = {
   priceBand: [number, number]; sizeRange: [string, string];
   shipsTo: string[]; shipsFrom: string;
   createdAt?: string;
-  logo?: string; cover?: string;
+  logo?: string; cover?: string; verification?: "pending";
 };
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
@@ -65,6 +65,8 @@ export type Product = {
   stock?: number; description?: string; createdAt?: string;
   image?: string; images?: string[];
 };
+export type LookFrame = { image?: string; h: number; bg?: string; product?: string; x?: number; y?: number; label?: string };
+export type Lookbook = { slug: string; brand: string; title: string; season: string; blurb: string; bg: string; frames: LookFrame[]; createdAt?: string };
 export type Post = { id: string; brand: string; caption: string; image?: string; products: string[]; at: string; likes: number };
 export type Message = { id: string; from: "shopper" | "brand"; text: string; at: string };
 export type Thread = { id: string; brand: string; shopper: string; messages: Message[] };
@@ -139,11 +141,19 @@ export const LOOKS = [
   { ph: "Look 06 · still life", h: 300, bg: "#DBE1EF", n: 6, x: 70, y: 36, product: "waxed-tote" },
 ];
 
-export const LOOKBOOKS = [
-  { slug: "off-the-shipyard", brand: "form-and-void", title: "Off the shipyard.", season: "Autumn 26", looks: 11, shoppable: 9, bg: "#C7DCEF", blurb: "Eleven looks shot across two cold mornings in the Rotterdam docks. Nine pieces are shoppable — tap any numbered dot." },
-  { slug: "salt-and-static", brand: "onda-studio", title: "Salt and static", season: "Summer 26", looks: 8, shoppable: 6, bg: "#1C3247", blurb: "Eight looks on the Porto seawall at 6am." },
-  { slug: "fourteen-pieces", brand: "studio-arva", title: "Fourteen pieces", season: "No season", looks: 14, shoppable: 14, bg: "#DBE1EF", blurb: "The whole Studio Arva range, one piece per frame." },
+export const LOOKBOOKS: Lookbook[] = [
+  { slug: "off-the-shipyard", brand: "form-and-void", title: "Off the shipyard.", season: "Autumn 26", bg: "#C7DCEF", blurb: "Eleven looks shot across two cold mornings in the Rotterdam docks. Nine pieces are shoppable — tap any numbered dot.",
+    frames: [
+      { label: "Look 01 · full length", h: 520, product: "panel-work-jacket", x: 38, y: 34 }, { label: "Look 02 · detail", h: 340, bg: "#C7DCEF", product: "corozo-overshirt", x: 62, y: 48 },
+      { label: "Look 03 · wide", h: 400, product: "wide-wool-trouser", x: 28, y: 60 }, { label: "Look 04 · portrait", h: 460, bg: "#1C3247", product: "duck-canvas-cap", x: 50, y: 40 },
+      { label: "Look 05 · full length", h: 560, product: "yoke-back-shirt", x: 42, y: 52 }, { label: "Look 06 · still life", h: 300, bg: "#DBE1EF", product: "waxed-tote", x: 70, y: 36 },
+    ] },
+  { slug: "salt-and-static", brand: "onda-studio", title: "Salt and static", season: "Summer 26", bg: "#1C3247", blurb: "Eight looks on the Porto seawall at 6am.",
+    frames: [{ label: "Look 01", h: 480, product: "sail-overshirt", x: 45, y: 40 }, { label: "Look 02", h: 360, bg: "#C7DCEF", product: "salt-wash-tee", x: 55, y: 50 }, { label: "Look 03", h: 420 }, { label: "Look 04", h: 300, bg: "#DBE1EF" }] },
+  { slug: "fourteen-pieces", brand: "studio-arva", title: "Fourteen pieces", season: "No season", bg: "#DBE1EF", blurb: "The whole Studio Arva range, one piece per frame.",
+    frames: [{ label: "Crew", h: 420, product: "heavyweight-crew", x: 50, y: 45 }, { label: "Chore coat", h: 520, product: "cotton-chore-coat", x: 40, y: 38 }, { label: "Still life", h: 320, bg: "#C7DCEF" }] },
 ];
+export const lookCount = (l: Lookbook) => ({ looks: l.frames.length, shoppable: l.frames.filter((f) => !!f.product).length });
 
 export const STYLE_CHOICES = ["Japanese streetwear", "Minimalist", "Workwear", "Tailoring", "Techwear", "Vintage revival", "Knitwear", "Sustainable", "Avant-garde", "Skate", "Outdoors", "Archive"];
 

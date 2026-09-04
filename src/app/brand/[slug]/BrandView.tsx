@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { LOOKBOOKS, POSTS, brandTier } from "@/lib/data";
+import { POSTS, brandTier, lookCount } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
@@ -14,14 +14,14 @@ import Countdown, { useNow } from "@/components/Countdown";
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks } = useApp();
   const router = useRouter();
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
   if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-black/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-navy">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
-  const books = LOOKBOOKS.filter((l) => l.brand === b.slug);
+  const books = allLookbooks.filter((l) => l.brand === b.slug);
   const drop = drops.find((d) => d.brand === b.slug && new Date(d.at).getTime() > now);
   const promo = promos.find((p) => p.active && p.brand === b.slug);
   const isOwner = session.role === "brand" && session.brand === b.slug;
@@ -90,9 +90,9 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
           {books.map((l, i) => { const dark = i % 2 === 1; return (
             <Link key={l.slug} href={`/lookbook/${l.slug}`} className={clsx("flex h-[320px] md:h-[400px] flex-col justify-between rounded-lg p-7 md:p-[34px]", dark ? "bg-navy text-offwhite" : "bg-sky")}>
               <div><Label light={dark} className="mb-3">{l.season}</Label><h3 className="mb-[10px] text-[28px] md:text-[34px] font-bold leading-[1.05] tracking-[-.038em]">{l.title}</h3><p className={clsx("max-w-[300px] text-[14px] leading-[1.55]", dark ? "text-offwhite/72" : "text-black/65")}>{l.blurb}</p></div>
-              <div className="flex items-center justify-between"><span className={clsx("mono text-[12px]", dark ? "text-offwhite/60" : "text-black/50")}>{l.looks} looks · {l.shoppable} shoppable</span><span className={clsx("grid h-12 w-12 place-items-center rounded-pill text-[17px]", dark ? "bg-peri text-ink" : "bg-black text-white")}>↗</span></div>
+              <div className="flex items-center justify-between"><span className={clsx("mono text-[12px]", dark ? "text-offwhite/60" : "text-black/50")}>{lookCount(l).looks} looks · {lookCount(l).shoppable} shoppable</span><span className={clsx("grid h-12 w-12 place-items-center rounded-pill text-[17px]", dark ? "bg-peri text-ink" : "bg-black text-white")}>↗</span></div>
             </Link>); })}
-          {books.length === 0 && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-black/55">No lookbooks yet.</div>}
+          {books.length === 0 && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-black/55">No lookbooks yet.{isOwner && <> <Link href="/dashboard?tab=Lookbooks" className="font-semibold text-navy">Build one →</Link></>}</div>}
         </div>
       )}
       {tab === "About" && (

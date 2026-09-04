@@ -6,15 +6,17 @@ import clsx from "clsx";
 import { ORDERS, STYLE_OPTIONS, SIZE_LADDER, brandMeta, money } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
-import { Avatar, Button, Label, Placeholder, Page } from "@/components/ui";
+import { Avatar, Button, Label, Placeholder, Page, inputCls } from "@/components/ui";
 
 export default function Account() { return <Suspense><AccountInner /></Suspense>; }
 
 function AccountInner() {
   const sp = useSearchParams();
-  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads } = useApp();
+  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper } = useApp();
   const [tab, setTab] = useState(sp.get("tab") ?? "Saved");
   const [addTag, setAddTag] = useState(false);
+  const [editName, setEditName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(session.name);
   const savedP = products.filter((p) => saved.includes(p.slug));
   const following = brands.filter((b) => follows.includes(b.slug));
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -24,11 +26,12 @@ function AccountInner() {
       <div className="mb-6 md:mb-[34px] flex items-center gap-4 md:gap-[22px]">
         <div className="grid h-[66px] w-[66px] md:h-[104px] md:w-[104px] flex-none place-items-center rounded-[14px] md:rounded-lg bg-sky text-[20px] md:text-[30px] font-extrabold tracking-[-.04em]">{initials}</div>
         <div className="flex-1">
-          <h1 className="mb-[6px] text-[20px] md:text-[32px] font-bold leading-[1.05] tracking-[-.038em]">{session.name}</h1>
+          {editName ? <form onSubmit={(e) => { e.preventDefault(); renameShopper(nameDraft); setEditName(false); }} className="mb-[6px] flex gap-2"><input autoFocus value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} className={clsx(inputCls, "!w-auto !py-2")} /><Button size="sm" type="submit">Save</Button></form> : <h1 className="mb-[6px] text-[20px] md:text-[32px] font-bold leading-[1.05] tracking-[-.038em]">{session.name}</h1>}
           <div className="hidden md:block text-[13.5px] text-black/55">Paris, FR · joined March 2025 · {following.length} brands followed · {alerts.length} price alerts · {notify.length} drop reminders</div>
           <div className="mono md:hidden text-[11.5px] text-black/45">{following.length} following · {savedP.length} saved</div>
         </div>
         <div className="hidden md:flex gap-[10px]">
+          <Button variant="secondary" onClick={() => { setNameDraft(session.name); setEditName(true); }}>Edit profile</Button>
           {session.role === "brand" ? <Link href="/dashboard"><Button variant="navy">Brand dashboard</Button></Link> : <Link href="/sell"><Button variant="secondary">Open a brand account</Button></Link>}
           {session.role === "brand" && <Button variant="secondary" onClick={() => setSession({ role: "shopper", name: "Jules Renard" })}>Switch to shopper</Button>}
         </div>

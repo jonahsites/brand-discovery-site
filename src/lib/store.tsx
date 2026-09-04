@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review, type Post, type Thread } from "./data";
+import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review, type Post, type Thread, type Lookbook } from "./data";
+import { LOOKBOOKS } from "./data";
 import { allBrands, allProducts, effectivePrice, findProduct } from "./catalog";
 
 export type BagItem = { key: string; product: string; variant: string; qty: number };
@@ -14,6 +15,7 @@ type Persisted = {
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
+  lookbooks: Lookbook[];
 };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
 
@@ -43,6 +45,9 @@ type Ctx = State & {
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
   setSizeOnly: (v: boolean) => void;
   points: number;
+  allLookbooks: Lookbook[];
+  upsertLookbook: (l: Lookbook) => void; deleteLookbook: (slug: string) => void;
+  renameShopper: (name: string) => void;
 };
 
 const DEFAULT_BAG: BagItem[] = [
@@ -71,7 +76,7 @@ const DEFAULTS: Persisted = {
     { id: "post-os-1", brand: "onda-studio", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
-  ], threads: [], sizeOnly: false,
+  ], threads: [], sizeOnly: false, lookbooks: [],
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -125,10 +130,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const discount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
     return { bagGroups, subtotal, shipTotal, discount, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
   }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, brands]);
+  const allLookbooks = useMemo(() => [...state.lookbooks, ...LOOKBOOKS.filter((l) => !state.lookbooks.some((c) => c.slug === l.slug))], [state.lookbooks]);
   const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal), 0), [state.orders]);
 
   const value: Ctx = {
-    ...state, ...derived, hydrated, brands, products, priceOf, points,
+    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks,
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
@@ -178,6 +184,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return id;
     },
     setSizeOnly: (sizeOnly) => up(() => ({ sizeOnly })),
+    upsertLookbook: (l) => up((p) => ({ lookbooks: [l, ...p.lookbooks.filter((x) => x.slug !== l.slug)] })),
+    deleteLookbook: (slug) => up((p) => ({ lookbooks: p.lookbooks.filter((x) => x.slug !== slug) })),
+    renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
