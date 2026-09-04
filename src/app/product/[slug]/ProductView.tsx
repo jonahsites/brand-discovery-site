@@ -29,8 +29,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const own = p ? [...reviews.filter((r) => r.product === p.slug), ...(p.createdAt ? [] : REVIEWS.map((r, i) => ({ ...r, id: "seed" + i, product: p.slug, stars: r.stars === "★ 5.0" ? 5 : 4, fit: 2 as const, size: r.meta.split(" ")[2] ?? "L", at: "" })))] : [];
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-ink">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
-  const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
-  while (gallery.length > 0 && gallery.length < 4) gallery.push(gallery[gallery.length % (p.images?.length ? gallery.length : 1)]);
+  const gallery = [...new Set([p.image, ...(p.images ?? [])].filter((x): x is string => !!x))];
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
   const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;
@@ -49,12 +48,12 @@ export default function ProductView({ slug }: { slug: string }) {
       <div className="mono mb-4 md:mb-[22px] text-[12px] text-ink/40"><Link href="/explore">Explore</Link> / <Link href={`/explore?cat=${encodeURIComponent(p.category)}`}>{p.category}</Link> / <Link href={`/brand/${b.slug}`}>{b.name}</Link></div>
       <div className="mb-10 md:mb-14 grid gap-6 md:gap-10 lg:grid-cols-[minmax(0,660px)_1fr] items-start">
         <div>
-          <div className="card relative h-[340px] md:h-[660px] rounded-[24px] p-3 md:p-[26px]">
+          <div className="relative h-[340px] md:h-[660px] rounded-[24px] p-3 md:p-[26px]" style={{background:"var(--cream)"}}>
             <Placeholder src={gallery[thumb]} alt={p.name} label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[26px] rounded-[18px]", soldOut && "opacity-60")} />
             {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121A24" fg="#F6F4EF">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#7C8C6F" fg="#F6F4EF">Final {p.stock} pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
-            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-sm md:rounded-md p-[3px] transition", thumb === i ? "bg-ink" : "bg-transparent hover:bg-sand")}><Placeholder src={gallery[i]} alt={`${p.name} ${t}`} label={t} className="h-[74px] md:h-[130px] rounded-[10px] md:rounded-[15px]" /></button>)}
+            {gallery.length > 1 && gallery.map((src, i) => <button key={src+i} onClick={() => setThumb(i)} aria-label={`Image ${i+1}`} className={clsx("flex-1 rounded-sm md:rounded-md p-[3px] transition", thumb === i ? "bg-ink" : "bg-transparent hover:bg-sand")}><Placeholder src={src} alt={`${p.name} view ${i+1}`} className="h-[74px] md:h-[130px] rounded-[10px] md:rounded-[15px]" /></button>)}
           </div>
         </div>
         <div className="md:pt-[6px]">
