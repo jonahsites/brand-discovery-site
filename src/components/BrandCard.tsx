@@ -13,10 +13,10 @@ export function FollowButton({ slug, size = "md", className }: { slug: string; s
     <button
       onClick={(e) => { e.preventDefault(); toggleFollow(slug); toast(on ? `Unfollowed ${name}` : `Following ${name}`, on ? undefined : "/?feed=Following"); }}
       className={clsx(
-        "press rounded-pill font-semibold border whitespace-nowrap",
-        size === "sm" && "px-4 py-2 text-[11.5px]",
-        size === "md" && "px-[22px] py-[10px] text-[12.5px]",
-        size === "lg" && "px-[30px] py-[13px] text-[13.5px]",
+        "press rounded-pill font-medium border whitespace-nowrap",
+        size === "sm" && "px-[13px] py-[6px] text-[11.5px]",
+        size === "md" && "px-4 py-2 text-[12.5px]",
+        size === "lg" && "px-5 py-[10px] text-[13px]",
         on ? "bg-offwhite text-ink border-black/12" : "bg-black text-white border-black",
         className,
       )}

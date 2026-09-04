@@ -41,7 +41,7 @@ function ExploreInner() {
 
   return (
     <>
-      <div className="glass-bar sticky top-[64px] md:top-[76px] z-30">
+      <div className="glass-bar sticky top-[56px] md:top-[64px] z-30">
         <div className="mx-auto flex h-[60px] md:h-[72px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
           <button onClick={() => setOpen(true)} className="press flex flex-none items-center gap-2 rounded-pill border border-black/12 bg-white px-4 md:px-5 py-[10px] text-[12.5px] font-semibold">≡ <span className="hidden sm:inline">Filters</span>{count > 0 && <span className="rounded-pill bg-sky px-[7px] py-[2px] text-[10px] font-semibold">{count}</span>}</button>
           <div className="h-[26px] w-px bg-black/10" />

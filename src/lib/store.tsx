@@ -81,9 +81,9 @@ const DEFAULTS: Persisted = {
   styleTags: ["Japanese streetwear", "Workwear", "Minimalist", "Deadstock", "Unisex", "Knitwear", "Under $200"],
   sizes: { tops: "L", waist: "32", shoe: "43" }, notify: [], alerts: [],
   posts: [
-    { id: "post-os-1", brand: "onda-studio", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
-    { id: "post-fv-1", brand: "form-and-void", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
-    { id: "post-ct-1", brand: "core-theory", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
+    { id: "post-os-1", brand: "onda-studio", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=900&q=75&auto=format&fit=crop", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
+    { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
+    { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
   ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0,
   boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},
 };

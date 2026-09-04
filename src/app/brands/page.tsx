@@ -34,7 +34,7 @@ function BrandsInner() {
   const tog = (arr: string[], v: string, set: (a: string[]) => void) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   return (
     <>
-      <div className="glass-bar sticky top-[64px] md:top-[76px] z-30">
+      <div className="glass-bar sticky top-[56px] md:top-[64px] z-30">
         <div className="mx-auto flex h-[60px] md:h-[72px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
           <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto">{["All", ...STYLE_OPTIONS].map((c) => <Chip key={c} active={style === c} onClick={() => setStyle(c)}>{c}</Chip>)}</div>
         </div>
@@ -45,7 +45,7 @@ function BrandsInner() {
           <div className="flex gap-2"><button onClick={() => setShowFilters(!showFilters)} className={clsx("lg:hidden rounded-pill border px-4 py-[10px] text-[12.5px] font-semibold", showFilters ? "bg-black text-white border-black" : "bg-white border-black/10")}>≡ Filters{tier.length + values.length + (country !== "All" ? 1 : 0) > 0 ? ` · ${tier.length + values.length + (country !== "All" ? 1 : 0)}` : ""}</button><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select></div>
         </div>
         <div className="grid gap-6 lg:grid-cols-[240px_1fr] items-start">
-          <aside className={clsx("flex-col gap-6 lg:sticky lg:top-[170px] lg:flex", showFilters ? "flex" : "hidden")}>
+          <aside className={clsx("flex-col gap-6 lg:sticky lg:top-[150px] lg:flex", showFilters ? "flex" : "hidden")}>
             <div><Label className="mb-3">Brand size</Label><div className="flex flex-wrap gap-[6px]">{TIERS.map((t) => <button key={t} onClick={() => tog(tier, t, setTier)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", tier.includes(t) ? "bg-black text-white border-black" : "bg-white border-black/10")}>{t}</button>)}</div></div>
             <div><Label className="mb-3">Based in</Label><div className="flex flex-wrap gap-[6px]">{countries.map((c) => <button key={c} onClick={() => setCountry(c)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", country === c ? "bg-black text-white border-black" : "bg-white border-black/10")}>{c}</button>)}</div></div>
             <div><Label className="mb-3">Values</Label><div className="flex flex-wrap gap-[6px]">{VALUE_OPTIONS.map((v) => <button key={v} onClick={() => tog(values, v, setValues)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", values.includes(v) ? "bg-navy text-offwhite border-navy" : "bg-white border-black/10")}>{v}</button>)}</div></div>

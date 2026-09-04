@@ -31,10 +31,10 @@ export function Button({ variant = "primary", size = "md", full, className, ...r
   return (
     <button
       className={clsx(
-        "press inline-flex min-w-0 items-center justify-center gap-2 rounded-pill font-semibold whitespace-nowrap",
-        size === "sm" && "px-4 py-2 text-[12px]",
-        size === "md" && "px-6 py-3 text-[13.5px]",
-        size === "lg" && "px-8 py-4 text-[14.5px]",
+        "press inline-flex min-w-0 items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap",
+        size === "sm" && "px-[13px] py-[6px] text-[12px]",
+        size === "md" && "px-[18px] py-[9px] text-[13px]",
+        size === "lg" && "px-6 py-[11px] text-[13.5px]",
         variant === "primary" && "bg-black text-white",
         variant === "navy" && "bg-navy text-offwhite",
         variant === "secondary" && "bg-white text-ink border border-black/14",
@@ -72,7 +72,7 @@ export function IconCircle({ children, size = 42, variant = "white", className, 
 export function Chip({ active, children, className, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
   return (
     <button
-      className={clsx("press flex-none rounded-pill px-[18px] py-[10px] text-[12.5px] font-medium border", active ? "bg-black text-white border-black" : "bg-white text-ink border-black/10", className)}
+      className={clsx("press flex-none rounded-pill px-[13px] py-[6px] text-[12.5px] font-medium border", active ? "bg-black text-white border-black" : "bg-white text-ink border-black/12", className)}
       {...rest}
     >
       {children}
@@ -103,7 +103,7 @@ export function SectionHead({ title, sub, action, href }: { title: ReactNode; su
   return (
     <div className="mb-4 flex items-baseline justify-between gap-4">
       <div>
-        <h3 className="text-[19px] md:text-[21px] font-semibold leading-tight tracking-[-.025em]">{title}</h3>
+        <h3 className="text-[19px] md:text-[22px] leading-tight">{title}</h3>
         {sub && <div className="mt-1 text-[12.5px] text-black/48">{sub}</div>}
       </div>
       {action && <a href={href ?? "#"} className="text-[12.5px] font-semibold text-navy whitespace-nowrap">{action} →</a>}

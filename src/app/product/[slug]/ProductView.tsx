@@ -29,6 +29,7 @@ export default function ProductView({ slug }: { slug: string }) {
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-black/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
   const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
+  while (gallery.length > 0 && gallery.length < 4) gallery.push(gallery[gallery.length % (p.images?.length ? gallery.length : 1)]);
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
   const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;

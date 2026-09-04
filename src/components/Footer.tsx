@@ -14,7 +14,7 @@ export default function Footer() {
     <footer className="mt-16 border-t border-black/6 bg-white">
       <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-10">
         <div>
-          <div className="mb-3 text-[22px] font-extrabold tracking-[-.035em]">Kindred.</div>
+          <div className="mb-3 text-[30px] italic leading-none" style={{ fontFamily: "var(--font-display)" }}>Kindred.</div>
           <p className="max-w-[300px] text-[13px] leading-[1.6] text-black/55">Find your next favorite clothing brand. Independent labels, their own words, one bag, one checkout.</p>
         </div>
         {cols.map(([title, links]) => (

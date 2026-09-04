@@ -66,7 +66,7 @@ export default function Sell() {
       </div>
       <div className="relative mx-auto max-w-[960px] px-4 py-6 pb-16 md:py-12">
         <div className="mb-5 flex items-center justify-between">
-          <Link href="/" className="text-[19px] font-extrabold tracking-[-.035em]">Kindred</Link>
+          <Link href="/" className="text-[26px] italic leading-none" style={{ fontFamily: "var(--font-display)" }}>Kindred</Link>
           <div className="mono text-[11px] text-black/45">Brand account · {completeness}% complete</div>
         </div>
         {step === -1 ? (

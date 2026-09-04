@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import TopNav from "@/components/TopNav";
@@ -14,6 +14,7 @@ const geist = Geist({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
+const instrument = Instrument_Serif({ variable: "--font-instrument", subsets: ["latin"], weight: "400", style: ["normal", "italic"] });
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${jetbrains.variable} h-full antialiased`}>
+    <html lang="en" className={`${geist.variable} ${jetbrains.variable} ${instrument.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AppProvider>
           <TopNav />
