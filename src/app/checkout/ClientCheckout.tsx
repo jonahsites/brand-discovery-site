@@ -56,7 +56,7 @@ export default function Checkout() {
               <input value={card.exp} onChange={(e) => setCard((c) => ({ ...c, exp: e.target.value }))} placeholder="MM / YY" className={clsx(inputCls, "!bg-cream")} />
               <input value={card.cvc} onChange={(e) => setCard((c) => ({ ...c, cvc: e.target.value }))} placeholder="CVC" className={clsx(inputCls, "!bg-cream")} />
             </div>
-            <div className="mt-[18px] flex items-center gap-[11px] text-[12.5px] text-ink/55"><span className="grid h-5 w-5 place-items-center rounded-[7px] bg-ink text-[11px] font-semibold text-paper">✓</span>Save this card for one-tap checkout across all brands</div>
+            <label className="mt-[18px] flex cursor-pointer items-center gap-[11px] text-[12.5px] text-ink/70 select-none"><input type="checkbox" defaultChecked className="peer sr-only" /><span className="grid h-5 w-5 flex-none place-items-center rounded-[7px] bg-cream text-[11px] font-semibold text-transparent peer-checked:bg-ink peer-checked:text-paper transition-colors">✓</span><span>Save this card for one-tap checkout across all brands</span></label>
             <div className="mt-3 text-[11.5px] text-ink/40">Demo checkout. No card is charged; Stripe Connect lands with the backend.</div>
           </div>
         </div>

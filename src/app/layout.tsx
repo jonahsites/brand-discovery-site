@@ -9,6 +9,7 @@ import BagDrawer from "@/components/BagDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
 import Toaster from "@/components/Toaster";
+import BackToTop from "@/components/BackToTop";
 import Personalize from "@/components/Personalize";
 import Analytics from "@/components/Analytics";
 import { Suspense } from "react";
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <BagDrawer />
           <SearchOverlay />
           <Toaster />
+          <BackToTop />
         </AppProvider>
       </body>
     </html>

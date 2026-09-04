@@ -24,7 +24,7 @@ export default function TopNav() {
         </nav>
         <button onClick={() => openSearch()} className="hidden md:flex flex-1 max-w-[380px] items-center justify-between rounded-pill bg-white px-4 py-[9px] text-left soft">
           <span className="text-[12px] font-medium text-ink/40">Search brands, pieces, cities</span>
-          <span className="text-[12px] text-ink/40">⌕</span>
+          <span className="hidden md:inline rounded-sm bg-cream px-[6px] py-[2px] text-[10px] font-semibold text-ink/45 tracking-[.06em]">⌘K</span>
         </button>
         <div className="ml-auto flex items-center gap-2 md:gap-3">
           <button onClick={() => openSearch()} aria-label="Search" className="press grid h-9 w-9 md:hidden place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">⌕</button>
