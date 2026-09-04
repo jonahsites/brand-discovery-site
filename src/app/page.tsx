@@ -93,7 +93,7 @@ function HomeInner() {
 
           {feed === "For you" && (
             <>
-              <div className="relative mb-6 flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-[34px] overflow-hidden rounded-lg bg-sky p-6 md:p-[38px]">
+              <div className="relative mb-6 flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-[34px] overflow-hidden rounded-lg bg-sky p-6 md:p-8">
                 <div className="flex-1">
                   <div className="label mb-[14px] !text-black/48">Brand of the week</div>
                   <h2 className="mb-3 text-[34px] md:text-[46px] leading-[1.02]">{arva.slug === "studio-arva" ? <>Minimalism for the <em>messy.</em></> : arva.tagline}</h2>
@@ -115,8 +115,8 @@ function HomeInner() {
                 </Link>
               )}
 
-              <div className="card mb-6 rounded-lg p-4 md:p-6">
-                <div className="mb-[18px] flex items-center gap-3">
+              <div className="card mb-6 rounded-lg p-4 md:p-5">
+                <div className="mb-4 flex items-center gap-3">
                   <Avatar init={onda.init} tint={onda.tint} ink={onda.ink} size={44} />
                   <div className="flex-1"><div className="flex items-center gap-[6px]"><Link href={`/brand/${onda.slug}`} className="text-[14.5px] font-semibold">{onda.name}</Link>{onda.verified && <Verified />}</div><div className="text-[12px] text-black/45">{onda.city}, {onda.country} · 4h ago</div></div>
                   <FollowButton slug={onda.slug} />

@@ -10,10 +10,10 @@ export default function MobileTabBar() {
   if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell")) return null;
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   return (
-    <div className="glass fixed inset-x-5 bottom-[22px] z-40 flex h-[66px] items-center justify-between rounded-pill px-[14px] md:hidden">
+    <div className="glass fixed inset-x-5 bottom-[18px] z-40 flex h-[58px] items-center justify-between rounded-pill px-3 md:hidden">
       <Tab href="/" icon="⌂" label="Home" on={active("/")} />
       <Tab href="/explore" icon="⌕" label="Explore" on={active("/explore")} />
-      <button onClick={() => openSearch()} aria-label="Search" className="press grid h-[52px] w-[52px] -translate-y-2 place-items-center rounded-pill bg-black text-[24px] font-light text-white">+</button>
+      <button onClick={() => openSearch()} aria-label="Search" className="press grid h-[46px] w-[46px] -translate-y-[6px] place-items-center rounded-pill bg-black text-[22px] font-light text-white">+</button>
       <button onClick={() => openBag()} aria-label="Bag" className="grid h-[42px] w-[42px] place-items-center rounded-pill text-[16px] text-black/55">⌂</button>
       <Tab href="/account" icon="☺" label="You" on={active("/account")} />
     </div>

@@ -35,7 +35,7 @@ function BrandsInner() {
   return (
     <>
       <div className="glass-bar sticky top-[56px] md:top-[64px] z-30">
-        <div className="mx-auto flex h-[60px] md:h-[72px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
+        <div className="mx-auto flex h-[52px] md:h-[58px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
           <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto">{["All", ...STYLE_OPTIONS].map((c) => <Chip key={c} active={style === c} onClick={() => setStyle(c)}>{c}</Chip>)}</div>
         </div>
       </div>
