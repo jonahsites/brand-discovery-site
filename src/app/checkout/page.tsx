@@ -6,7 +6,7 @@ import { SHIP_OPTS, money } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { Avatar, Button, Label, Placeholder, Page } from "@/components/ui";
 
-const Field = ({ v, span }: { v: string; span?: boolean }) => <div className={clsx("rounded-[16px] bg-offwhite px-[18px] py-[15px] text-[13.5px]", span && "sm:col-span-2")}>{v}</div>;
+const Field = ({ v, span }: { v: string; span?: boolean }) => <div className={clsx("rounded-[9px] bg-offwhite px-[18px] py-[15px] text-[13.5px]", span && "sm:col-span-2")}>{v}</div>;
 const Step = ({ n, t }: { n: number; t: string }) => <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-pill bg-black text-[12px] font-semibold text-white">{n}</span><span className="text-[18px] font-semibold tracking-[-.02em]">{t}</span></div>;
 
 export default function Checkout() {
@@ -57,7 +57,7 @@ export default function Checkout() {
           <div className="card rounded-lg p-5 md:p-[30px]">
             <div className="mb-[22px]"><Step n={3} t="Payment" /></div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center justify-between rounded-[16px] bg-offwhite px-[18px] py-[15px] text-[13.5px] sm:col-span-2">•••• •••• •••• 4242<span className="mono text-[11px] text-black/40">VISA</span></div>
+              <div className="flex items-center justify-between rounded-[9px] bg-offwhite px-[18px] py-[15px] text-[13.5px] sm:col-span-2">•••• •••• •••• 4242<span className="mono text-[11px] text-black/40">VISA</span></div>
               <Field v="09 / 29" /><Field v="CVC" />
             </div>
             <div className="mt-[18px] flex items-center gap-[11px] text-[12.5px] text-black/55"><span className="grid h-5 w-5 place-items-center rounded-[6px] bg-black text-[11px] font-semibold text-white">✓</span>Save this card for one-tap checkout across all brands</div>
@@ -68,7 +68,7 @@ export default function Checkout() {
           <div className="mb-[22px] flex flex-col gap-3">
             {bagGroups.flatMap((g) => g.items).map((it) => (
               <div key={it.key} className="flex items-center gap-3">
-                <Placeholder className="h-14 w-12 flex-none rounded-[14px]" />
+                <Placeholder className="h-14 w-12 flex-none rounded-[8px]" />
                 <div className="min-w-0 flex-1"><div className="text-[12.5px] font-medium leading-[1.3]">{it.p.name}</div><div className="mono text-[10.5px] text-black/42">{it.variant} · ×{it.qty}</div></div>
                 <div className="text-[12.5px] font-medium">{money(it.total, true)}</div>
               </div>

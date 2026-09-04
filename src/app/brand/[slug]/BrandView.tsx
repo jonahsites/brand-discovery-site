@@ -24,7 +24,7 @@ export default function BrandView({ b, initialTab }: { b: Brand; initialTab: str
       </Placeholder>
 
       <div className="relative -mt-[38px] md:-mt-[52px] flex flex-col md:flex-row md:items-end gap-4 md:gap-6 md:px-2">
-        <div className="grid h-[78px] w-[78px] md:h-[132px] md:w-[132px] flex-none place-items-center rounded-[24px] md:rounded-[36px] border-4 md:border-[5px] border-offwhite text-[21px] md:text-[34px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.init}</div>
+        <div className="grid h-[78px] w-[78px] md:h-[132px] md:w-[132px] flex-none place-items-center rounded-[13px] md:rounded-[20px] border-4 md:border-[5px] border-offwhite text-[21px] md:text-[34px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.init}</div>
         <div className="flex-1 md:pb-2">
           <div className="mb-[7px] flex items-center gap-[9px]"><h1 className="text-[24px] md:text-[34px] font-bold leading-none tracking-[-.038em]">{b.name}</h1>{b.verified && <Verified size={20} />}</div>
           <div className="text-[13px] md:text-[14px] text-black/58">{b.city}, {b.country} · {b.tagline}</div>
@@ -93,7 +93,7 @@ export default function BrandView({ b, initialTab }: { b: Brand; initialTab: str
           </div>
           <div className="flex flex-col gap-[18px]">
             <div className="card rounded-lg p-[14px]">
-              <Placeholder label="Founder photo" className="h-[280px] rounded-[22px]" />
+              <Placeholder label="Founder photo" className="h-[280px] rounded-[12px]" />
               <div className="px-[10px] pt-4 pb-[6px] text-[13px] leading-[1.5] text-black/55">Wies Doorn and Tomas Reijn in the workroom, 2025.</div>
             </div>
             <div className="card rounded-lg p-7">

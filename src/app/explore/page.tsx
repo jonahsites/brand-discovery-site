@@ -21,7 +21,7 @@ export default function Explore() {
   const toggle = <T,>(arr: T[], v: T, set: (a: T[]) => void) => set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   return (
     <>
-      <div className="glass-bar sticky top-[64px] md:top-[76px] z-30 !shadow-none">
+      <div className="glass-bar sticky top-[64px] md:top-[76px] z-30">
         <div className="mx-auto flex h-[60px] md:h-[72px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
           <button onClick={() => setOpen(true)} className="press flex flex-none items-center gap-2 rounded-pill border border-black/12 bg-white px-4 md:px-5 py-[10px] text-[12.5px] font-semibold">≡ <span className="hidden sm:inline">Filters</span><span className="rounded-pill bg-sky px-[7px] py-[2px] text-[10px] font-semibold">{count}</span></button>
           <div className="h-[26px] w-px bg-black/10" />
@@ -56,8 +56,8 @@ export default function Explore() {
             <div className="mb-[10px] flex justify-between text-[13px] font-medium"><span>$40</span><span>$620</span></div>
             <div className="relative mb-[26px] h-[5px] rounded-pill bg-black/10">
               <div className="absolute inset-y-0 left-[12%] right-[34%] rounded-pill bg-black" />
-              <div className="absolute left-[12%] top-[-7px] h-[19px] w-[19px] -ml-[9px] rounded-pill bg-white shadow-[0_2px_8px_rgba(0,0,0,.2)]" />
-              <div className="absolute right-[34%] top-[-7px] h-[19px] w-[19px] -mr-[9px] rounded-pill bg-white shadow-[0_2px_8px_rgba(0,0,0,.2)]" />
+              <div className="absolute left-[12%] top-[-7px] h-[19px] w-[19px] -ml-[9px] rounded-pill bg-white" />
+              <div className="absolute right-[34%] top-[-7px] h-[19px] w-[19px] -mr-[9px] rounded-pill bg-white" />
             </div>
             <Label className="mb-3">Size</Label>
             <div className="mb-[26px] flex flex-wrap gap-[7px]">
@@ -70,7 +70,7 @@ export default function Explore() {
             <Label className="mb-3">Brand size</Label>
             <div className="mb-[26px] flex flex-col gap-2">
               {BRAND_SIZES.map((b, i) => (
-                <button key={b} onClick={() => toggle(bsz, i, setBsz)} className={clsx("flex items-center justify-between rounded-[16px] px-4 py-3 text-left text-[13px] font-medium", bsz.includes(i) ? "bg-white/75" : "bg-white/50 text-black/60")}>
+                <button key={b} onClick={() => toggle(bsz, i, setBsz)} className={clsx("flex items-center justify-between rounded-[9px] px-4 py-3 text-left text-[13px] font-medium", bsz.includes(i) ? "bg-white/75" : "bg-white/50 text-black/60")}>
                   {b}<span className={clsx("grid h-5 w-5 place-items-center rounded-[6px] text-[11px] font-semibold", bsz.includes(i) ? "bg-black text-white" : "border border-black/18")}>{bsz.includes(i) ? "✓" : ""}</span>
                 </button>
               ))}
@@ -80,8 +80,8 @@ export default function Explore() {
               {MATERIALS.map((m) => <button key={m} onClick={() => toggle(mats, m, setMats)} className={clsx("press rounded-pill px-[15px] py-[9px] text-[12px] font-medium", mats.includes(m) ? "bg-navy text-offwhite" : "bg-white/75 border border-black/8")}>{m}</button>)}
             </div>
             <Label className="mb-3">Ships from</Label>
-            <div className="mb-3 rounded-[16px] bg-white/75 px-4 py-[13px] text-[13px] font-medium">Portugal, Japan, UK ▾</div>
-            <button onClick={() => setSale(!sale)} className="mb-[26px] flex w-full items-center justify-between rounded-[16px] bg-white/50 px-4 py-[14px] text-[13px] font-medium">On sale only
+            <div className="mb-3 rounded-[9px] bg-white/75 px-4 py-[13px] text-[13px] font-medium">Portugal, Japan, UK ▾</div>
+            <button onClick={() => setSale(!sale)} className="mb-[26px] flex w-full items-center justify-between rounded-[9px] bg-white/50 px-4 py-[14px] text-[13px] font-medium">On sale only
               <span className={clsx("relative h-[26px] w-11 rounded-pill transition-colors", sale ? "bg-black" : "bg-black/14")}><span className={clsx("absolute top-[3px] h-5 w-5 rounded-pill bg-white transition-all", sale ? "left-[21px]" : "left-[3px]")} /></span>
             </button>
             <div className="flex gap-[10px]">

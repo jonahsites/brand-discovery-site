@@ -38,7 +38,7 @@ export function BrandTile({ b }: { b: Brand }) {
 
 export function BrandRow({ b, action = true, className }: { b: Brand; action?: boolean; className?: string }) {
   return (
-    <Link href={`/brand/${b.slug}`} className={clsx("flex items-center gap-[13px] rounded-[22px] bg-white/75 p-4", className)}>
+    <Link href={`/brand/${b.slug}`} className={clsx("flex items-center gap-[13px] rounded-[12px] bg-white/75 p-4", className)}>
       <Avatar init={b.init} tint={b.tint} ink={b.ink} size={44} />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-semibold">{b.name}</div>

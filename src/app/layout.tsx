@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Schibsted_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import TopNav from "@/components/TopNav";
@@ -7,8 +7,8 @@ import MobileTabBar from "@/components/MobileTabBar";
 import BagDrawer from "@/components/BagDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 
-const schibsted = Schibsted_Grotesk({
-  variable: "--font-schibsted",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${jetbrains.variable} h-full antialiased`}>
+    <html lang="en" className={`${geist.variable} ${jetbrains.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AppProvider>
           <TopNav />

@@ -31,10 +31,10 @@ export default function LookbookView({ l }: { l: (typeof LOOKBOOKS)[number] }) {
           return (
             <div key={lk.n} className={clsx("relative overflow-hidden rounded-2xl md:rounded-lg", !isColor && "stripes-wide")} style={{ height: lk.h * (i % 2 ? 0.8 : 0.85), background: isColor ? lk.bg : undefined }}>
               <div className={clsx("mono absolute inset-0 grid place-items-center text-[10px] font-medium uppercase tracking-[.12em]", dark ? "text-offwhite/50" : "text-black/32")}>{lk.ph}</div>
-              <button onClick={() => setSpot(spot === i ? -1 : i)} className="glass-chip absolute grid h-[34px] w-[34px] place-items-center rounded-pill text-[12.5px] font-semibold shadow-[0_6px_20px_rgba(0,0,0,.16)]" style={{ left: `${lk.x}%`, top: `${lk.y}%` }}>{lk.n}</button>
+              <button onClick={() => setSpot(spot === i ? -1 : i)} className="glass-chip absolute grid h-[34px] w-[34px] place-items-center rounded-pill text-[12.5px] font-semibold" style={{ left: `${lk.x}%`, top: `${lk.y}%` }}>{lk.n}</button>
               {spot === i && (
-                <div className="glass absolute inset-x-4 bottom-4 md:inset-x-5 md:bottom-5 flex items-center gap-[14px] rounded-xl p-[14px] !shadow-[0_16px_44px_rgba(0,0,0,.18)]">
-                  <Placeholder className="h-[66px] w-[58px] flex-none rounded-[16px]" />
+                <div className="glass absolute inset-x-4 bottom-4 md:inset-x-5 md:bottom-5 flex items-center gap-[14px] rounded-xl p-[14px]">
+                  <Placeholder className="h-[66px] w-[58px] flex-none rounded-[9px]" />
                   <div className="min-w-0 flex-1">
                     <div className="label mb-1 !text-[9.5px]">{b.name}</div>
                     <Link href={`/product/${p.slug}`} className="mb-1 block text-[13.5px] font-medium leading-[1.25]">{p.name}</Link>

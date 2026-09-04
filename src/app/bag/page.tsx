@@ -24,7 +24,7 @@ export default function BagPage() {
               </div>
               {g.items.map((it) => (
                 <div key={it.key} className="flex flex-wrap items-center gap-3 md:gap-4 py-4">
-                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-[16px] md:rounded-[18px]" />
+                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-[9px] md:rounded-[10px]" />
                   <div className="min-w-0 flex-1">
                     <Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link>
                     <div className="text-[12.5px] text-black/50">{it.variant}</div>

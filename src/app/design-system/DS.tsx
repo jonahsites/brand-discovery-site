@@ -20,19 +20,19 @@ export default function DS() {
         <div><div className="text-[17px] font-medium">$248.00</div><div className="mono mt-[6px] text-[10.5px] text-black/45">Price / 17 / 500</div></div>
       </div></Card>
       <Card title="Radii & spacing" wide>
-        <div className="mb-[26px] flex flex-wrap items-end gap-[14px]">{[[76, 12, "12 sm"], [96, 20, "20 md"], [124, 32, "32 lg"]].map(([s, r, l]) => <div key={l} className="text-center"><div className="border border-black/8 bg-offwhite" style={{ width: s, height: s, borderRadius: r }} /><div className="mono mt-2 text-[10.5px] text-black/50">{l}</div></div>)}<div className="text-center"><div className="h-11 w-[124px] rounded-pill border border-black/8 bg-offwhite" /><div className="mono mt-2 text-[10.5px] text-black/50">full pill</div></div></div>
+        <div className="mb-[26px] flex flex-wrap items-end gap-[14px]">{[[76, 8, "8 sm"], [96, 12, "12 md"], [124, 18, "18 lg"]].map(([s, r, l]) => <div key={l} className="text-center"><div className="border border-black/8 bg-offwhite" style={{ width: s, height: s, borderRadius: r }} /><div className="mono mt-2 text-[10.5px] text-black/50">{l}</div></div>)}<div className="text-center"><div className="h-11 w-[124px] rounded-pill border border-black/8 bg-offwhite" /><div className="mono mt-2 text-[10.5px] text-black/50">full pill</div></div></div>
         <div className="flex items-end gap-[10px]">{[4, 8, 12, 16, 24, 32, 48].map((v) => <div key={v} className="text-center"><div className="w-[34px] rounded-t-[6px] bg-navy" style={{ height: v * 2.2 }} /><div className="mono mt-[7px] text-[10px] text-black/50">{v}</div></div>)}<div className="ml-[14px] max-w-[230px] text-[12.5px] leading-[1.5] text-black/50">4px base step. Card padding 24–32. Section gap 40–56. Grid gutter 20–24.</div></div>
       </Card>
       <Card title="Buttons & icon circles">
         <div className="mb-5 flex flex-wrap items-center gap-3"><Button>Add to bag</Button><Button variant="secondary">Follow</Button><Button variant="navy">Checkout</Button><button disabled className="cursor-not-allowed rounded-pill bg-black/8 px-[26px] py-[13px] text-[13.5px] font-semibold text-black/32">Sold out</button></div>
-        <div className="mb-[22px] flex items-center gap-3"><IconCircle size={44}>♡</IconCircle><IconCircle size={44} variant="sky">↗</IconCircle><IconCircle size={44} variant="black">↗</IconCircle><IconCircle size={44} variant="glass" className="shadow-[0_6px_20px_rgba(0,0,0,.09)]">↗</IconCircle><span className="mono text-[11px] leading-[1.4] text-black/45">white · sky<br />black · glass</span></div>
+        <div className="mb-[22px] flex items-center gap-3"><IconCircle size={44}>♡</IconCircle><IconCircle size={44} variant="sky">↗</IconCircle><IconCircle size={44} variant="black">↗</IconCircle><IconCircle size={44} variant="glass" className="">↗</IconCircle><span className="mono text-[11px] leading-[1.4] text-black/45">white · sky<br />black · glass</span></div>
         <div className="mono mb-3 text-[10px] font-medium uppercase tracking-[.14em] text-black/42">Chip row</div>
         <div className="flex flex-wrap gap-2"><Chip active>All</Chip><Chip>Outerwear</Chip><Chip>Knitwear</Chip><Chip>Sustainable</Chip></div>
       </Card>
       <Card title="Liquid glass spec" wide dark>
         <div className="flex flex-col md:flex-row gap-5 items-start">
           <div className="glass w-full md:w-[300px] flex-none rounded-xl p-5 text-ink"><div className="-mt-2 mb-[14px] h-[3px] rounded-pill" style={{ background: "linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95),rgba(255,255,255,0))" }} /><div className="mb-[6px] text-[14px] font-semibold">Floating surface</div><div className="text-[12px] leading-[1.5] text-black/60">Nav, tab bar, drawers, sticky bars, toasts, popovers.</div></div>
-          <div className="mono text-[12px] leading-[1.9] text-offwhite/80">fill · rgba(255,255,255,.62)<br />blur · 20–30px<br />border · 1px rgba(255,255,255,.82)<br />shadow · 0 14px 40px rgba(0,0,0,.12)<br />specular · 3px top highlight<br />press · scale(.985)</div>
+          <div className="mono text-[12px] leading-[1.9] text-offwhite/80">fill · rgba(255,255,255,.62)<br />blur · 20–30px<br />border · 1px rgba(0,0,0,.07)<br />shadow · none, hairline only<br />specular · 1px top highlight<br />press · scale(.985)</div>
         </div>
       </Card>
       <Card title="Controls">

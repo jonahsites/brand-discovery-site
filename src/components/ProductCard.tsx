@@ -12,7 +12,7 @@ export default function ProductCard({ p, showBrand = true, compact, hoverAdd, ta
   return (
     <div className={clsx("card group relative lift", compact ? "rounded-xl p-[10px]" : "rounded-2xl p-3 md:p-[14px]")}>
       <Link href={`/product/${p.slug}`} className="block">
-        <Placeholder label="Product shot" className={clsx(compact ? "h-[170px] rounded-[18px]" : tall ? "h-[220px] md:h-[280px] rounded-md" : "h-[200px] md:h-[210px] rounded-[16px]")}>
+        <Placeholder label="Product shot" className={clsx(compact ? "h-[170px] rounded-[10px]" : tall ? "h-[220px] md:h-[280px] rounded-md" : "h-[200px] md:h-[210px] rounded-[9px]")}>
           {p.tag && <div className="absolute left-3 top-3"><Tag bg={p.tagBg} fg={p.tagFg}>{p.tag}</Tag></div>}
         </Placeholder>
       </Link>

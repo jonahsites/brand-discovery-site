@@ -21,7 +21,7 @@ export default function Home() {
           <div className="label mb-3 mt-[6px]">Discover</div>
           <div className="mb-[26px] flex flex-col gap-[2px]">
             {["For you", "Following", "New drops", "Trending brands"].map((l, i) => (
-              <button key={l} onClick={() => setFeed(i < 2 ? l : i === 2 ? "Drops" : "For you")} className={clsx("rounded-sm px-[14px] py-[10px] text-left text-[13.5px]", (feed === l || (l === "New drops" && feed === "Drops")) ? "bg-white font-semibold shadow-[0_2px_8px_rgba(0,0,0,.04)]" : "font-medium text-black/62")}>{l}</button>
+              <button key={l} onClick={() => setFeed(i < 2 ? l : i === 2 ? "Drops" : "For you")} className={clsx("rounded-sm px-[14px] py-[10px] text-left text-[13.5px]", (feed === l || (l === "New drops" && feed === "Drops")) ? "bg-white font-semibold" : "font-medium text-black/62")}>{l}</button>
             ))}
           </div>
           <div className="label mb-3">Categories</div>
@@ -39,7 +39,7 @@ export default function Home() {
 
         <div className="min-w-0 flex-1">
           <div className="mb-5 flex items-center justify-between">
-            <div className="glass flex gap-1 rounded-pill p-1 !shadow-[0_6px_20px_rgba(0,0,0,.06)]">
+            <div className="glass flex gap-1 rounded-pill p-1">
               {FEEDS.map((f) => (
                 <button key={f} onClick={() => setFeed(f)} className={clsx("press rounded-pill px-4 md:px-[22px] py-[9px] md:py-[10px] text-[12.5px] md:text-[13px] font-semibold", feed === f ? "bg-black text-white" : "text-black/55")}>{f}</button>
               ))}
@@ -76,8 +76,8 @@ export default function Home() {
                   <Link href={`/brand/${arva.slug}?tab=About`}><Button variant="ghost">Read the story</Button></Link>
                 </div>
               </div>
-              <div className="relative h-[240px] w-full md:h-[300px] md:w-[320px] flex-none rounded-xl bg-white shadow-[0_18px_44px_rgba(0,0,0,.1)]">
-                <Placeholder label="Hero product shot" className="absolute inset-[22px] rounded-[16px]" />
+              <div className="relative h-[240px] w-full md:h-[300px] md:w-[320px] flex-none rounded-xl bg-white">
+                <Placeholder label="Hero product shot" className="absolute inset-[22px] rounded-[9px]" />
                 <Link href="/product/heavyweight-crew" className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-pill bg-black text-[16px] text-white">↗</Link>
               </div>
             </div>
@@ -95,7 +95,7 @@ export default function Home() {
               </div>
               <div className="mb-4 grid grid-cols-[2fr_1fr] gap-[10px]">
                 <Placeholder label="Lookbook frame 01" className="h-[240px] md:h-[340px] rounded-md">
-                  <Link href="/product/sail-overshirt" className="glass-chip absolute bottom-4 left-4 flex items-center gap-[9px] rounded-pill py-2 pl-3 pr-2 shadow-[0_8px_24px_rgba(0,0,0,.1)]">
+                  <Link href="/product/sail-overshirt" className="glass-chip absolute bottom-4 left-4 flex items-center gap-[9px] rounded-pill py-2 pl-3 pr-2">
                     <span className="text-[12px] font-medium">Sail Overshirt</span><span className="rounded-pill bg-black px-[10px] py-1 text-[12px] font-medium text-white">$186</span>
                   </Link>
                 </Placeholder>

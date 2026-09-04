@@ -30,7 +30,7 @@ export default function Dashboard() {
       <div className="min-w-0 flex-1 bg-offwhite md:bg-offwhite">
         <div className="glass-navy md:hidden sticky top-0 z-30 px-[18px] pb-3 pt-4 !border-0">
           <div className="flex items-center gap-[10px]">
-            <div className="grid h-[30px] w-[30px] place-items-center rounded-[10px] bg-peri text-[10.5px] font-extrabold">FV</div>
+            <div className="grid h-[30px] w-[30px] place-items-center rounded-[6px] bg-peri text-[10.5px] font-extrabold">FV</div>
             <div className="flex-1 text-[13.5px] font-semibold text-offwhite">Form &amp; Void</div>
             <Link href="/" className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-offwhite/14 text-[14px] text-offwhite">◔</Link>
           </div>
@@ -65,7 +65,7 @@ export default function Dashboard() {
             <div className="card rounded-lg p-6">
               <Label className="mb-4">New post</Label>
               <textarea placeholder="Say something about this drop…" className="mb-3 min-h-[84px] w-full resize-none rounded-md bg-offwhite p-4 text-[13.5px] leading-[1.6] outline-none placeholder:text-black/42" />
-              <div className="mb-4 flex gap-[9px]"><Placeholder className="h-[74px] flex-1 rounded-[16px]" /><Placeholder className="h-[74px] flex-1 rounded-[16px]" /><div className="grid h-[74px] w-[74px] flex-none place-items-center rounded-[16px] border-[1.5px] border-dashed border-black/16 bg-offwhite text-[22px] font-light text-black/35">+</div></div>
+              <div className="mb-4 flex gap-[9px]"><Placeholder className="h-[74px] flex-1 rounded-[9px]" /><Placeholder className="h-[74px] flex-1 rounded-[9px]" /><div className="grid h-[74px] w-[74px] flex-none place-items-center rounded-[9px] border-[1.5px] border-dashed border-black/16 bg-offwhite text-[22px] font-light text-black/35">+</div></div>
               <div className="mb-[18px] flex flex-wrap gap-2"><span className="rounded-pill bg-offwhite px-[14px] py-2 text-[11.5px] font-medium">◇ Tag products · 2</span><span className="rounded-pill bg-offwhite px-[14px] py-2 text-[11.5px] font-medium">⌂ Add to lookbook</span></div>
               <div className="flex gap-[9px]"><Button className="flex-1">Publish</Button><Button variant="secondary">Schedule</Button></div>
             </div>

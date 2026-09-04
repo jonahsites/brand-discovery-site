@@ -29,7 +29,7 @@ export default function ProductView({ p }: { p: Product }) {
             {p.tag === "Last 3" || p.slug === "panel-work-jacket" ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#456F94" fg="#fff">Final 6 pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
-            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-[16px] md:rounded-md border-2", thumb === i ? "border-ink" : "border-transparent")}><Placeholder label={t} className="h-[74px] md:h-[130px] rounded-[14px] md:rounded-[18px]" /></button>)}
+            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-[9px] md:rounded-md border-2", thumb === i ? "border-ink" : "border-transparent")}><Placeholder label={t} className="h-[74px] md:h-[130px] rounded-[8px] md:rounded-[10px]" /></button>)}
           </div>
         </div>
         <div className="md:pt-[6px]">
@@ -83,7 +83,7 @@ export default function ProductView({ p }: { p: Product }) {
                 <span className="rounded-pill bg-offwhite px-[13px] py-[6px] text-[11.5px] font-semibold">{r.stars}</span>
               </div>
               <p className="mb-[14px] text-[13.5px] leading-[1.6] text-black/70">{r.body}</p>
-              <div className="flex gap-[9px]"><Placeholder className="h-[72px] w-[72px] rounded-[14px]" /><Placeholder className="h-[72px] w-[72px] rounded-[14px]" /><div className="mono grid h-[72px] w-[72px] place-items-center rounded-[14px] bg-offwhite text-[10px] text-black/40">+3</div></div>
+              <div className="flex gap-[9px]"><Placeholder className="h-[72px] w-[72px] rounded-[8px]" /><Placeholder className="h-[72px] w-[72px] rounded-[8px]" /><div className="mono grid h-[72px] w-[72px] place-items-center rounded-[8px] bg-offwhite text-[10px] text-black/40">+3</div></div>
             </div>
           ))}
         </div>
