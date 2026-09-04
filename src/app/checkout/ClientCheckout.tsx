@@ -30,7 +30,20 @@ export default function Checkout() {
       </div>
     </Page>
   );
-  if (bagGroups.length === 0) return <Page narrow className="pt-16 text-center"><h1 className="mb-2 text-[36px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Your bag is empty.</h1><Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></Page>;
+  if (bagGroups.length === 0) return (
+    <Page narrow className="pt-14 md:pt-20">
+      <div className="mx-auto max-w-[460px] card rounded-lg p-10 md:p-14 text-center">
+        <div className="mb-4 mx-auto grid h-16 w-16 place-items-center rounded-pill" style={{background:"var(--clay)"}}><span className="text-[24px]">⛭</span></div>
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Nothing to pay for</div>
+        <h1 className="mb-2 text-[30px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Your bag is empty.</h1>
+        <p className="mb-6 text-[13.5px] text-ink/60">Head back to Discover or filter Explore.</p>
+        <div className="flex justify-center gap-2">
+          <Link href="/"><span className="press inline-flex rounded-sm bg-ink px-5 py-[11px] text-[12px] font-semibold text-paper">Discover</span></Link>
+          <Link href="/explore"><span className="press inline-flex rounded-sm bg-white soft px-5 py-[11px] text-[12px] font-semibold text-ink">Explore brands</span></Link>
+        </div>
+      </div>
+    </Page>
+  );
   return (
     <Page className="pt-6 md:pt-[34px]">
       <div className="mono mb-4 hidden md:block text-[12px] text-ink/45">Secure checkout · {bagGroups.length} brands</div>
