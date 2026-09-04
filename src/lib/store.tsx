@@ -141,8 +141,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         onboarded: prof.data?.onboarded ?? p.onboarded,
         styleTags: tags.data?.length ? tags.data.map((r: { tag: string }) => r.tag) : p.styleTags,
         sizes: sz.data ? { tops: sz.data.tops ?? p.sizes.tops, waist: sz.data.waist ?? p.sizes.waist, shoe: sz.data.shoe ?? p.sizes.shoe } : p.sizes,
-        follows: fol.data ? fol.data.map((r: { brand_slug: string }) => r.brand_slug) : p.follows,
-        saved: sav.data ? sav.data.map((r: { product_slug: string }) => r.product_slug) : p.saved,
+        follows: fol.data?.length ? fol.data.map((r: { brand_slug: string }) => r.brand_slug) : p.follows,
+        saved: sav.data?.length ? sav.data.map((r: { product_slug: string }) => r.product_slug) : p.saved,
       }));
     };
     const applySession = async () => {
