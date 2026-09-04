@@ -11,13 +11,12 @@ export default function ProductCard({ p, showBrand = true, compact, hoverAdd }: 
   const saved = isSaved(p.slug);
   const { price, compareAt, promo } = priceOf(p);
   const tag = promo ? `${promo.pct}% off` : p.preorder && p.stock !== 0 ? "Pre-order" : p.tag ?? (p.createdAt ? "New in" : undefined);
-  const strong = !!promo || p.tag === "20% off";
   const soldOut = p.stock === 0;
   return (
     <div className={clsx("card group relative rounded-lg lift", compact ? "p-2" : "p-[10px]")}>
       <Link href={`/product/${p.slug}`} className="block">
         <Placeholder src={p.image} alt={p.name} label={soldOut ? "Sold out" : undefined} className={clsx("aspect-square", compact ? "rounded-[14px]" : "rounded-[18px]", soldOut && "opacity-60")}>
-          {tag && <span className={clsx("absolute left-[10px] top-[10px] rounded-pill px-[10px] py-[5px] text-[9px] font-semibold uppercase tracking-[.06em]", strong ? "bg-sage text-paper" : "bg-white/92 text-ink")}>{tag}</span>}
+          {tag && <span className={clsx("absolute left-[10px] top-[10px] rounded-pill px-[10px] py-[5px] text-[9px] font-semibold uppercase tracking-[.06em]", promo ? "bg-rust text-paper" : p.preorder ? "bg-indigo text-paper" : "bg-ink text-paper")}>{tag}</span>}
         </Placeholder>
       </Link>
       <button aria-label={saved ? "Unsave" : "Save"} onClick={() => { toggleSaved(p.slug); toast(saved ? "Removed from saved" : "Saved", saved ? undefined : "/account"); }} className={clsx("press absolute grid place-items-center rounded-pill bg-white/92 text-[12px]", compact ? "right-[15px] top-[15px] h-6 w-6" : "right-[19px] top-[19px] h-[27px] w-[27px]", saved ? "text-sage" : "text-ink/50")}>{saved ? "♥" : "♡"}</button>

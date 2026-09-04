@@ -9,7 +9,10 @@
   --sand-3: #cfc8b8;
   --moss: #d6d9ce;
   --ink: #121a24;
-  --sage: #7c8c6f;
+  --sage: #4d6b52;    /* deeper, more saturated moss for the accent */
+  --rust: #b85a3c;    /* warm accent for tags, dots, sale prices */
+  --indigo: #2a3a52;  /* cool contrast used on dark tiles/CTA panels */
+  --clay: #d99d6f;    /* soft warm tone for category tiles that need warmth */
   --card: #ffffff;
   --ink-rgb: 18, 26, 36;
     --sh-card: 0 1px 0 rgba(var(--ink-rgb), 0.08), 0 14px 28px -22px rgba(var(--ink-rgb), 0.55);
@@ -28,6 +31,9 @@
   --color-moss: var(--moss);
   --color-ink: var(--ink);
   --color-sage: var(--sage);
+  --color-rust: var(--rust);
+  --color-indigo: var(--indigo);
+  --color-clay: var(--clay);
   /* legacy names kept so every screen shifts palette at once */
   --color-offwhite: var(--cream);
   --color-sky: var(--sand);
