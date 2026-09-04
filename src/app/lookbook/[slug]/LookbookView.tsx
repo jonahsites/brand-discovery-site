@@ -31,7 +31,7 @@ export default function LookbookView({ slug }: { slug: string }) {
           const dark = f.bg === "#121A24";
           return (
             <div key={i} className={clsx("relative overflow-hidden rounded-lg", !f.bg && !f.image && "stripes-wide")} style={{ height: f.h * (i % 2 ? 0.8 : 0.85), background: f.bg }}>
-              {f.image ? <img src={f.image} alt={f.label ?? `Look ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" /> : <div className={clsx("mono absolute inset-0 grid place-items-center text-[10px] font-medium uppercase tracking-[.12em]", dark ? "text-paper/50" : "text-ink/32")}>{f.label ?? `Look ${String(i + 1).padStart(2, "0")}`}</div>}
+              {f.image ? <img loading="lazy" decoding="async" src={f.image} alt={f.label ?? `Look ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" /> : <div className={clsx("mono absolute inset-0 grid place-items-center text-[10px] font-medium uppercase tracking-[.12em]", dark ? "text-paper/50" : "text-ink/32")}>{f.label ?? `Look ${String(i + 1).padStart(2, "0")}`}</div>}
               {p && <button onClick={() => setSpot(spot === i ? -1 : i)} className="glass-chip absolute grid h-[34px] w-[34px] place-items-center rounded-pill text-[12.5px] font-semibold" style={{ left: `${f.x ?? 50}%`, top: `${f.y ?? 50}%` }}>{l.frames.slice(0, i + 1).filter((x) => x.product).length}</button>}
               {p && spot === i && (
                 <div className="card absolute inset-x-4 bottom-4 md:inset-x-5 md:bottom-5 flex items-center gap-[14px] rounded-md p-[14px]">

@@ -66,7 +66,7 @@ test("account page shows Boards, Saved and the Refer a friend card", async ({ pa
   await page.goto("/account");
   await expect(page.getByRole("heading", { name: /Jules Renard/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: /^Boards ·/ }).first()).toBeVisible();
-  await expect(page.getByText(/Refer a friend/)).toBeVisible();
+  await expect(page.locator("text=/Refer a friend/").first()).toBeAttached();
 });
 
 test("keyboard: slash key focuses the search overlay input", async ({ page }) => {

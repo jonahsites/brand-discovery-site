@@ -34,7 +34,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
       <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-stretch">
         <div className="card order-2 flex flex-col rounded-lg p-6 md:p-8 lg:order-1">
           <div className="mb-5 flex items-center gap-3">
-            <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-[16px] text-[15px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
+            <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-[16px] text-[15px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img loading="lazy" decoding="async" src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
             <div className="min-w-0"><div className="label">{b.city}, {b.country}{b.founded ? ` · since ${b.founded}` : ""}</div><div className="mt-[3px] truncate text-[12px] text-ink/50">{brandTier(followers)} · {b.batch} batch · ships from {b.shipsFrom}</div></div>
             <div className="ml-auto flex flex-none gap-2">
               {isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[11px] font-semibold text-paper">Edit in dashboard</Link>}

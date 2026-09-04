@@ -28,7 +28,7 @@ export default function ClientForgot() {
           <Link href="/login" className="text-[12px] font-semibold text-ink">← Back to log in</Link>
         </>
       ) : (
-        <form onSubmit={submit} className="flex flex-col gap-3">
+        <form onSubmit={submit} noValidate className="flex flex-col gap-3">
           <p className="text-[13px] leading-[1.55] text-ink/60">Enter the email you signed up with. We&apos;ll send a link to set a new one.</p>
           <div><Label className="mb-[6px] !text-[9.5px]">Email address</Label><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={authInput} /></div>
           {err && <div className="text-[12px] text-rust">{err}</div>}

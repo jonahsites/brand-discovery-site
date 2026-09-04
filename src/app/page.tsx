@@ -93,7 +93,7 @@ function HomeInner() {
                 <div className="mt-4 md:mt-6 text-[10px] text-ink/42">{hero.foot}</div>
               </div>
               <div className="absolute right-0 bottom-0 w-[52%] h-[132px] rounded-tl-[24px] md:static md:h-auto md:flex-1 md:rounded-none bg-sand overflow-hidden">
-                {hero.img && <img src={hero.img} alt="" className="h-full w-full object-cover" />}
+                {hero.img && <img loading="lazy" decoding="async" src={hero.img} alt="" className="h-full w-full object-cover" />}
                 <div className="label absolute left-5 bottom-4 hidden md:block !text-ink/40">Campaign · {featBrand.name}</div>
               </div>
             </div>
@@ -106,7 +106,7 @@ function HomeInner() {
                 <div className="mt-5 hidden md:grid grid-cols-3 gap-[18px]" style={{ gridTemplateColumns: "1fr 1fr 1.2fr" }}>
                   {collections.map((c) => (
                     <Link key={c.title} href={c.href} className="relative h-[280px] overflow-hidden rounded-[26px] shadow-[inset_0_0_0_1px_rgba(18,26,36,.06)]" style={{ background: c.tone }}>
-                      {c.img && <img src={c.img} alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />}
+                      {c.img && <img loading="lazy" decoding="async" src={c.img} alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />}
                       <div className="absolute inset-0 bg-gradient-to-b from-paper/85 via-transparent to-transparent" />
                       <div className="absolute left-5 right-5 top-5"><div className="text-[20px] font-bold leading-[1.1] tracking-[-.03em]">{c.title}</div><div className="mt-1 text-[11px] text-ink/55">{c.meta}</div></div>
                       {c.pills && <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">{c.pills.map((p) => <span key={p.label} className="flex items-center gap-2 rounded-pill bg-white/92 py-[7px] pl-[7px] pr-3 shadow-[0_8px_20px_-14px_rgba(18,26,36,.7)]"><span className="h-6 w-6 rounded-pill" style={{ background: p.tone }} /><span><span className="block text-[10px] font-semibold">{p.label}</span><span className="block text-[9px] text-ink/45">{p.meta}</span></span></span>)}</div>}

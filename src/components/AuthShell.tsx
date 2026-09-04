@@ -14,7 +14,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         <a href="mailto:hello@kindred.shop" className="text-ink/70 hover:text-ink">Contact support</a>
       </header>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%]">
-        <img src={ART} alt="" className="h-full w-full object-cover opacity-90" />
+        <img loading="lazy" decoding="async" src={ART} alt="" className="h-full w-full object-cover opacity-90" />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, var(--paper) 0%, color-mix(in srgb, var(--paper) 55%, transparent) 45%, transparent 100%)" }} />
       </div>
       <main className="relative z-10 grid place-items-center px-4 pb-24 pt-6 md:pt-14">

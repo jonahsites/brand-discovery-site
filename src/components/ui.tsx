@@ -8,7 +8,7 @@ export function Avatar({ init, tint, ink, size = 44, radius, className, src }: {
       className={clsx("grid flex-none place-items-center overflow-hidden font-bold", className)}
       style={{ width: size, height: size, borderRadius: radius ?? 999, background: tint, color: ink ?? "#121A24", fontSize: Math.round(size * 0.3), letterSpacing: "-.03em" }}
     >
-      {src ? <img src={src} alt={init} className="h-full w-full object-cover" /> : init}
+      {src ? <img loading="lazy" decoding="async" src={src} alt={init} className="h-full w-full object-cover" /> : init}
     </div>
   );
 }
