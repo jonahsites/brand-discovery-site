@@ -10,7 +10,7 @@ export default function ProductCard({ p, showBrand = true, compact, hoverAdd }: 
   const b = brands.find((x) => x.slug === p.brand);
   const saved = isSaved(p.slug);
   const { price, compareAt, promo } = priceOf(p);
-  const tag = promo ? `${promo.pct}% off` : p.tag ?? (p.createdAt ? "New in" : undefined);
+  const tag = promo ? `${promo.pct}% off` : p.preorder && p.stock !== 0 ? "Pre-order" : p.tag ?? (p.createdAt ? "New in" : undefined);
   const strong = !!promo || p.tag === "20% off";
   const soldOut = p.stock === 0;
   return (

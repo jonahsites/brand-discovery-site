@@ -65,6 +65,8 @@ export type Product = {
   sizes?: string[]; colors?: string[]; materials?: string[]; tags?: string[];
   stock?: number; description?: string; createdAt?: string;
   image?: string; images?: string[];
+  /** ISO date the piece ships if it is sold as a pre-order. */
+  preorder?: string;
 };
 export type LookFrame = { image?: string; h: number; bg?: string; product?: string; x?: number; y?: number; label?: string };
 export type Lookbook = { slug: string; brand: string; title: string; season: string; blurb: string; bg: string; frames: LookFrame[]; createdAt?: string };
@@ -81,7 +83,7 @@ export const PRODUCTS: Product[] = [
   { slug: "ripstop-cargo", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=75&auto=format&fit=crop", brand: "nomad", name: "Ripstop Cargo", price: 139, tag: "New", tagBg: "#121A24", tagFg: "#fff", category: "Trousers" },
   { slug: "cotton-chore-coat", image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900&q=75&auto=format&fit=crop", brand: "studio-arva", name: "Cotton Chore Coat", price: 268, category: "Outerwear" },
   { slug: "wide-wool-trouser", image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=900&q=75&auto=format&fit=crop", brand: "form-and-void", name: "Wide Wool Trouser", price: 195, category: "Trousers" },
-  { slug: "salt-wash-tee", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=75&auto=format&fit=crop", brand: "onda-studio", name: "Salt-Wash Tee", price: 68, category: "Shirting" },
+  { slug: "salt-wash-tee", preorder: new Date(Date.now() + 18 * 864e5).toISOString(), image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=75&auto=format&fit=crop", brand: "onda-studio", name: "Salt-Wash Tee", price: 68, category: "Shirting" },
   { slug: "felted-cardigan", image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=900&q=75&auto=format&fit=crop", brand: "core-theory", name: "Felted Cardigan", price: 232, tag: "20% off", tagBg: "#E5DFD3", tagFg: "#121A24", category: "Knitwear" },
   { slug: "canvas-field-bag", image: "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=900&q=75&auto=format&fit=crop", brand: "nomad", name: "Canvas Field Bag", price: 148, category: "Accessories" },
   { slug: "pleated-short", image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=900&q=75&auto=format&fit=crop", brand: "neutral-ground", name: "Pleated Short", price: 94, category: "Trousers" },

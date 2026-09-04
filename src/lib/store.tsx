@@ -1,10 +1,13 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
+import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
+import { computeCart, pointsEarned, type BagGroup } from "./cart";
+import { slugify } from "./catalog";
 import { LOOKBOOKS } from "./data";
-import { allBrands, allProducts, effectivePrice, findProduct } from "./catalog";
+import { allBrands, allProducts, effectivePrice } from "./catalog";
 
-export type BagItem = { key: string; product: string; variant: string; qty: number };
+export type { BagItem, BagGroup, BagLine } from "./cart";
+import type { BagItem } from "./cart";
 export type Session = { role: "shopper" | "brand"; name: string; brand?: string };
 
 type Persisted = {
@@ -15,13 +18,12 @@ type Persisted = {
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
-  lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string;
+  lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string; referredBy?: string;
   boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
 };
 type Toast = { id: string; text: string; href?: string };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean; toasts: Toast[] };
 
-type BagGroup = { brand: Brand; items: (BagItem & { p: Product; unit: number; total: number })[]; shipCost: number };
 type Ctx = State & {
   hydrated: boolean;
   brands: Brand[]; products: Product[];
@@ -43,6 +45,7 @@ type Ctx = State & {
   setStyleTags: (t: string[]) => void; setSizes: (s: Persisted["sizes"]) => void;
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
+  referralCode: string; applyReferral: (code: string) => boolean;
   buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
@@ -128,26 +131,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const products = useMemo(() => allProducts(state.customProducts, state.removedProducts), [state.customProducts, state.removedProducts]);
   const priceOf = useCallback((p: Product) => effectivePrice(p, state.promos), [state.promos]);
 
-  const derived = useMemo(() => {
-    const map = new Map<string, BagGroup>();
-    for (const it of state.bag) {
-      const p = findProduct(it.product, state.customProducts); if (!p || state.removedProducts.includes(p.slug)) continue;
-      const brand = brands.find((b) => b.slug === p.brand); if (!brand) continue;
-      if (!map.has(brand.slug)) { const idx = state.ship[brand.slug] ?? 0; const opts = SHIP_OPTS[brand.slug]?.opts ?? [{ cost: 9 }]; map.set(brand.slug, { brand, items: [], shipCost: opts[Math.min(idx, opts.length - 1)].cost }); }
-      const unit = effectivePrice(p, state.promos).price;
-      map.get(brand.slug)!.items.push({ ...it, p, unit, total: unit * it.qty });
-    }
-    const bagGroups = [...map.values()];
-    const subtotal = bagGroups.reduce((s, g) => s + g.items.reduce((a, i) => a + i.total, 0), 0);
-    const shipTotal = bagGroups.reduce((s, g) => s + g.shipCost, 0);
-    const code = state.promoCode ? state.promos.find((pr) => pr.active && pr.code.toLowerCase() === state.promoCode!.toLowerCase()) : undefined;
-    const promoDiscount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
-    const credit = Math.min(state.redeem / 100, Math.max(0, subtotal + shipTotal - promoDiscount));
-    const giftCard = state.giftCode ? state.giftCards.find((g) => g.code === state.giftCode) : undefined;
-    const giftCredit = giftCard ? Math.min(giftCard.balance, Math.max(0, subtotal + shipTotal - promoDiscount - credit)) : 0;
-    const discount = promoDiscount + credit + giftCredit;
-    return { bagGroups, subtotal, shipTotal, discount, promoDiscount, credit, giftCredit, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
-  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, state.redeem, state.giftCode, state.giftCards, brands]);
+  const derived = useMemo(() => computeCart({ bag: state.bag, ship: state.ship, promos: state.promos, promoCode: state.promoCode, redeem: state.redeem, giftCode: state.giftCode, giftCards: state.giftCards, customProducts: state.customProducts, removedProducts: state.removedProducts, brands }),
+    [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, state.redeem, state.giftCode, state.giftCards, brands]);
   const allLookbooks = useMemo(() => [...state.lookbooks, ...LOOKBOOKS.filter((l) => !state.lookbooks.some((c) => c.slug === l.slug))], [state.lookbooks]);
   const notifications = useMemo(() => {
     const out: Ctx["notifications"] = [];
@@ -157,7 +142,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const t of state.threads) { const last = t.messages[t.messages.length - 1]; const b = brands.find((x) => x.slug === t.brand); if (last && b && ((state.session.role === "brand") !== (last.from === "brand"))) out.push({ id: "m-" + t.id, kind: "message", title: state.session.role === "brand" ? `${t.shopper} messaged you` : `${b.name} replied`, body: last.text, href: `/messages?t=${t.id}`, at: last.at }); }
     return out.sort((a, b) => b.at.localeCompare(a.at));
   }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
-  const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal) - Math.round((o.credit ?? 0) * 100), 0), [state.orders]);
+  const points = useMemo(() => 1240 + (state.referredBy ? 200 : 0) + state.orders.reduce((s, o) => s + pointsEarned(o), 0), [state.orders, state.referredBy]);
+  const referralCode = useMemo(() => slugify(state.session.name) || "friend", [state.session.name]);
 
   const value: Ctx = {
     ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
@@ -198,6 +184,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleAlert: (slug) => up((p) => ({ alerts: toggleIn(p.alerts, slug) })),
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
+    referralCode,
+    applyReferral: (code) => { const c = code.trim().toLowerCase().replace(/^.*\/r\//, ""); if (!/^[a-z0-9-]{3,40}$/.test(c) || c === referralCode || state.referredBy) return false; up(() => ({ referredBy: c })); return true; },
     buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; up((p) => ({ giftCards: [{ code, amount, balance: amount, to, from, note, at: new Date().toISOString() }, ...p.giftCards] })); return code; },
     applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const g = state.giftCards.find((x) => x.code === c); if (!g || g.balance <= 0) return false; up(() => ({ giftCode: c })); return true; },
     clearGiftCode: () => up(() => ({ giftCode: undefined })),

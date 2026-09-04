@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { BRANDS, LOOKBOOKS, PRODUCTS } from "@/lib/data";
-const base = "https://brand-discovery-site.vercel.app";
+const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://brand-discovery-site.vercel.app";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   return [

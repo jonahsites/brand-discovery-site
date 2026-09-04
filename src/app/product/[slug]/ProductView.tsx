@@ -33,6 +33,8 @@ export default function ProductView({ slug }: { slug: string }) {
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
   const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;
+  const preorder = !soldOut && p.preorder ? new Date(p.preorder) : undefined;
+  const shipsOn = preorder ? preorder.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : undefined;
   const inLooks = allLookbooks.filter((l) => l.frames.some((f) => f.product === p.slug));
   const completeLook = [...new Set(inLooks.flatMap((l) => l.frames.map((f) => f.product)).filter((s): s is string => !!s && s !== p.slug))].map((s) => products.find((x) => x.slug === s)).filter((x): x is NonNullable<typeof x> => !!x).slice(0, 4);
   const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); toast(`${p.name} added to bag`); };
@@ -74,7 +76,7 @@ export default function ProductView({ slug }: { slug: string }) {
           </div>
           <div className="mb-4 flex items-center gap-3">
             <QtyStepper value={qty} onChange={setQty} className="!p-[6px]" />
-            <Button size="lg" className={clsx("flex-1", soldOut && "!bg-ink/8 !text-ink/32 cursor-not-allowed")} onClick={add}>{soldOut ? "Sold out" : added ? "Added to bag ✓" : "Add to bag"}</Button>
+            <Button size="lg" className={clsx("flex-1", soldOut && "!bg-ink/8 !text-ink/32 cursor-not-allowed")} onClick={add}>{soldOut ? "Sold out" : added ? "Added to bag ✓" : preorder ? `Pre-order · ships ${shipsOn}` : "Add to bag"}</Button>
             <IconCircle size={52} variant={saved ? "black" : "white"} onClick={() => { toggleSaved(p.slug); toast(saved ? "Removed from saved" : "Saved to your profile", "/account"); }} className="hidden sm:grid text-[17px]">{saved ? "♥" : "♡"}</IconCircle>
             <IconCircle size={52} variant="white" onClick={() => setBoardOpen(!boardOpen)} className="hidden sm:grid text-[15px]" aria-label="Add to board">◇</IconCircle>
             <IconCircle size={52} variant="white" className="hidden sm:grid text-[16px]" onClick={() => { if (navigator.share) navigator.share({ title: p.name, url: location.href }).catch(() => {}); else { navigator.clipboard?.writeText(location.href); toast("Link copied"); } }}>↗</IconCircle>
@@ -87,7 +89,7 @@ export default function ProductView({ slug }: { slug: string }) {
             </div>
           )}
           <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sand" : "bg-cream")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-ink text-paper" : "bg-cream")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
-          <div className="mb-6 md:mb-[30px] text-[12.5px] text-ink/50">Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</div>
+          <div className="mb-6 md:mb-[30px] text-[12.5px] text-ink/50">{preorder ? <>Pre-order: made after you order, ships from {b.shipsFrom} on <span className="font-semibold text-ink" suppressHydrationWarning>{shipsOn}</span>. Charged now, cancel any time before it ships.</> : <>Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</>}</div>
           <Accordion items={ACCORDIONS} />
         </div>
       </div>
@@ -144,7 +146,7 @@ export default function ProductView({ slug }: { slug: string }) {
 
       <div className="card fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden">
         <div className="px-2 text-[15px] font-semibold">{money(price)}</div>
-        <Button className="flex-1" onClick={add}>{soldOut ? "Sold out" : added ? "Added ✓" : "Add to bag"}</Button>
+        <Button className="flex-1" onClick={add}>{soldOut ? "Sold out" : added ? "Added ✓" : preorder ? "Pre-order" : "Add to bag"}</Button>
       </div>
     </Page>
   );

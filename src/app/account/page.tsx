@@ -12,7 +12,9 @@ export default function Account() { return <Suspense><AccountInner /></Suspense>
 
 function AccountInner() {
   const sp = useSearchParams();
-  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo } = useApp();
+  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo, referralCode, referredBy, applyReferral, toast } = useApp();
+  const [friendCode, setFriendCode] = useState("");
+  const [friendErr, setFriendErr] = useState("");
   const [newBoard, setNewBoard] = useState("");
   const [openOrder, setOpenOrder] = useState<string | null>(null);
   const STEPS = ["Placed", "Packed", "In transit", "Delivered"] as const;
@@ -91,7 +93,14 @@ function AccountInner() {
             <div className="mb-1 text-[34px] font-bold leading-none tracking-[-.04em]">{points.toLocaleString()}</div>
             <div className="mb-4 text-[12.5px] text-ink/60">{points >= 2000 ? "Regular · free EU shipping on every order" : `${(2000 - points).toLocaleString()} points to Regular tier`} · 1 point per $1, spendable at any brand</div>
             <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-sage" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
-            <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => navigator.clipboard?.writeText("kindred.shop/r/jules")} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button><Link href="/gift" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Gift cards</Link></div>
+            <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => { navigator.clipboard?.writeText(`${location.origin}/r/${referralCode}`); toast("Referral link copied"); }} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button><Link href="/gift" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Gift cards</Link></div>
+          </div>
+          <div className="card rounded-lg p-6 md:p-7">
+            <Label className="mb-2">Refer a friend</Label>
+            <div className="mb-3 text-[13px] leading-[1.55] text-ink/60">Your link is <span className="mono font-semibold text-ink">/r/{referralCode}</span>. When a friend joins through it you both get 200 points after their first order.</div>
+            {referredBy ? <div className="rounded-md bg-cream px-4 py-3 text-[12.5px]">You joined through <span className="mono font-semibold">{referredBy}</span> · 200 points added.</div>
+              : <form onSubmit={(e) => { e.preventDefault(); if (applyReferral(friendCode)) { setFriendErr(""); setFriendCode(""); toast("200 points added"); } else setFriendErr("That code doesn't work, or you already used one."); }} className="flex gap-2"><input value={friendCode} onChange={(e) => setFriendCode(e.target.value)} placeholder="Friend's code" className={clsx(inputCls, "mono")} /><Button variant="secondary" type="submit">Apply</Button></form>}
+            {friendErr && <div className="mt-2 text-[12px] text-sage">{friendErr}</div>}
           </div>
           <div className="rounded-lg bg-ink p-6 md:p-7 text-paper">
             <Label light className="mb-4">Style profile</Label>
