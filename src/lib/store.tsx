@@ -1,34 +1,43 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { BRANDS, PRODUCTS, SHIP_OPTS, productBySlug, type Brand, type Product } from "./data";
+import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review } from "./data";
+import { allBrands, allProducts, effectivePrice, findProduct } from "./catalog";
 
 export type BagItem = { key: string; product: string; variant: string; qty: number };
+export type Session = { role: "shopper" | "brand"; name: string; brand?: string };
 
-type State = {
-  bag: BagItem[];
-  follows: string[];
-  saved: string[];
-  ship: Record<string, number>;
-  bagOpen: boolean;
-  searchOpen: boolean;
+type Persisted = {
+  bag: BagItem[]; follows: string[]; saved: string[]; ship: Record<string, number>;
+  session: Session;
+  customBrands: Brand[]; customProducts: Product[]; removedProducts: string[];
+  promos: Promo[]; drops: Drop[]; orders: Order[]; reviews: Review[];
+  styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
+  notify: string[]; alerts: string[]; promoCode?: string;
 };
+type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
 
+type BagGroup = { brand: Brand; items: (BagItem & { p: Product; unit: number; total: number })[]; shipCost: number };
 type Ctx = State & {
-  bagCount: number;
-  bagGroups: { brand: Brand; items: (BagItem & { p: Product; total: number })[]; shipCost: number }[];
-  subtotal: number;
-  shipTotal: number;
-  total: number;
+  hydrated: boolean;
+  brands: Brand[]; products: Product[];
+  bagCount: number; bagGroups: BagGroup[]; subtotal: number; shipTotal: number; discount: number; total: number;
+  priceOf: (p: Product) => ReturnType<typeof effectivePrice>;
   addToBag: (product: string, variant: string, qty?: number) => void;
-  setQty: (key: string, qty: number) => void;
-  removeItem: (key: string) => void;
-  toggleFollow: (slug: string) => void;
-  isFollowing: (slug: string) => boolean;
-  toggleSaved: (slug: string) => void;
-  isSaved: (slug: string) => boolean;
+  setQty: (key: string, qty: number) => void; removeItem: (key: string) => void; clearBag: () => void;
+  toggleFollow: (slug: string) => void; isFollowing: (slug: string) => boolean;
+  toggleSaved: (slug: string) => void; isSaved: (slug: string) => boolean;
   setShip: (brand: string, idx: number) => void;
-  openBag: (v?: boolean) => void;
-  openSearch: (v?: boolean) => void;
+  openBag: (v?: boolean) => void; openSearch: (v?: boolean) => void;
+  setSession: (s: Session) => void;
+  upsertBrand: (b: Brand) => void;
+  upsertProduct: (p: Product) => void; deleteProduct: (slug: string) => void;
+  upsertPromo: (p: Promo) => void; deletePromo: (id: string) => void;
+  upsertDrop: (d: Drop) => void; deleteDrop: (id: string) => void;
+  placeOrder: () => Order | undefined; setOrderStatus: (id: string, status: Order["status"]) => void;
+  addReview: (r: Omit<Review, "id" | "at">) => void;
+  setStyleTags: (t: string[]) => void; setSizes: (s: Persisted["sizes"]) => void;
+  toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
+  applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
 };
 
 const DEFAULT_BAG: BagItem[] = [
@@ -37,82 +46,114 @@ const DEFAULT_BAG: BagItem[] = [
   { key: "heavyweight-crew|L · Ecru", product: "heavyweight-crew", variant: "L · Ecru", qty: 2 },
   { key: "sail-overshirt|M · Salt", product: "sail-overshirt", variant: "M · Salt", qty: 1 },
 ];
+const DEFAULT_DROPS: Drop[] = [
+  { id: "drop-fv-bone", brand: "form-and-void", title: "Bone colourway", at: nextFriday().toISOString(), pieces: 40, blurb: "Forty pieces cut from the last of the sailmaker's roll. Followers get the link an hour early.", products: ["panel-work-jacket", "corozo-overshirt"] },
+  { id: "drop-os-salt", brand: "onda-studio", title: "Salt run 04", at: new Date(Date.now() + 9 * 864e5).toISOString(), pieces: 40, blurb: "Salt-washed overshirts, cut once, never restocked.", products: ["sail-overshirt", "salt-wash-tee"] },
+];
+const DEFAULT_PROMOS: Promo[] = [
+  { id: "promo-ct-autumn", brand: "core-theory", code: "WARMUP", pct: 15, label: "Autumn knit week", products: "all", active: true, ends: new Date(Date.now() + 6 * 864e5).toISOString() },
+];
+function nextFriday() { const d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7)); d.setHours(9, 0, 0, 0); return d; }
+
+const DEFAULTS: Persisted = {
+  bag: DEFAULT_BAG, follows: ["form-and-void", "onda-studio"],
+  saved: ["cotton-chore-coat", "sail-overshirt", "felted-cardigan", "ripstop-cargo", "wide-wool-trouser", "boxy-poplin-shirt"],
+  ship: {}, session: { role: "shopper", name: "Jules Renard" },
+  customBrands: [], customProducts: [], removedProducts: [], promos: DEFAULT_PROMOS, drops: DEFAULT_DROPS, orders: [], reviews: [],
+  styleTags: ["Japanese streetwear", "Workwear", "Minimalist", "Deadstock", "Unisex", "Knitwear", "Under $200"],
+  sizes: { tops: "L", waist: "32", shoe: "43" }, notify: [], alerts: [],
+};
 
 const AppContext = createContext<Ctx | null>(null);
-const LS = "kindred.v1";
+const LS = "kindred.v2";
+export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>({
-    bag: DEFAULT_BAG, follows: ["form-and-void", "onda-studio"], saved: ["cotton-chore-coat", "sail-overshirt", "felted-cardigan", "ripstop-cargo", "wide-wool-trouser", "boxy-poplin-shirt"],
-    ship: {}, bagOpen: false, searchOpen: false,
-  });
+  const [state, setState] = useState<State>({ ...DEFAULTS, bagOpen: false, searchOpen: false });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
-      try {
-        const raw = localStorage.getItem(LS);
-        if (raw) {
-          const s = JSON.parse(raw);
-          setState((p) => ({ ...p, bag: s.bag ?? p.bag, follows: s.follows ?? p.follows, saved: s.saved ?? p.saved, ship: s.ship ?? p.ship }));
-        }
-      } catch {}
+      try { const raw = localStorage.getItem(LS); if (raw) { const s = JSON.parse(raw) as Partial<Persisted>; setState((p) => ({ ...p, ...s })); } } catch {}
       setHydrated(true);
     });
     return () => cancelAnimationFrame(id);
   }, []);
   useEffect(() => {
     if (!hydrated) return;
-    try { localStorage.setItem(LS, JSON.stringify({ bag: state.bag, follows: state.follows, saved: state.saved, ship: state.ship })); } catch {}
-  }, [state.bag, state.follows, state.saved, state.ship, hydrated]);
-
+    const { bagOpen: _b, searchOpen: _s, ...persist } = state; void _b; void _s;
+    try { localStorage.setItem(LS, JSON.stringify(persist)); } catch {}
+  }, [state, hydrated]);
   useEffect(() => {
-    const anyOpen = state.bagOpen || state.searchOpen;
-    document.body.style.overflow = anyOpen ? "hidden" : "";
+    document.body.style.overflow = state.bagOpen || state.searchOpen ? "hidden" : "";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setState((p) => ({ ...p, bagOpen: false, searchOpen: false })); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [state.bagOpen, state.searchOpen]);
 
-  const addToBag = useCallback((product: string, variant: string, qty = 1) => {
-    setState((p) => {
-      const key = product + "|" + variant;
-      const ex = p.bag.find((b) => b.key === key);
-      const bag = ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }];
-      return { ...p, bag };
-    });
-  }, []);
-  const setQty = useCallback((key: string, qty: number) => setState((p) => ({ ...p, bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })), []);
-  const removeItem = useCallback((key: string) => setState((p) => ({ ...p, bag: p.bag.filter((b) => b.key !== key) })), []);
-  const toggleFollow = useCallback((slug: string) => setState((p) => ({ ...p, follows: p.follows.includes(slug) ? p.follows.filter((s) => s !== slug) : [...p.follows, slug] })), []);
-  const toggleSaved = useCallback((slug: string) => setState((p) => ({ ...p, saved: p.saved.includes(slug) ? p.saved.filter((s) => s !== slug) : [...p.saved, slug] })), []);
-  const setShip = useCallback((brand: string, idx: number) => setState((p) => ({ ...p, ship: { ...p.ship, [brand]: idx } })), []);
-  const openBag = useCallback((v = true) => setState((p) => ({ ...p, bagOpen: v, searchOpen: v ? false : p.searchOpen })), []);
-  const openSearch = useCallback((v = true) => setState((p) => ({ ...p, searchOpen: v, bagOpen: v ? false : p.bagOpen })), []);
+  const up = useCallback((fn: (p: State) => Partial<State>) => setState((p) => ({ ...p, ...fn(p) })), []);
+  const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+
+  const brands = useMemo(() => allBrands(state.customBrands), [state.customBrands]);
+  const products = useMemo(() => allProducts(state.customProducts, state.removedProducts), [state.customProducts, state.removedProducts]);
+  const priceOf = useCallback((p: Product) => effectivePrice(p, state.promos), [state.promos]);
 
   const derived = useMemo(() => {
-    const groupsMap = new Map<string, Ctx["bagGroups"][number]>();
+    const map = new Map<string, BagGroup>();
     for (const it of state.bag) {
-      const p = productBySlug(it.product);
-      if (!p) continue;
-      const brand = BRANDS.find((b) => b.slug === p.brand)!;
-      if (!groupsMap.has(brand.slug)) {
-        const idx = state.ship[brand.slug] ?? 0;
-        groupsMap.set(brand.slug, { brand, items: [], shipCost: SHIP_OPTS[brand.slug].opts[idx].cost });
-      }
-      groupsMap.get(brand.slug)!.items.push({ ...it, p, total: p.price * it.qty });
+      const p = findProduct(it.product, state.customProducts); if (!p || state.removedProducts.includes(p.slug)) continue;
+      const brand = brands.find((b) => b.slug === p.brand); if (!brand) continue;
+      if (!map.has(brand.slug)) { const idx = state.ship[brand.slug] ?? 0; const opts = SHIP_OPTS[brand.slug]?.opts ?? [{ cost: 9 }]; map.set(brand.slug, { brand, items: [], shipCost: opts[Math.min(idx, opts.length - 1)].cost }); }
+      const unit = effectivePrice(p, state.promos).price;
+      map.get(brand.slug)!.items.push({ ...it, p, unit, total: unit * it.qty });
     }
-    const bagGroups = [...groupsMap.values()];
+    const bagGroups = [...map.values()];
     const subtotal = bagGroups.reduce((s, g) => s + g.items.reduce((a, i) => a + i.total, 0), 0);
     const shipTotal = bagGroups.reduce((s, g) => s + g.shipCost, 0);
-    return { bagGroups, subtotal, shipTotal, total: subtotal + shipTotal, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
-  }, [state.bag, state.ship]);
+    const code = state.promoCode ? state.promos.find((pr) => pr.active && pr.code.toLowerCase() === state.promoCode!.toLowerCase()) : undefined;
+    const discount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
+    return { bagGroups, subtotal, shipTotal, discount, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
+  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, brands]);
 
   const value: Ctx = {
-    ...state, ...derived,
-    addToBag, setQty, removeItem, toggleFollow, toggleSaved, setShip, openBag, openSearch,
+    ...state, ...derived, hydrated, brands, products, priceOf,
+    addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
+    setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
+    removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
+    clearBag: () => up(() => ({ bag: [], promoCode: undefined })),
+    toggleFollow: (slug) => up((p) => ({ follows: toggleIn(p.follows, slug) })),
     isFollowing: (s) => state.follows.includes(s),
+    toggleSaved: (slug) => up((p) => ({ saved: toggleIn(p.saved, slug) })),
     isSaved: (s) => state.saved.includes(s),
+    setShip: (brand, idx) => up((p) => ({ ship: { ...p.ship, [brand]: idx } })),
+    openBag: (v = true) => up((p) => ({ bagOpen: v, searchOpen: v ? false : p.searchOpen })),
+    openSearch: (v = true) => up((p) => ({ searchOpen: v, bagOpen: v ? false : p.bagOpen })),
+    setSession: (session) => up(() => ({ session })),
+    upsertBrand: (b) => up((p) => ({ customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)] })),
+    upsertProduct: (pr) => up((p) => ({ customProducts: [pr, ...p.customProducts.filter((x) => x.slug !== pr.slug)], removedProducts: p.removedProducts.filter((s) => s !== pr.slug) })),
+    deleteProduct: (slug) => up((p) => ({ customProducts: p.customProducts.filter((x) => x.slug !== slug), removedProducts: [...new Set([...p.removedProducts, slug])], bag: p.bag.filter((b) => b.product !== slug) })),
+    upsertPromo: (pr) => up((p) => ({ promos: [pr, ...p.promos.filter((x) => x.id !== pr.id)] })),
+    deletePromo: (id) => up((p) => ({ promos: p.promos.filter((x) => x.id !== id) })),
+    upsertDrop: (d) => up((p) => ({ drops: [d, ...p.drops.filter((x) => x.id !== d.id)].sort((a, b) => a.at.localeCompare(b.at)) })),
+    deleteDrop: (id) => up((p) => ({ drops: p.drops.filter((x) => x.id !== id) })),
+    placeOrder: () => {
+      if (derived.bagGroups.length === 0) return undefined;
+      const order: Order = {
+        id: "UN-" + String(40912 + state.orders.length + 1), placedAt: new Date().toISOString(), status: "Placed", promo: state.promoCode,
+        items: derived.bagGroups.flatMap((g) => g.items.map((i) => ({ product: i.p.slug, name: i.p.name, brand: g.brand.slug, variant: i.variant, qty: i.qty, unit: i.unit }))),
+        subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total,
+      };
+      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined }));
+      return order;
+    },
+    setOrderStatus: (id, status) => up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })),
+    addReview: (r) => up((p) => ({ reviews: [{ ...r, id: uid(), at: new Date().toISOString() }, ...p.reviews] })),
+    setStyleTags: (styleTags) => up(() => ({ styleTags })),
+    setSizes: (sizes) => up(() => ({ sizes })),
+    toggleNotify: (id) => up((p) => ({ notify: toggleIn(p.notify, id) })),
+    toggleAlert: (slug) => up((p) => ({ alerts: toggleIn(p.alerts, slug) })),
+    applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
+    clearPromoCode: () => up(() => ({ promoCode: undefined })),
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
@@ -122,5 +163,3 @@ export function useApp() {
   if (!c) throw new Error("useApp outside AppProvider");
   return c;
 }
-
-export { PRODUCTS };

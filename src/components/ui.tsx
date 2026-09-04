@@ -113,3 +113,5 @@ export function SectionHead({ title, sub, action, href }: { title: ReactNode; su
 export function Page({ children, className, narrow }: { children: ReactNode; className?: string; narrow?: boolean }) {
   return <main className={clsx("mx-auto w-full px-4 md:px-10 pb-16", narrow ? "max-w-[1100px]" : "max-w-[1440px]", className)}>{children}</main>;
 }
+
+export const inputCls = "w-full rounded-[10px] bg-white/85 px-4 py-3 text-[14px] outline-none border border-black/8 focus:border-black/30 placeholder:text-black/35";

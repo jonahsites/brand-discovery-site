@@ -1,17 +1,56 @@
+export type Batch = "one-off" | "small" | "medium" | "large";
 export type Brand = {
   slug: string; name: string; init: string; city: string; country: string;
   tagline: string; items: number; followers: number; verified: boolean;
   tint: string; ink: string;
+  /* Onboarding — the fields that drive filters and search */
+  founded?: number; website?: string; story?: string;
+  styles: string[];        // aesthetic tags e.g. "Workwear"
+  moods: string[];         // how it feels e.g. "cozy", "rainy weekend"
+  categories: string[];    // what they make
+  materials: string[];     // fabrics
+  values: string[];        // "Small batch", "Deadstock"
+  madeIn: string; batch: Batch; gender: string[];
+  priceBand: [number, number]; sizeRange: [string, string];
+  shipsTo: string[]; shipsFrom: string;
+  createdAt?: string;
 };
+export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
+export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
+export type OrderItem = { product: string; name: string; brand: string; variant: string; qty: number; unit: number };
+export type Order = { id: string; placedAt: string; items: OrderItem[]; subtotal: number; shipping: number; total: number; status: "Placed" | "Packed" | "In transit" | "Delivered"; promo?: string };
+export type Review = { id: string; product: string; name: string; init: string; tint: string; stars: number; fit: 1 | 2 | 3; body: string; size: string; at: string };
 
 export const BRANDS: Brand[] = [
-  { slug: "form-and-void", name: "Form & Void", init: "FV", city: "Rotterdam", country: "NL", tagline: "Workwear cut from one bolt at a time", items: 22, followers: 1847, verified: true, tint: "#DBE1EF", ink: "#1A1A1A" },
-  { slug: "studio-arva", name: "Studio Arva", init: "SA", city: "Lisbon", country: "PT", tagline: "Heavyweight cotton, no seasons", items: 14, followers: 892, verified: true, tint: "#C7DCEF", ink: "#1A1A1A" },
-  { slug: "onda-studio", name: "Onda Studio", init: "OS", city: "Porto", country: "PT", tagline: "Salt-washed, cut once", items: 31, followers: 4200, verified: true, tint: "#1C3247", ink: "#F6F7F9" },
-  { slug: "core-theory", name: "Core Theory", init: "CT", city: "Kyoto", country: "JP", tagline: "Knitwear for long winters", items: 9, followers: 340, verified: false, tint: "#456F94", ink: "#fff" },
-  { slug: "neutral-ground", name: "Neutral Ground", init: "NG", city: "Copenhagen", country: "DK", tagline: "Quiet shirting", items: 18, followers: 2400, verified: true, tint: "#456F94", ink: "#fff" },
-  { slug: "nomad", name: "Nomad", init: "NO", city: "Melbourne", country: "AU", tagline: "Ripstop for the road", items: 26, followers: 1120, verified: false, tint: "#EDF1F4", ink: "#1A1A1A" },
+  { slug: "form-and-void", name: "Form & Void", init: "FV", city: "Rotterdam", country: "NL", tagline: "Workwear cut from one bolt at a time", items: 22, followers: 1847, verified: true, tint: "#DBE1EF", ink: "#1A1A1A",
+    founded: 2021, website: "formandvoid.nl", story: "Started when Wies and Tomas bought a roll of deadstock cotton duck from a shuttered sailmaker two streets over. Six jackets, sold to friends, no business plan. Everything is still made in the same room above a bike shop.",
+    styles: ["Workwear", "Minimalist", "Archive"], moods: ["rugged", "rainy weekend", "utilitarian", "heavy", "worn-in", "outdoors", "cold morning"], categories: ["Outerwear", "Trousers", "Shirting", "Accessories"], materials: ["Cotton canvas", "Deadstock", "Wool", "Waxed cotton"], values: ["Small batch", "Deadstock", "Repairs for life", "Made locally"], madeIn: "Rotterdam, NL", batch: "small", gender: ["Unisex"], priceBand: [64, 268], sizeRange: ["S", "XXL"], shipsTo: ["EU", "UK", "US & Canada"], shipsFrom: "Rotterdam" },
+  { slug: "studio-arva", name: "Studio Arva", init: "SA", city: "Lisbon", country: "PT", tagline: "Heavyweight cotton, no seasons", items: 14, followers: 892, verified: true, tint: "#C7DCEF", ink: "#1A1A1A",
+    founded: 2022, website: "studioarva.pt", story: "A two-person Lisbon workshop cutting heavyweight cotton. Fourteen pieces, no seasons, nothing on sale, ever.",
+    styles: ["Minimalist", "Tailoring", "Japanese streetwear"], moods: ["clean", "quiet", "everyday", "boxy", "calm", "uniform", "soft"], categories: ["Knitwear", "Outerwear", "Shirting"], materials: ["Organic cotton", "Heavyweight jersey", "Linen"], values: ["Small batch", "Organic", "Made locally", "No sales"], madeIn: "Lisbon, PT", batch: "small", gender: ["Unisex"], priceBand: [68, 268], sizeRange: ["XS", "XL"], shipsTo: ["EU", "UK", "US & Canada", "Worldwide"], shipsFrom: "Lisbon" },
+  { slug: "onda-studio", name: "Onda Studio", init: "OS", city: "Porto", country: "PT", tagline: "Salt-washed, cut once", items: 31, followers: 4200, verified: true, tint: "#1C3247", ink: "#F6F7F9",
+    founded: 2019, website: "onda.studio", story: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am. Every run is 40 pieces.",
+    styles: ["Skate", "Outdoors", "Vintage revival"], moods: ["beach", "summer", "salty", "sun-faded", "relaxed", "coastal", "surf", "warm evening"], categories: ["Shirting", "Outerwear", "Trousers", "Accessories"], materials: ["Cotton", "Hemp", "Recycled cotton"], values: ["Recycled", "Limited runs", "Plastic-free"], madeIn: "Porto, PT", batch: "medium", gender: ["Unisex", "Men"], priceBand: [48, 210], sizeRange: ["S", "XXL"], shipsTo: ["EU", "UK", "US & Canada", "Worldwide"], shipsFrom: "Porto" },
+  { slug: "core-theory", name: "Core Theory", init: "CT", city: "Kyoto", country: "JP", tagline: "Knitwear for long winters", items: 9, followers: 340, verified: false, tint: "#456F94", ink: "#fff",
+    founded: 2023, website: "coretheory.jp", story: "Nine knits made on a hand-flat machine in a Kyoto attic. Merino from a single farm in Tasmania.",
+    styles: ["Knitwear", "Minimalist", "Techwear"], moods: ["cozy", "warm", "winter", "cabin", "soft", "layered", "slow", "snow"], categories: ["Knitwear", "Accessories"], materials: ["Merino", "Wool", "Felted wool", "Alpaca"], values: ["Small batch", "Traceable wool", "Made locally"], madeIn: "Kyoto, JP", batch: "one-off", gender: ["Unisex"], priceBand: [90, 260], sizeRange: ["S", "XL"], shipsTo: ["Japan", "US & Canada", "EU", "Worldwide"], shipsFrom: "Kyoto" },
+  { slug: "neutral-ground", name: "Neutral Ground", init: "NG", city: "Copenhagen", country: "DK", tagline: "Quiet shirting", items: 18, followers: 2400, verified: true, tint: "#456F94", ink: "#fff",
+    founded: 2020, website: "neutralground.dk", story: "Poplin, oxford and twill in colours you already own. Cut boxy, finished by hand in a Copenhagen studio.",
+    styles: ["Minimalist", "Tailoring", "Scandi"], moods: ["office", "clean", "smart casual", "date night", "quiet", "polished", "spring"], categories: ["Shirting", "Trousers"], materials: ["Poplin", "Organic cotton", "Tencel", "Linen"], values: ["Organic", "Fair wages", "Carbon neutral shipping"], madeIn: "Copenhagen, DK", batch: "medium", gender: ["Women", "Men", "Unisex"], priceBand: [80, 180], sizeRange: ["XS", "XL"], shipsTo: ["EU", "UK", "US & Canada"], shipsFrom: "Copenhagen" },
+  { slug: "nomad", name: "Nomad", init: "NO", city: "Melbourne", country: "AU", tagline: "Ripstop for the road", items: 26, followers: 1120, verified: false, tint: "#EDF1F4", ink: "#1A1A1A",
+    founded: 2018, website: "nomad.au", story: "Ripstop, cordura and canvas built for weeks away from a washing machine. Tested on the Overland Track.",
+    styles: ["Outdoors", "Techwear", "Workwear"], moods: ["travel", "hiking", "rugged", "adventure", "rainy", "functional", "trail", "camping"], categories: ["Trousers", "Outerwear", "Accessories", "Footwear"], materials: ["Ripstop nylon", "Cordura", "Canvas", "Recycled polyester"], values: ["Recycled", "Repairs for life", "Durable"], madeIn: "Melbourne, AU", batch: "medium", gender: ["Unisex"], priceBand: [40, 240], sizeRange: ["XS", "XXL"], shipsTo: ["Australia", "US & Canada", "EU", "UK", "Worldwide"], shipsFrom: "Melbourne" },
 ];
+
+export const STYLE_OPTIONS = ["Japanese streetwear", "Minimalist", "Workwear", "Tailoring", "Techwear", "Vintage revival", "Knitwear", "Sustainable", "Avant-garde", "Skate", "Outdoors", "Archive", "Scandi", "Streetwear", "Designer", "Upcycled"];
+export const MOOD_OPTIONS = ["cozy", "rugged", "clean", "beach", "office", "travel", "date night", "rainy weekend", "summer", "winter", "quiet", "loud", "relaxed", "polished", "worn-in", "soft", "heavy", "warm", "cold morning", "hiking", "cabin", "coastal", "everyday", "uniform"];
+export const CATEGORY_OPTIONS = ["Outerwear", "Knitwear", "Shirting", "Trousers", "Footwear", "Accessories", "Dresses", "Denim", "Archive"];
+export const MATERIAL_OPTIONS = ["Organic cotton", "Cotton canvas", "Linen", "Merino", "Wool", "Deadstock", "Recycled cotton", "Recycled polyester", "Hemp", "Tencel", "Ripstop nylon", "Waxed cotton", "Poplin", "Leather", "Denim"];
+export const VALUE_OPTIONS = ["Small batch", "Deadstock", "Recycled", "Organic", "Made locally", "Repairs for life", "Fair wages", "Carbon neutral shipping", "Plastic-free", "Traceable materials", "No sales", "Limited runs"];
+export const REGION_OPTIONS = ["EU", "UK", "US & Canada", "Japan", "Australia", "Worldwide"];
+export const GENDER_OPTIONS = ["Unisex", "Women", "Men", "Kids"];
+export const SIZE_LADDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL"];
+export const brandTier = (followers: number) => (followers < 1000 ? "Indie" : followers < 10000 ? "Rising" : "Established");
 
 export const brandBySlug = (slug: string) => BRANDS.find((b) => b.slug === slug);
 export const brandByName = (name: string) => BRANDS.find((b) => b.name === name)!;
@@ -21,6 +60,8 @@ export const brandMeta = (b: Brand) => `${b.items} items · ${fmtFollowers(b.fol
 export type Product = {
   slug: string; brand: string; name: string; price: number; compareAt?: number;
   tag?: string; tagBg?: string; tagFg?: string; category: string;
+  sizes?: string[]; colors?: string[]; materials?: string[]; tags?: string[];
+  stock?: number; description?: string; createdAt?: string;
 };
 
 export const PRODUCTS: Product[] = [

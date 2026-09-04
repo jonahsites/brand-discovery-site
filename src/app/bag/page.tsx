@@ -1,13 +1,16 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { PRODUCTS, money, shipEstimate } from "@/lib/data";
+import { money, shipEstimate } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { Avatar, Button, Label, Placeholder, QtyStepper, SectionHead, Page } from "@/components/ui";
 
 export default function BagPage() {
-  const { bagGroups, bagCount, subtotal, total, setQty, removeItem } = useApp();
-  const also = PRODUCTS.filter((p) => !bagGroups.some((g) => g.items.some((i) => i.product === p.slug))).slice(0, 4);
+  const { bagGroups, bagCount, subtotal, discount, total, setQty, removeItem, products, promoCode, applyPromoCode, clearPromoCode, promos } = useApp();
+  const [code, setCode] = useState(""); const [err, setErr] = useState("");
+  const also = products.filter((p) => !bagGroups.some((g) => g.items.some((i) => i.product === p.slug))).slice(0, 4);
+  const hint = promos.find((p) => p.active && bagGroups.some((g) => g.brand.slug === p.brand) && p.code !== promoCode);
   return (
     <Page className="pt-6 md:pt-[34px]">
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
@@ -24,12 +27,8 @@ export default function BagPage() {
               </div>
               {g.items.map((it) => (
                 <div key={it.key} className="flex flex-wrap items-center gap-3 md:gap-4 py-4">
-                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-[9px] md:rounded-[10px]" />
-                  <div className="min-w-0 flex-1">
-                    <Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link>
-                    <div className="text-[12.5px] text-black/50">{it.variant}</div>
-                    <div className="mt-[7px] text-[13px] font-medium md:hidden">{money(it.total, true)}</div>
-                  </div>
+                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-[9px]" />
+                  <div className="min-w-0 flex-1"><Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link><div className="text-[12.5px] text-black/50">{it.variant}{it.unit < it.p.price && <span className="ml-2 rounded-pill bg-peri px-2 py-[1px] text-[10.5px] font-semibold text-ink">promo</span>}</div><div className="mt-[7px] text-[13px] font-medium md:hidden">{money(it.total, true)}</div></div>
                   <QtyStepper value={it.qty} onChange={(v) => setQty(it.key, v)} />
                   <span className="hidden md:inline rounded-pill border border-black/8 bg-white px-4 py-[9px] text-[13.5px] font-medium">{money(it.total, true)}</span>
                   <button onClick={() => removeItem(it.key)} aria-label="Remove" className="text-[15px] text-black/32">✕</button>
@@ -37,12 +36,7 @@ export default function BagPage() {
               ))}
             </div>
           ))}
-          {also.length > 0 && (
-            <div className="mt-8">
-              <SectionHead title="You might also want" />
-              <div className="grid grid-cols-2 gap-3 md:gap-[14px] lg:grid-cols-4">{also.map((p) => <ProductCard key={p.slug} p={p} showBrand={false} />)}</div>
-            </div>
-          )}
+          {also.length > 0 && <div className="mt-8"><SectionHead title="You might also want" /><div className="grid grid-cols-2 gap-3 md:gap-[14px] lg:grid-cols-4">{also.map((p) => <ProductCard key={p.slug} p={p} showBrand={false} />)}</div></div>}
         </div>
         <div className="flex flex-col gap-[14px] lg:sticky lg:top-[100px]">
           <div className="card rounded-lg p-6 md:p-7">
@@ -50,22 +44,22 @@ export default function BagPage() {
             <div className="flex flex-col gap-[13px] text-[13.5px] text-black/65">
               <div className="flex justify-between"><span>Subtotal</span><span className="font-medium text-ink">{money(subtotal, true)}</span></div>
               {bagGroups.map((g) => <div key={g.brand.slug} className="flex justify-between"><span>{g.brand.name} shipping</span><span className="font-medium text-ink">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span></div>)}
+              {discount > 0 && <div className="flex justify-between text-navy"><span>Code {promoCode}</span><span className="font-medium">−{money(discount, true)}</span></div>}
             </div>
             <div className="my-5 h-px bg-black/8" />
             <div className="mb-[22px] flex items-baseline justify-between"><span className="text-[15px] font-semibold">Total</span><span className="text-[26px] font-semibold tracking-[-.025em]">{money(total, true)}</span></div>
             <Link href="/checkout"><Button full size="lg" className="mb-3">Checkout</Button></Link>
-            <div className="flex gap-2"><input placeholder="Promo code" className="min-w-0 flex-1 rounded-pill bg-offwhite px-4 py-[13px] text-[13px] outline-none placeholder:text-black/45" /><Button variant="secondary">Apply</Button></div>
+            {promoCode ? <div className="flex items-center justify-between rounded-pill bg-peri px-4 py-[11px] text-[13px]"><span className="mono font-semibold">{promoCode} applied</span><button onClick={clearPromoCode} className="text-[12px] font-semibold text-black/55">Remove</button></div>
+              : <form onSubmit={(e) => { e.preventDefault(); if (applyPromoCode(code)) { setErr(""); setCode(""); } else setErr("That code isn't active."); }} className="flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Promo code" className="min-w-0 flex-1 rounded-pill bg-offwhite px-4 py-[13px] text-[13px] outline-none placeholder:text-black/45" /><Button variant="secondary" type="submit">Apply</Button></form>}
+            {err && <div className="mt-2 text-[12px] text-slate">{err}</div>}
           </div>
           <div className="rounded-lg bg-peri p-6">
-            <div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{money(Math.max(0, 500 - subtotal))} from free EU shipping</div>
-            <div className="text-[12.5px] leading-[1.5] text-black/60">Add anything from Studio Arva and we cover the label.</div>
+            {hint ? <><div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{hint.pct}% off {bagGroups.find((g) => g.brand.slug === hint.brand)?.brand.name}</div><div className="text-[12.5px] leading-[1.5] text-black/60">Code <button onClick={() => { applyPromoCode(hint.code); }} className="mono font-semibold text-ink underline">{hint.code}</button> is running until {hint.ends ? new Date(hint.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "further notice"}.</div></>
+              : <><div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{money(Math.max(0, 500 - subtotal))} from free EU shipping</div><div className="text-[12.5px] leading-[1.5] text-black/60">Add anything from Studio Arva and we cover the label.</div></>}
           </div>
         </div>
       </div>
-      <div className="glass fixed inset-x-4 bottom-[100px] z-30 rounded-lg p-[14px] lg:hidden">
-        <div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-black/55">Total</span><span className="font-semibold">{money(total, true)}</span></div>
-        <Link href="/checkout"><Button full size="lg">Checkout</Button></Link>
-      </div>
+      <div className="glass fixed inset-x-4 bottom-[100px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-black/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
       <div className="h-24 lg:hidden" />
     </Page>
   );

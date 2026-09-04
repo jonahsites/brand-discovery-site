@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useApp } from "@/lib/store";
 
 export default function TopNav() {
-  const { bagCount, openBag, openSearch } = useApp();
+  const { bagCount, openBag, openSearch, session } = useApp();
   const path = usePathname();
   if (path.startsWith("/dashboard") || path.startsWith("/onboarding")) return null;
   return (
@@ -12,7 +12,7 @@ export default function TopNav() {
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-10">
         <Link href="/" className="text-[17px] md:text-[19px] font-extrabold tracking-[-.035em] leading-none">Kindred</Link>
         <nav className="hidden lg:flex items-center gap-1 ml-2">
-          {[["/", "Discover"], ["/explore", "Explore"], ["/lookbook/off-the-shipyard", "Lookbooks"]].map(([href, label]) => (
+          {[["/", "Discover"], ["/explore", "Explore"], ["/lookbook/off-the-shipyard", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]].map(([href, label]) => (
             <Link key={href} href={href} className={`rounded-pill px-3 py-2 text-[13px] font-medium ${path === href ? "bg-white/70 text-ink" : "text-black/60 hover:text-ink"}`}>{label}</Link>
           ))}
         </nav>
@@ -27,7 +27,7 @@ export default function TopNav() {
             ⌂
             {bagCount > 0 && <span className="absolute -right-[2px] -top-[2px] grid h-[18px] min-w-[18px] place-items-center rounded-pill bg-slate px-[5px] text-[10px] font-semibold text-white">{bagCount}</span>}
           </button>
-          <Link href="/account" className="hidden md:grid h-[42px] w-[42px] place-items-center rounded-pill bg-sky text-[13px] font-bold">JR</Link>
+          <Link href="/account" className="hidden md:grid h-[42px] w-[42px] place-items-center rounded-pill bg-sky text-[13px] font-bold">{session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</Link>
         </div>
       </div>
     </header>
