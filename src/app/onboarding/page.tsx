@@ -17,15 +17,16 @@ function Pills({ opts, v, set, label }: { opts: string[]; v: string; set: (s: st
 
 export default function Onboarding() {
   const router = useRouter();
-  const { follows, toggleFollow } = useApp();
+  const { follows, toggleFollow, styleTags, setStyleTags, sizes, setSizes } = useApp();
   const [step, setStep] = useState(0);
-  const [styles, setStyles] = useState(["Japanese streetwear", "Workwear", "Minimalist"]);
-  const [top, setTop] = useState("L");
-  const [waist, setWaist] = useState("32");
-  const [shoe, setShoe] = useState("43");
+  const [styles, setStyles] = useState(() => styleTags.filter((t) => STYLE_CHOICES.includes(t)).length ? styleTags.filter((t) => STYLE_CHOICES.includes(t)) : ["Japanese streetwear", "Workwear", "Minimalist"]);
+  const [top, setTop] = useState(sizes.tops);
+  const [waist, setWaist] = useState(sizes.waist);
+  const [shoe, setShoe] = useState(sizes.shoe);
   const [title, body, hintDefault] = STEP_COPY[step];
   const hint = step === 0 ? `${styles.length} of 3 chosen` : step === 2 ? `${follows.length} of 5 chosen` : hintDefault;
-  const next = () => (step === 2 ? router.push("/") : setStep(step + 1));
+  const finish = () => { setStyleTags([...styles, ...styleTags.filter((t) => !STYLE_CHOICES.includes(t))]); setSizes({ tops: top, waist, shoe }); router.push("/"); };
+  const next = () => (step === 2 ? finish() : setStep(step + 1));
   return (
     <div className="relative min-h-screen overflow-hidden bg-offwhite">
       <div className="pointer-events-none absolute inset-0">

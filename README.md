@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kindred
 
-## Getting Started
+Find your next favorite clothing brand. A marketplace where independent labels onboard with one honest questionnaire, and shoppers search by how they feel.
 
-First, run the development server:
+Live: https://brand-discovery-site.vercel.app
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev        # http://localhost:3000
+pnpm build && pnpm start
+pnpm lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Effect |
+|---|---|
+| `ANTHROPIC_API_KEY` | Turns on Claude-powered feel search in `/api/search`. Without it the local synonym engine in `src/lib/catalog.ts` answers. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Where things live
 
-## Learn More
+- `src/app` routes: `/` discover, `/brands`, `/explore`, `/brand/[slug]`, `/product/[slug]`, `/lookbooks`, `/lookbook/[slug]`, `/bag`, `/checkout`, `/account`, `/messages`, `/sell` (brand onboarding), `/dashboard` (seller), `/onboarding` (shopper), `/design-system`.
+- `src/lib/data.ts` seed brands, products, onboarding option lists.
+- `src/lib/catalog.ts` the pure engine: merge, promo pricing, filters, feel search, daily pick.
+- `src/lib/store.tsx` client state persisted to localStorage (`kindred.v2`). This is the piece to replace with a database.
+- `docs/design/Kindred.dc.html` the Claude Design source the UI was built from.
 
-To learn more about Next.js, take a look at the following resources:
+## Design rules
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Rounded but restrained (8/12/18px cards, pill buttons), no drop shadows, hairline borders, glass only on floating chrome, Geist + JetBrains Mono.
