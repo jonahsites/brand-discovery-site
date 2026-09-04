@@ -6,7 +6,7 @@ import { useApp } from "@/lib/store";
 import { Placeholder, Tag } from "./ui";
 
 export default function ProductCard({ p, showBrand = true, compact, hoverAdd, tall }: { p: Product; showBrand?: boolean; compact?: boolean; hoverAdd?: boolean; tall?: boolean }) {
-  const { addToBag, openBag, toggleSaved, isSaved, brands, priceOf } = useApp();
+  const { addToBag, openBag, toggleSaved, isSaved, brands, priceOf, toast } = useApp();
   const b = brands.find((x) => x.slug === p.brand);
   const saved = isSaved(p.slug);
   const { price, compareAt, promo } = priceOf(p);
@@ -20,7 +20,7 @@ export default function ProductCard({ p, showBrand = true, compact, hoverAdd, ta
           {tag && <div className="absolute left-3 top-3"><Tag bg={tagBg} fg={tagFg}>{tag}</Tag></div>}
         </Placeholder>
       </Link>
-      <button aria-label={saved ? "Unsave" : "Save"} onClick={() => toggleSaved(p.slug)} className={clsx("press absolute grid place-items-center rounded-pill text-[14px]", compact ? "right-[18px] top-[18px] h-[31px] w-[31px]" : "right-6 top-6 h-9 w-9", saved ? "bg-black text-white" : "glass-chip")}>{saved ? "♥" : "♡"}</button>
+      <button aria-label={saved ? "Unsave" : "Save"} onClick={() => { toggleSaved(p.slug); toast(saved ? "Removed from saved" : "Saved", saved ? undefined : "/account"); }} className={clsx("press absolute grid place-items-center rounded-pill text-[14px]", compact ? "right-[18px] top-[18px] h-[31px] w-[31px]" : "right-6 top-6 h-9 w-9", saved ? "bg-black text-white" : "glass-chip")}>{saved ? "♥" : "♡"}</button>
       {hoverAdd && !soldOut && (
         <button onClick={() => { addToBag(p.slug, `${(p.sizes ?? ["M"])[0]} · ${(p.colors ?? ["Default"])[0]}`); openBag(); }} className={clsx("press absolute left-6 right-6 rounded-pill bg-black py-3 text-center text-[12.5px] font-semibold text-white opacity-0 translate-y-2 transition-all duration-200 group-hover:opacity-100 group-hover:translate-y-0", tall ? "top-[196px] md:top-[256px]" : "top-[176px] md:top-[186px]")}>Add to bag</button>
       )}

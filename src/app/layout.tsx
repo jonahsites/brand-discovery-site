@@ -7,6 +7,7 @@ import MobileTabBar from "@/components/MobileTabBar";
 import BagDrawer from "@/components/BagDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
+import Toaster from "@/components/Toaster";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <MobileTabBar />
           <BagDrawer />
           <SearchOverlay />
+          <Toaster />
         </AppProvider>
       </body>
     </html>

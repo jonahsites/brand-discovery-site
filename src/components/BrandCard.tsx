@@ -6,11 +6,12 @@ import { useApp } from "@/lib/store";
 import { Avatar } from "./ui";
 
 export function FollowButton({ slug, size = "md", className }: { slug: string; size?: "sm" | "md" | "lg"; className?: string }) {
-  const { toggleFollow, isFollowing } = useApp();
+  const { toggleFollow, isFollowing, toast, brands } = useApp();
   const on = isFollowing(slug);
+  const name = brands.find((b) => b.slug === slug)?.name ?? "brand";
   return (
     <button
-      onClick={(e) => { e.preventDefault(); toggleFollow(slug); }}
+      onClick={(e) => { e.preventDefault(); toggleFollow(slug); toast(on ? `Unfollowed ${name}` : `Following ${name}`, on ? undefined : "/?feed=Following"); }}
       className={clsx(
         "press rounded-pill font-semibold border whitespace-nowrap",
         size === "sm" && "px-4 py-2 text-[11.5px]",

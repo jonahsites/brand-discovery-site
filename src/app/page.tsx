@@ -21,7 +21,9 @@ function HomeInner() {
   const now = useNow();
   const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, recent } = useApp();
   const recentP = recent.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p).slice(0, 4);
-  const arva = brands.find((b) => b.slug === featured) ?? brands.find((b) => b.slug === "studio-arva") ?? brands[0];
+  const week = Math.floor(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / (7 * 864e5));
+  const seedBrands = brands.filter((b) => !b.createdAt);
+  const arva = brands.find((b) => b.slug === featured) ?? seedBrands[week % Math.max(1, seedBrands.length)] ?? brands[0];
   const onda = brands.find((b) => b.slug === "onda-studio") ?? brands[1];
   const pick = useMemo(() => dailyPick(products), [products]);
   const curated = useMemo(() => {

@@ -32,7 +32,7 @@ function DashInner() {
     { label: "Sales · 30d", value: money((seeded ? 12408 : 0) + revenue), delta: seeded ? "↑ 34% vs prev" : `${myOrders.length} live orders`, bg: "#1C3247", ink: "#F6F7F9" },
     { label: "Orders", value: String((seeded ? 86 : 0) + myOrders.length), delta: seeded ? "↑ 12 vs prev" : "since launch", bg: "#fff", ink: "#1A1A1A" },
     { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) && !seeded ? 1 : 0)).toLocaleString(), delta: seeded ? "↑ 214 new" : "share your page", bg: "#C7DCEF", ink: "#1A1A1A" },
-    { label: "Products", value: String(mine.length), delta: `${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#fff", ink: "#1A1A1A" },
+    { label: "Profile views", value: ((seeded ? 24100 : 0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#fff", ink: "#1A1A1A" },
   ];
   return (
     <div className="flex min-h-screen">

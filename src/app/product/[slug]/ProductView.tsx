@@ -10,7 +10,9 @@ import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos, toast, boards, createBoard, toggleInBoard } = useApp();
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [boardName, setBoardName] = useState("");
   useEffect(() => { markViewed(slug); }, [slug, markViewed]);
   const p = products.find((x) => x.slug === slug);
   const b = p ? brands.find((x) => x.slug === p.brand) : undefined;
@@ -29,7 +31,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
   const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;
-  const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); };
+  const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); toast(`${p.name} added to bag`); };
   const saved = isSaved(p.slug);
   const alertOn = alerts.includes(p.slug);
   const avg = own.length ? (own.reduce((s, r) => s + r.stars, 0) / own.length).toFixed(1) : "—";
@@ -69,9 +71,17 @@ export default function ProductView({ slug }: { slug: string }) {
           <div className="mb-4 flex items-center gap-3">
             <QtyStepper value={qty} onChange={setQty} className="!bg-white border border-black/8 !p-[6px]" />
             <Button size="lg" className={clsx("flex-1", soldOut && "!bg-black/8 !text-black/32 cursor-not-allowed")} onClick={add}>{soldOut ? "Sold out" : added ? "Added to bag ✓" : "Add to bag"}</Button>
-            <IconCircle size={52} variant={saved ? "black" : "white"} onClick={() => toggleSaved(p.slug)} className="hidden sm:grid text-[17px]">{saved ? "♥" : "♡"}</IconCircle>
-            <IconCircle size={52} variant="white" className="hidden sm:grid text-[16px]" onClick={() => navigator.share?.({ title: p.name, url: location.href })}>↗</IconCircle>
+            <IconCircle size={52} variant={saved ? "black" : "white"} onClick={() => { toggleSaved(p.slug); toast(saved ? "Removed from saved" : "Saved to your profile", "/account"); }} className="hidden sm:grid text-[17px]">{saved ? "♥" : "♡"}</IconCircle>
+            <IconCircle size={52} variant="white" onClick={() => setBoardOpen(!boardOpen)} className="hidden sm:grid text-[15px]" aria-label="Add to board">◇</IconCircle>
+            <IconCircle size={52} variant="white" className="hidden sm:grid text-[16px]" onClick={() => { if (navigator.share) navigator.share({ title: p.name, url: location.href }).catch(() => {}); else { navigator.clipboard?.writeText(location.href); toast("Link copied"); } }}>↗</IconCircle>
           </div>
+          {boardOpen && (
+            <div className="card mb-3 rounded-md p-3">
+              <Label className="mb-2">Add to a board</Label>
+              <div className="mb-2 flex flex-wrap gap-2">{boards.map((bd) => { const on = bd.products.includes(p.slug); return <button key={bd.id} onClick={() => { toggleInBoard(bd.id, p.slug); toast(on ? `Removed from ${bd.name}` : `Added to ${bd.name}`, "/account"); }} className={clsx("rounded-pill border px-3 py-[6px] text-[12px] font-medium", on ? "bg-black text-white border-black" : "bg-white border-black/10")}>{on ? "✓ " : ""}{bd.name}</button>; })}</div>
+              <form onSubmit={(e) => { e.preventDefault(); if (!boardName.trim()) return; createBoard(boardName, p.slug); toast(`Board “${boardName.trim()}” created`, "/account"); setBoardName(""); setBoardOpen(false); }} className="flex gap-2"><input value={boardName} onChange={(e) => setBoardName(e.target.value)} placeholder="New board name" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit">Create</Button></form>
+            </div>
+          )}
           <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sky" : "bg-offwhite")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-navy text-offwhite" : "bg-offwhite")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
           <div className="mb-6 md:mb-[30px] text-[12.5px] text-black/50">Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</div>
           <Accordion items={ACCORDIONS} />

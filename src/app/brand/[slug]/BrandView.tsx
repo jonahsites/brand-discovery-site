@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -14,8 +14,9 @@ import Countdown, { useNow } from "@/components/Countdown";
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views } = useApp();
   const router = useRouter();
+  useEffect(() => { if (hydrated) recordView(slug); }, [slug, hydrated, recordView]);
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
@@ -29,7 +30,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   return (
     <Page className="pt-0 md:pt-6">
       <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-lg">
-        {isOwner && <Link href="/dashboard" className="absolute right-5 top-5 rounded-pill bg-black px-4 py-2 text-[12px] font-semibold text-white">Edit in dashboard</Link>}
+        <div className="absolute right-5 top-5 flex gap-2">{isOwner && <Link href="/dashboard" className="rounded-pill bg-black px-4 py-2 text-[12px] font-semibold text-white">Edit in dashboard</Link>}<button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="glass-chip grid h-[38px] w-[38px] place-items-center rounded-pill text-[14px]" aria-label="Share">↗</button></div>
       </Placeholder>
 
       <div className="relative -mt-[38px] md:-mt-[52px] flex flex-col md:flex-row md:items-end gap-4 md:gap-6 md:px-2">
@@ -41,6 +42,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         <div className="flex flex-none items-center gap-3 md:gap-[22px] md:pb-3">
           <div className="hidden md:block text-right"><div className="text-[20px] font-semibold tracking-[-.02em]">{own.length}</div><div className="label !text-[10px]">Items</div></div>
           <div className="hidden md:block text-right"><div className="text-[20px] font-semibold tracking-[-.02em]">{followers.toLocaleString()}</div><div className="label !text-[10px]">Followers</div></div>
+          {isOwner && <div className="hidden md:block text-right"><div className="text-[20px] font-semibold tracking-[-.02em]">{(views[b.slug] ?? 0).toLocaleString()}</div><div className="label !text-[10px]">Views</div></div>}
           <FollowButton slug={b.slug} size="lg" className="flex-1 md:flex-none" />
           <Button variant="secondary" className="flex-1 md:flex-none" onClick={() => { const id = sendMessage(b.slug, `Hi ${b.name} — quick question about sizing.`, "shopper"); router.push(`/messages?t=${id}`); }}>Message</Button>
         </div>

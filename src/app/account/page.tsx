@@ -12,7 +12,8 @@ export default function Account() { return <Suspense><AccountInner /></Suspense>
 
 function AccountInner() {
   const sp = useSearchParams();
-  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper } = useApp();
+  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo } = useApp();
+  const [newBoard, setNewBoard] = useState("");
   const [tab, setTab] = useState(sp.get("tab") ?? "Saved");
   const [addTag, setAddTag] = useState(false);
   const [editName, setEditName] = useState(false);
@@ -40,7 +41,17 @@ function AccountInner() {
       <div className="grid gap-7 lg:grid-cols-[1fr_400px] items-start">
         <div>
           <div className={clsx(tab !== "Saved" && "hidden md:block")}>
-            <div className="mb-4 flex items-baseline justify-between"><h3 className="text-[20px] font-semibold tracking-[-.025em]">Saved · {savedP.length} pieces</h3><span className="text-[12.5px] font-semibold text-navy">Create a board →</span></div>
+            <h3 className="mb-4 text-[20px] font-semibold tracking-[-.025em]">Boards · {boards.length}</h3>
+            <div className="mb-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {boards.map((bd) => { const ps = bd.products.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p); return (
+                <div key={bd.id} className="card rounded-lg p-3">
+                  <div className="mb-3 grid grid-cols-3 gap-1">{[0, 1, 2].map((i) => <Placeholder key={i} src={ps[i]?.image} className="h-[74px] rounded-[8px]" />)}</div>
+                  <div className="flex items-center justify-between px-1"><div><div className="text-[14px] font-semibold tracking-[-.02em]">{bd.name}</div><div className="mono text-[10.5px] text-black/45">{ps.length} piece{ps.length === 1 ? "" : "s"}</div></div><button onClick={() => deleteBoard(bd.id)} className="text-[12px] text-black/40">✕</button></div>
+                  {ps.length > 0 && <div className="mt-2 flex flex-wrap gap-1 px-1">{ps.slice(0, 3).map((p) => <Link key={p.slug} href={`/product/${p.slug}`} className="rounded-pill bg-offwhite px-2 py-[3px] text-[11px]">{p.name}</Link>)}</div>}
+                </div>); })}
+              <form onSubmit={(e) => { e.preventDefault(); if (!newBoard.trim()) return; createBoard(newBoard); setNewBoard(""); }} className="flex flex-col justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-black/14 p-4"><Label>New board</Label><input value={newBoard} onChange={(e) => setNewBoard(e.target.value)} placeholder="Winter capsule" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit" className="self-start">Create</Button></form>
+            </div>
+            <div className="mb-4 flex items-baseline justify-between"><h3 className="text-[20px] font-semibold tracking-[-.025em]">Saved · {savedP.length} piece{savedP.length === 1 ? "" : "s"}</h3></div>
             <div className="mb-9 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">{savedP.map((p) => <ProductCard key={p.slug} p={p} />)}{savedP.length === 0 && <div className="col-span-full rounded-lg bg-white p-8 text-center text-[13.5px] text-black/55">Nothing saved yet. Tap ♡ on anything.</div>}</div>
           </div>
           <div className={clsx(tab !== "Orders" && "hidden md:block")}>
@@ -97,6 +108,7 @@ function AccountInner() {
             </div>
           </div>
           <div className="md:hidden flex flex-col gap-2">{session.role === "brand" ? <Link href="/dashboard"><Button full variant="navy">Brand dashboard</Button></Link> : <Link href="/sell"><Button full variant="secondary">Open a brand account</Button></Link>}</div>
+          <button onClick={() => { if (confirm("Reset all demo data on this device? Bag, orders, brands you created, everything.")) resetDemo(); }} className="text-left text-[12px] text-black/40 underline-offset-2 hover:underline">Reset demo data</button>
         </div>
       </div>
     </Page>

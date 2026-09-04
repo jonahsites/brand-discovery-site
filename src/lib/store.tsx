@@ -16,8 +16,10 @@ type Persisted = {
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
   lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number;
+  boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
 };
-type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
+type Toast = { id: string; text: string; href?: string };
+type State = Persisted & { bagOpen: boolean; searchOpen: boolean; toasts: Toast[] };
 
 type BagGroup = { brand: Brand; items: (BagItem & { p: Product; unit: number; total: number })[]; shipCost: number };
 type Ctx = State & {
@@ -50,6 +52,9 @@ type Ctx = State & {
   renameShopper: (name: string) => void;
   toggleWaitlist: (slug: string) => void; setFeatured: (slug?: string) => void;
   markViewed: (slug: string) => void; setRedeem: (points: number) => void;
+  toast: (text: string, href?: string) => void; dismissToast: (id: string) => void;
+  createBoard: (name: string, product?: string) => string; toggleInBoard: (id: string, product: string) => void; deleteBoard: (id: string) => void;
+  recordView: (brand: string) => void; resetDemo: () => void;
   notifications: { id: string; kind: "drop" | "price" | "order" | "message"; title: string; body: string; href: string; at: string }[];
 };
 
@@ -80,6 +85,7 @@ const DEFAULTS: Persisted = {
     { id: "post-fv-1", brand: "form-and-void", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
   ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0,
+  boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -87,7 +93,7 @@ const LS = "kindred.v2";
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>({ ...DEFAULTS, bagOpen: false, searchOpen: false });
+  const [state, setState] = useState<State>({ ...DEFAULTS, bagOpen: false, searchOpen: false, toasts: [] });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -100,7 +106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     if (!hydrated) return;
-    const { bagOpen: _b, searchOpen: _s, ...persist } = state; void _b; void _s;
+    const { bagOpen: _b, searchOpen: _s, toasts: _t, ...persist } = state; void _b; void _s; void _t;
     try { localStorage.setItem(LS, JSON.stringify(persist)); } catch {}
   }, [state, hydrated]);
   useEffect(() => {
@@ -174,7 +180,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         items: derived.bagGroups.flatMap((g) => g.items.map((i) => ({ product: i.p.slug, name: i.p.name, brand: g.brand.slug, variant: i.variant, qty: i.qty, unit: i.unit }))),
         subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit,
       };
-      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, redeem: 0 }));
+      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, redeem: 0, customProducts: p.customProducts.map((cp) => { const bought = order.items.filter((i) => i.product === cp.slug).reduce((s, i) => s + i.qty, 0); return bought && cp.stock !== undefined ? { ...cp, stock: Math.max(0, cp.stock - bought) } : cp; }) }));
       return order;
     },
     setOrderStatus: (id, status) => up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })),
@@ -204,6 +210,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFeatured: (featured) => up(() => ({ featured })),
     markViewed: (slug) => up((p) => (p.recent[0] === slug ? {} : { recent: [slug, ...p.recent.filter((s) => s !== slug)].slice(0, 12) })),
     setRedeem: (redeem) => up(() => ({ redeem: Math.max(0, Math.min(redeem, points)) })),
+    toast: (text, href) => { const id = uid(); up((p) => ({ toasts: [...p.toasts, { id, text, href }] })); setTimeout(() => setState((p) => ({ ...p, toasts: p.toasts.filter((t) => t.id !== id) })), 2600); },
+    dismissToast: (id) => up((p) => ({ toasts: p.toasts.filter((t) => t.id !== id) })),
+    createBoard: (name, product) => { const id = uid(); up((p) => ({ boards: [...p.boards, { id, name: name.trim() || "Untitled", products: product ? [product] : [] }] })); return id; },
+    toggleInBoard: (id, product) => up((p) => ({ boards: p.boards.map((b) => (b.id === id ? { ...b, products: toggleIn(b.products, product) } : b)) })),
+    deleteBoard: (id) => up((p) => ({ boards: p.boards.filter((b) => b.id !== id) })),
+    recordView: (brand) => up((p) => ({ views: { ...p.views, [brand]: (p.views[brand] ?? 0) + 1 } })),
+    resetDemo: () => { try { localStorage.removeItem(LS); } catch {} setState({ ...DEFAULTS, bagOpen: false, searchOpen: false, toasts: [] }); },
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
