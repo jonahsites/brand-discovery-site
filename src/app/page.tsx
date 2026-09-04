@@ -33,7 +33,7 @@ function HomeInner() {
   }, [styleTags, brands, products, promos]);
   const followingProducts = products.filter((p) => follows.includes(p.brand)).slice(0, 8);
   const newBrands = [...brands].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || a.followers - b.followers).slice(0, 4);
-  const upcoming = [...drops].filter((d) => new Date(d.at).getTime() > now - 864e5).sort((a, b) => a.at.localeCompare(b.at));
+  const upcoming = [...drops].filter((d) => new Date(d.at).getTime() > (now || 864e5) - 864e5).sort((a, b) => a.at.localeCompare(b.at));
 
   return (
     <Page className="pt-4 md:pt-6">
@@ -67,7 +67,7 @@ function HomeInner() {
             <div className="mb-6 flex flex-col gap-4">
               {upcoming.map((d, i) => { const b = brands.find((x) => x.slug === d.brand); if (!b) return null; const on = notify.includes(d.id); const dark = i % 2 === 0; return (
                 <div key={d.id} className={clsx("rounded-lg p-6 md:p-[34px]", dark ? "bg-navy text-offwhite" : "bg-sky")}>
-                  <div className="mb-3 flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={36} /><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><span className={clsx("mono text-[11px]", dark ? "text-offwhite/60" : "text-black/50")}>{new Date(d.at).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })}</span></div>
+                  <div className="mb-3 flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={36} /><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><span suppressHydrationWarning className={clsx("mono text-[11px]", dark ? "text-offwhite/60" : "text-black/50")}>{new Date(d.at).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })}</span></div>
                   <h2 className="mb-2 text-[28px] md:text-[36px] font-bold leading-[1.02] tracking-[-.04em]">{d.title}</h2>
                   <p className={clsx("mb-5 max-w-[420px] text-[14px] leading-[1.55]", dark ? "text-offwhite/72" : "text-black/65")}>{d.pieces} pieces. {d.blurb}</p>
                   <div className="flex flex-wrap items-center gap-4"><Countdown at={d.at} dark={dark} /><button onClick={() => toggleNotify(d.id)} className={clsx("press rounded-pill px-5 py-3 text-[13px] font-semibold", on ? (dark ? "bg-peri text-ink" : "bg-black text-white") : dark ? "bg-offwhite/12 text-offwhite border border-offwhite/20" : "bg-white border border-black/10")}>{on ? "✓ You'll be notified" : "Notify me"}</button></div>
@@ -80,7 +80,7 @@ function HomeInner() {
             <div className="mb-6">
               {posts.filter((x) => follows.includes(x.brand)).map((x) => { const b = brands.find((y) => y.slug === x.brand); if (!b) return null; return (
                 <div key={x.id} className="card mb-4 rounded-lg p-4 md:p-6">
-                  <div className="mb-4 flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1"><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><div className="text-[12px] text-black/45">{new Date(x.at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div></div><FollowButton slug={b.slug} size="sm" /></div>
+                  <div className="mb-4 flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1"><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><div className="text-[12px] text-black/45" suppressHydrationWarning>{new Date(x.at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div></div><FollowButton slug={b.slug} size="sm" /></div>
                   <Placeholder src={x.image} label="Post" className="mb-4 h-[260px] md:h-[380px] rounded-md" />
                   <p className="mb-3 text-[14px] leading-[1.6] text-black/72">{x.caption}</p>
                   <div className="flex flex-wrap items-center gap-2">{x.products.map((s) => { const p = products.find((y) => y.slug === s); return p ? <Link key={s} href={`/product/${s}`} className="rounded-pill bg-offwhite px-3 py-[6px] text-[12px] font-medium">{p.name} · {money(priceOf(p).price)}</Link> : null; })}<button onClick={() => likePost(x.id)} className="ml-auto text-[13px] font-medium text-black/55">♡ {x.likes}</button></div>
@@ -106,7 +106,7 @@ function HomeInner() {
                 <Link href={`/product/${pick.slug}`} className="card mb-6 flex items-center gap-5 rounded-lg p-4 md:p-5 lift">
                   <Placeholder label="Today" className="h-[96px] w-[84px] flex-none rounded-[10px]" />
                   <div className="min-w-0 flex-1">
-                    <div className="label mb-1">Today&apos;s pick · {new Date().toLocaleDateString(undefined, { weekday: "long" })}</div>
+                    <div className="label mb-1" suppressHydrationWarning>Today&apos;s pick · {new Date().toLocaleDateString(undefined, { weekday: "long" })}</div>
                     <div className="text-[17px] font-semibold tracking-[-.02em]">{pick.name}</div>
                     <div className="text-[12.5px] text-black/50">{brands.find((b) => b.slug === pick.brand)?.name} · {money(priceOf(pick).price)}{priceOf(pick).promo ? ` · ${priceOf(pick).promo!.pct}% off today` : ""}</div>
                   </div>

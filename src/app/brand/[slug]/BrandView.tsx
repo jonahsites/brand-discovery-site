@@ -24,7 +24,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-black/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-navy">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
   const books = allLookbooks.filter((l) => l.brand === b.slug);
-  const drop = drops.find((d) => d.brand === b.slug && new Date(d.at).getTime() > now);
+  const drop = drops.find((d) => d.brand === b.slug && new Date(d.at).getTime() > (now || 0));
   const promo = promos.find((p) => p.active && p.brand === b.slug);
   const isOwner = session.role === "brand" && session.brand === b.slug;
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
@@ -61,7 +61,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
       {(drop || promo) && (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {drop && <div className="rounded-lg bg-navy p-6 text-offwhite"><Label light className="mb-2">Next drop</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{drop.title}</div><div className="mb-4 text-[13px] text-offwhite/70">{drop.pieces} pieces · {drop.blurb}</div><Countdown at={drop.at} dark /></div>}
-          {promo && <div className="rounded-lg bg-peri p-6"><Label className="mb-2">Promo running</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{promo.pct}% off · {promo.label}</div><div className="text-[13px] text-black/60">Use code <span className="mono font-semibold text-ink">{promo.code}</span> at checkout{promo.ends ? ` · ends ${new Date(promo.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</div></div>}
+          {promo && <div className="rounded-lg bg-peri p-6"><Label className="mb-2">Promo running</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{promo.pct}% off · {promo.label}</div><div className="text-[13px] text-black/60" suppressHydrationWarning>Use code <span className="mono font-semibold text-ink">{promo.code}</span> at checkout{promo.ends ? ` · ends ${new Date(promo.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</div></div>}
         </div>
       )}
 

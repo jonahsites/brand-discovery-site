@@ -24,7 +24,7 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="mono mx-auto flex max-w-[1440px] items-center justify-between px-4 pb-8 text-[10.5px] text-black/40 md:px-10"><span>© {new Date().getFullYear()} Kindred</span><span>Made for small brands</span></div>
+      <div className="mono mx-auto flex max-w-[1440px] items-center justify-between px-4 pb-8 text-[10.5px] text-black/40 md:px-10"><span suppressHydrationWarning>© {new Date().getFullYear()} Kindred</span><span>Made for small brands</span></div>
     </footer>
   );
 }
