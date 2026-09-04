@@ -10,7 +10,7 @@ import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist } = useApp();
   const p = products.find((x) => x.slug === slug);
   const b = p ? brands.find((x) => x.slug === p.brand) : undefined;
   const sizes = p?.sizes?.length ? p.sizes : b ? sizesBetween(b.sizeRange) : SIZES;
@@ -70,7 +70,7 @@ export default function ProductView({ slug }: { slug: string }) {
             <IconCircle size={52} variant={saved ? "black" : "white"} onClick={() => toggleSaved(p.slug)} className="hidden sm:grid text-[17px]">{saved ? "♥" : "♡"}</IconCircle>
             <IconCircle size={52} variant="white" className="hidden sm:grid text-[16px]" onClick={() => navigator.share?.({ title: p.name, url: location.href })}>↗</IconCircle>
           </div>
-          <button onClick={() => toggleAlert(p.slug)} className={clsx("mb-2 rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sky" : "bg-offwhite")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>
+          <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sky" : "bg-offwhite")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-navy text-offwhite" : "bg-offwhite")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
           <div className="mb-6 md:mb-[30px] text-[12.5px] text-black/50">Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</div>
           <Accordion items={ACCORDIONS} />
         </div>

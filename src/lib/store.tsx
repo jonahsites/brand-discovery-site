@@ -15,7 +15,7 @@ type Persisted = {
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
-  lookbooks: Lookbook[];
+  lookbooks: Lookbook[]; waitlist: string[]; featured?: string;
 };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
 
@@ -48,6 +48,8 @@ type Ctx = State & {
   allLookbooks: Lookbook[];
   upsertLookbook: (l: Lookbook) => void; deleteLookbook: (slug: string) => void;
   renameShopper: (name: string) => void;
+  toggleWaitlist: (slug: string) => void; setFeatured: (slug?: string) => void;
+  notifications: { id: string; kind: "drop" | "price" | "order" | "message"; title: string; body: string; href: string; at: string }[];
 };
 
 const DEFAULT_BAG: BagItem[] = [
@@ -76,7 +78,7 @@ const DEFAULTS: Persisted = {
     { id: "post-os-1", brand: "onda-studio", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
-  ], threads: [], sizeOnly: false, lookbooks: [],
+  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [],
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -131,10 +133,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { bagGroups, subtotal, shipTotal, discount, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
   }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, brands]);
   const allLookbooks = useMemo(() => [...state.lookbooks, ...LOOKBOOKS.filter((l) => !state.lookbooks.some((c) => c.slug === l.slug))], [state.lookbooks]);
+  const notifications = useMemo(() => {
+    const out: Ctx["notifications"] = [];
+    for (const id of state.notify) { const d = state.drops.find((x) => x.id === id); const b = d && brands.find((x) => x.slug === d.brand); if (d && b) out.push({ id: "n-" + id, kind: "drop", title: `${b.name} drops ${d.title}`, body: new Date(d.at).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" }), href: "/?feed=Drops", at: d.at }); }
+    for (const slug of state.alerts) { const p = products.find((x) => x.slug === slug); if (!p) continue; const e = effectivePrice(p, state.promos); if (e.price < p.price) out.push({ id: "p-" + slug, kind: "price", title: `${p.name} dropped to $${e.price}`, body: `was $${p.price} · ${e.promo?.label ?? "on sale"}`, href: `/product/${slug}`, at: new Date().toISOString() }); }
+    for (const o of state.orders.slice(0, 3)) out.push({ id: "o-" + o.id, kind: "order", title: `Order #${o.id} · ${o.status}`, body: `${o.items.length} piece${o.items.length === 1 ? "" : "s"} · $${o.total.toFixed(2)}`, href: "/account?tab=Orders", at: o.placedAt });
+    for (const t of state.threads) { const last = t.messages[t.messages.length - 1]; const b = brands.find((x) => x.slug === t.brand); if (last && b && ((state.session.role === "brand") !== (last.from === "brand"))) out.push({ id: "m-" + t.id, kind: "message", title: state.session.role === "brand" ? `${t.shopper} messaged you` : `${b.name} replied`, body: last.text, href: `/messages?t=${t.id}`, at: last.at }); }
+    return out.sort((a, b) => b.at.localeCompare(a.at));
+  }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
   const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal), 0), [state.orders]);
 
   const value: Ctx = {
-    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks,
+    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
@@ -187,6 +197,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     upsertLookbook: (l) => up((p) => ({ lookbooks: [l, ...p.lookbooks.filter((x) => x.slug !== l.slug)] })),
     deleteLookbook: (slug) => up((p) => ({ lookbooks: p.lookbooks.filter((x) => x.slug !== slug) })),
     renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
+    toggleWaitlist: (slug) => up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })),
+    setFeatured: (featured) => up(() => ({ featured })),
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

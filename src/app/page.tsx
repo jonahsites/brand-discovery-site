@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
 import { CATEGORIES, money } from "@/lib/data";
@@ -12,11 +13,14 @@ import { Avatar, Button, Placeholder, SectionHead, Verified, Page } from "@/comp
 
 const FEEDS = ["For you", "Following", "Drops"];
 
-export default function Home() {
-  const [feed, setFeed] = useState("For you");
+export default function Home() { return <Suspense><HomeInner /></Suspense>; }
+
+function HomeInner() {
+  const sp = useSearchParams();
+  const [feed, setFeed] = useState(sp.get("feed") ?? "For you");
   const now = useNow();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost } = useApp();
-  const arva = brands.find((b) => b.slug === "studio-arva") ?? brands[0];
+  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured } = useApp();
+  const arva = brands.find((b) => b.slug === featured) ?? brands.find((b) => b.slug === "studio-arva") ?? brands[0];
   const onda = brands.find((b) => b.slug === "onda-studio") ?? brands[1];
   const pick = useMemo(() => dailyPick(products), [products]);
   const curated = useMemo(() => {
@@ -88,11 +92,11 @@ export default function Home() {
               <div className="relative mb-6 flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-[34px] overflow-hidden rounded-lg bg-sky p-6 md:p-[38px]">
                 <div className="flex-1">
                   <div className="label mb-[14px] !text-black/48">Brand of the week</div>
-                  <h2 className="mb-3 text-[30px] md:text-[40px] font-bold leading-[1.02] tracking-[-.04em]">Minimalism for the messy.</h2>
-                  <p className="mb-[22px] max-w-[390px] text-[14.5px] leading-[1.55] text-black/66">{arva.name} cuts heavyweight cotton in a two-person {arva.city} workshop. {products.filter((p) => p.brand === arva.slug).length} pieces, no seasons.</p>
+                  <h2 className="mb-3 text-[30px] md:text-[40px] font-bold leading-[1.02] tracking-[-.04em]">{arva.slug === "studio-arva" ? "Minimalism for the messy." : arva.tagline}</h2>
+                  <p className="mb-[22px] max-w-[390px] text-[14.5px] leading-[1.55] text-black/66">{arva.slug === "studio-arva" ? `${arva.name} cuts heavyweight cotton in a two-person ${arva.city} workshop. ${products.filter((p) => p.brand === arva.slug).length} pieces, no seasons.` : `${arva.name}, ${arva.city}. ${arva.story?.split(". ")[0] ?? ""}${arva.story ? "." : ""} ${products.filter((p) => p.brand === arva.slug).length} pieces.`}</p>
                   <div className="flex flex-wrap items-center gap-[10px]"><Link href={`/brand/${arva.slug}`}><Button>Shop the drop</Button></Link><Link href={`/brand/${arva.slug}?tab=About`}><Button variant="ghost">Read the story</Button></Link></div>
                 </div>
-                <div className="relative h-[240px] w-full md:h-[300px] md:w-[320px] flex-none rounded-xl bg-white"><Placeholder label="Hero product shot" className="absolute inset-[22px] rounded-[9px]" /><Link href="/product/heavyweight-crew" className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-pill bg-black text-[16px] text-white">↗</Link></div>
+                <div className="relative h-[240px] w-full md:h-[300px] md:w-[320px] flex-none rounded-xl bg-white"><Placeholder src={products.find((p) => p.brand === arva.slug && p.image)?.image} label="Hero product shot" className="absolute inset-[22px] rounded-[9px]" /><Link href={`/product/${products.find((p) => p.brand === arva.slug)?.slug ?? "heavyweight-crew"}`} className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-pill bg-black text-[16px] text-white">↗</Link></div>
               </div>
 
               {pick && (
