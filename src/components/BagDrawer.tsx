@@ -28,7 +28,7 @@ export default function BagDrawer() {
             </div>
             {g.items.map((it) => (
               <div key={it.key} className="flex items-center gap-3 py-2">
-                <Placeholder className="h-16 w-14 flex-none rounded-sm" />
+                <Placeholder src={it.p.image} className="h-16 w-14 flex-none rounded-sm" />
                 <div className="min-w-0 flex-1">
                   <div className="mb-[3px] text-[13px] font-medium leading-[1.3]">{it.p.name}</div>
                   <div className="text-[11px] text-ink/48">{it.variant}</div>

@@ -1,5 +1,7 @@
+"use client";
 /* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 import clsx from "clsx";
+import { useState } from "react";
 import type { ReactNode, ButtonHTMLAttributes, CSSProperties } from "react";
 
 export function Avatar({ init, tint, ink, size = 44, radius, className, src }: { init: string; tint: string; ink?: string; size?: number; radius?: number; className?: string; src?: string }) {
@@ -14,9 +16,11 @@ export function Avatar({ init, tint, ink, size = 44, radius, className, src }: {
 }
 
 export function Placeholder({ label, className, style, children, wide, src, alt }: { label?: string; className?: string; style?: CSSProperties; children?: ReactNode; wide?: boolean; src?: string; alt?: string }) {
+  const [broken, setBroken] = useState(false);
+  const showImg = src && !broken;
   return (
-    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", !src && (wide ? "stripes-wide" : "stripes"), src && "bg-moss", className)} style={style}>
-      {src ? <img src={src} alt={alt ?? label ?? ""} loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : label && <span className="mono text-[9px] font-medium uppercase tracking-[.1em] text-ink/30">{label}</span>}
+    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", !showImg && (wide ? "stripes-wide" : "stripes"), showImg && "bg-moss", className)} style={style}>
+      {showImg ? <img src={src} alt={alt ?? label ?? ""} loading="lazy" decoding="async" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover" /> : label ? <span className="mono text-[9px] font-medium uppercase tracking-[.1em] text-ink/30">{label}</span> : null}
       {children}
     </div>
   );
