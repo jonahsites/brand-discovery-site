@@ -6,7 +6,7 @@ import { useApp } from "@/lib/store";
 export default function TopNav() {
   const { bagCount, openBag, openSearch, session } = useApp();
   const path = usePathname();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding")) return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell")) return null;
   return (
     <header className="glass-bar sticky top-0 z-40 h-[64px] md:h-[76px]">
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-10">

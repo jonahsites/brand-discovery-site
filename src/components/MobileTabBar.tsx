@@ -7,7 +7,7 @@ import { useApp } from "@/lib/store";
 export default function MobileTabBar() {
   const path = usePathname();
   const { openBag, openSearch } = useApp();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout")) return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell")) return null;
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   return (
     <div className="glass fixed inset-x-5 bottom-[22px] z-40 flex h-[66px] items-center justify-between rounded-pill px-[14px] md:hidden">

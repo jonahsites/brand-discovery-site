@@ -21,6 +21,7 @@ function BrandsInner() {
   const [values, setValues] = useState<string[]>([]);
   const [country, setCountry] = useState("All");
   const [sort, setSort] = useState(SORTS[0]);
+  const [showFilters, setShowFilters] = useState(false);
   const countries = useMemo(() => ["All", ...new Set(brands.map((b) => b.country))], [brands]);
   const list = useMemo(() => {
     let l = brands.filter((b) => (tier.length === 0 || tier.includes(brandTier(b.followers))) && (style === "All" || b.styles.includes(style)) && (values.length === 0 || values.some((v) => b.values.includes(v))) && (country === "All" || b.country === country));
@@ -41,10 +42,10 @@ function BrandsInner() {
       <Page className="pt-6">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-bold leading-[1.05] tracking-[-.035em]">{style === "All" ? "Every brand on Kindred" : `${style} brands`}</h1><div className="text-[12.5px] text-black/48">{list.length} independent label{list.length === 1 ? "" : "s"} · {list.filter((b) => brandTier(b.followers) === "Indie").length} under 1k followers</div></div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select>
+          <div className="flex gap-2"><button onClick={() => setShowFilters(!showFilters)} className={clsx("lg:hidden rounded-pill border px-4 py-[10px] text-[12.5px] font-semibold", showFilters ? "bg-black text-white border-black" : "bg-white border-black/10")}>≡ Filters{tier.length + values.length + (country !== "All" ? 1 : 0) > 0 ? ` · ${tier.length + values.length + (country !== "All" ? 1 : 0)}` : ""}</button><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select></div>
         </div>
         <div className="grid gap-6 lg:grid-cols-[240px_1fr] items-start">
-          <aside className="flex flex-col gap-6 lg:sticky lg:top-[170px]">
+          <aside className={clsx("flex-col gap-6 lg:sticky lg:top-[170px] lg:flex", showFilters ? "flex" : "hidden")}>
             <div><Label className="mb-3">Brand size</Label><div className="flex flex-wrap gap-[6px]">{TIERS.map((t) => <button key={t} onClick={() => tog(tier, t, setTier)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", tier.includes(t) ? "bg-black text-white border-black" : "bg-white border-black/10")}>{t}</button>)}</div></div>
             <div><Label className="mb-3">Based in</Label><div className="flex flex-wrap gap-[6px]">{countries.map((c) => <button key={c} onClick={() => setCountry(c)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", country === c ? "bg-black text-white border-black" : "bg-white border-black/10")}>{c}</button>)}</div></div>
             <div><Label className="mb-3">Values</Label><div className="flex flex-wrap gap-[6px]">{VALUE_OPTIONS.map((v) => <button key={v} onClick={() => tog(values, v, setValues)} className={clsx("rounded-pill border px-3 py-[7px] text-[12px] font-medium", values.includes(v) ? "bg-navy text-offwhite border-navy" : "bg-white border-black/10")}>{v}</button>)}</div></div>

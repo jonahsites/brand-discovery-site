@@ -64,7 +64,7 @@ export default function Sell() {
         <div className="absolute -left-[120px] -top-[80px] h-[520px] w-[520px] rounded-pill bg-peri opacity-60" />
         <div className="absolute -bottom-[140px] -right-[120px] h-[600px] w-[600px] rounded-pill bg-sky opacity-50" />
       </div>
-      <div className="relative mx-auto max-w-[960px] px-4 py-6 md:py-12">
+      <div className="relative mx-auto max-w-[960px] px-4 py-6 pb-16 md:py-12">
         <div className="mb-5 flex items-center justify-between">
           <Link href="/" className="text-[19px] font-extrabold tracking-[-.035em]">Kindred</Link>
           <div className="mono text-[11px] text-black/45">Brand account · {completeness}% complete</div>
