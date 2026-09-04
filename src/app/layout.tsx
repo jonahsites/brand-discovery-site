@@ -1,20 +1,46 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Schibsted_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AppProvider } from "@/lib/store";
+import TopNav from "@/components/TopNav";
+import MobileTabBar from "@/components/MobileTabBar";
+import BagDrawer from "@/components/BagDrawer";
+import SearchOverlay from "@/components/SearchOverlay";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-schibsted",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+const jetbrains = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
 
 export const metadata: Metadata = {
-  title: "Find your next favorite clothing brand",
-  description:
-    "Discover independent clothing brands, follow the ones you love, and shop them all in one place.",
+  title: { default: "Kindred", template: "%s · Kindred" },
+  description: "Find your next favorite clothing brand. Independent labels, one bag, one checkout.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f6f7f9",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${schibsted.variable} ${jetbrains.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col">
+        <AppProvider>
+          <TopNav />
+          <div className="flex-1 pb-28 md:pb-0">{children}</div>
+          <MobileTabBar />
+          <BagDrawer />
+          <SearchOverlay />
+        </AppProvider>
+      </body>
     </html>
   );
 }
