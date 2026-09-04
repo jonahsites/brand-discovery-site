@@ -10,8 +10,9 @@ import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos, toast, boards, createBoard, toggleInBoard } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
   const [boardOpen, setBoardOpen] = useState(false);
+  const [guide, setGuide] = useState(false);
   const [boardName, setBoardName] = useState("");
   useEffect(() => { markViewed(slug); }, [slug, markViewed]);
   const p = products.find((x) => x.slug === slug);
@@ -31,6 +32,8 @@ export default function ProductView({ slug }: { slug: string }) {
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).slice(0, 4);
   const similar = searchCatalog([p.category, ...(p.tags ?? []), ...b.styles.slice(0, 2), ...b.moods.slice(0, 3)].join(" "), brands, products.filter((x) => x.brand !== b.slug), promos).products.map((h) => h.item).slice(0, 4);
   const soldOut = p.stock === 0;
+  const inLooks = allLookbooks.filter((l) => l.frames.some((f) => f.product === p.slug));
+  const completeLook = [...new Set(inLooks.flatMap((l) => l.frames.map((f) => f.product)).filter((s): s is string => !!s && s !== p.slug))].map((s) => products.find((x) => x.slug === s)).filter((x): x is NonNullable<typeof x> => !!x).slice(0, 4);
   const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); toast(`${p.name} added to bag`); };
   const saved = isSaved(p.slug);
   const alertOn = alerts.includes(p.slug);
@@ -60,7 +63,7 @@ export default function ProductView({ slug }: { slug: string }) {
             {compareAt && <><span className="text-[17px] text-black/35 line-through">{money(compareAt)}</span><Tag>{Math.round((1 - price / compareAt) * 100)}% off{promo ? ` · ${promo.label}` : ""}</Tag></>}
           </div>
           {p.description && <p className="mb-6 max-w-[520px] text-[14px] leading-[1.6] text-black/65">{p.description}</p>}
-          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><span className="text-[12px] font-medium text-navy">Size guide</span></div>
+          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-medium text-navy">Size guide</button></div>
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
             {sizes.map((s) => <button key={s} onClick={() => { setSize(s); setAdded(false); }} className={clsx("press flex-1 md:flex-none md:min-w-[62px] rounded-pill border py-[13px] md:py-[14px] text-[13px] md:text-[14px] font-medium", size === s ? "bg-sky border-sky" : "bg-white border-black/11")}>{s}</button>)}
           </div>
@@ -88,6 +91,17 @@ export default function ProductView({ slug }: { slug: string }) {
         </div>
       </div>
 
+      {completeLook.length > 0 && <><SectionHead title="Complete the look" sub={`Worn together in ${inLooks[0].title}`} action="See the lookbook" href={`/lookbook/${inLooks[0].slug}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{completeLook.map((x) => <ProductCard key={x.slug} p={x} showBrand={x.brand !== b.slug} />)}</div></>}
+      {guide && (
+        <div className="fixed inset-0 z-50"><div onClick={() => setGuide(false)} className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
+          <div className="glass absolute left-1/2 top-1/2 w-[min(560px,calc(100%-24px))] -translate-x-1/2 -translate-y-1/2 rounded-lg p-6">
+            <div className="mb-1 flex items-center justify-between"><div className="text-[20px] font-bold tracking-[-.03em]">Size guide · {b.name}</div><button onClick={() => setGuide(false)} className="grid h-9 w-9 place-items-center rounded-pill bg-white/85 text-[14px]">✕</button></div>
+            <div className="mb-4 text-[12.5px] text-black/55">Body measurements in cm. {b.name} cuts {b.sizeRange[0]}–{b.sizeRange[1]}; your profile says {session.name.split(" ")[0]} wears <span className="font-semibold text-ink">{size}</span>.</div>
+            <div className="overflow-x-auto rounded-md bg-white/80"><table className="w-full text-[12.5px]"><thead><tr className="label !text-[9.5px]"><th className="px-3 py-2 text-left">Size</th><th className="px-3 py-2 text-left">Chest</th><th className="px-3 py-2 text-left">Waist</th><th className="px-3 py-2 text-left">Length</th></tr></thead><tbody>{sizes.map((s, i) => <tr key={s} className={clsx(s === size && "bg-sky/60")}><td className="px-3 py-2 font-semibold">{s}</td><td className="px-3 py-2">{92 + i * 6}–{97 + i * 6}</td><td className="px-3 py-2">{76 + i * 6}–{81 + i * 6}</td><td className="px-3 py-2">{66 + i * 2}</td></tr>)}</tbody></table></div>
+            <div className="mt-3 text-[12px] text-black/50">Reviews say this piece runs {fitAvg < 1.7 ? "small" : fitAvg > 2.3 ? "large" : "true to size"}. Free returns for 30 days if it doesn&apos;t.</div>
+          </div>
+        </div>
+      )}
       <SectionHead title={`More from ${b.name}`} action="Visit brand" href={`/brand/${b.slug}`} />
       <div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{more.map((x) => <ProductCard key={x.slug} p={x} showBrand={false} />)}{more.length === 0 && <div className="col-span-full text-[13px] text-black/50">This is {b.name}&apos;s only piece so far.</div>}</div>
       {similar.length > 0 && <><SectionHead title="Similar from other brands" sub={`Matched on ${p.category.toLowerCase()} and ${b.moods.slice(0, 2).join(", ")}`} action="Explore" href={`/explore?q=${encodeURIComponent(p.category + " " + b.moods.slice(0, 2).join(" "))}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{similar.map((x) => <ProductCard key={x.slug} p={x} />)}</div></>}

@@ -14,6 +14,8 @@ function AccountInner() {
   const sp = useSearchParams();
   const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo } = useApp();
   const [newBoard, setNewBoard] = useState("");
+  const [openOrder, setOpenOrder] = useState<string | null>(null);
+  const STEPS = ["Placed", "Packed", "In transit", "Delivered"] as const;
   const [tab, setTab] = useState(sp.get("tab") ?? "Saved");
   const [addTag, setAddTag] = useState(false);
   const [editName, setEditName] = useState(false);
@@ -57,14 +59,23 @@ function AccountInner() {
           <div className={clsx(tab !== "Orders" && "hidden md:block")}>
             <h3 className="mb-4 text-[20px] font-semibold tracking-[-.025em]">Order history</h3>
             <div className="mb-9 flex flex-col gap-3">
-              {allOrders.map((o) => (
-                <div key={o.key} className="card flex items-center gap-4 md:gap-[18px] rounded-2xl px-5 py-4 md:px-6 md:py-5">
-                  <Placeholder className="h-[52px] w-[52px] flex-none rounded-[9px]" />
-                  <div className="min-w-0 flex-1"><div className="mb-1 text-[14px] font-semibold">{o.title}</div><div className="mono text-[11.5px] text-black/42">{o.meta}</div></div>
-                  <span className="hidden sm:inline rounded-pill px-4 py-2 text-[11px] font-semibold uppercase tracking-[.08em]" style={{ background: o.tint, color: o.ink }}>{o.status}</span>
-                  <span className="text-[14px] font-medium">{o.total}</span>
-                </div>
-              ))}
+              {allOrders.map((o) => { const real = orders.find((x) => x.id === o.key); const idx = Math.max(0, STEPS.indexOf(o.status as (typeof STEPS)[number])); return (
+                <div key={o.key} className="card rounded-2xl">
+                  <button onClick={() => setOpenOrder(openOrder === o.key ? null : o.key)} className="flex w-full items-center gap-4 md:gap-[18px] px-5 py-4 md:px-6 md:py-5 text-left">
+                    <Placeholder src={real ? products.find((p) => p.slug === real.items[0]?.product)?.image : undefined} className="h-[52px] w-[52px] flex-none rounded-[9px]" />
+                    <div className="min-w-0 flex-1"><div className="mb-1 text-[14px] font-semibold">{o.title}</div><div className="mono text-[11.5px] text-black/42">{o.meta}</div></div>
+                    <span className="hidden sm:inline rounded-pill px-4 py-2 text-[11px] font-semibold uppercase tracking-[.08em]" style={{ background: o.tint, color: o.ink }}>{o.status}</span>
+                    <span className="text-[14px] font-medium">{o.total}</span>
+                  </button>
+                  {openOrder === o.key && (
+                    <div className="border-t border-black/6 px-5 py-4 md:px-6">
+                      <div className="mb-4 flex items-center gap-2">{STEPS.map((s, i) => <div key={s} className="flex flex-1 items-center gap-2"><div className={clsx("h-[6px] flex-1 rounded-pill", i <= idx ? "bg-navy" : "bg-black/10")} /></div>)}</div>
+                      <div className="mb-4 flex justify-between text-[10.5px] font-semibold uppercase tracking-[.1em]">{STEPS.map((s, i) => <span key={s} className={i <= idx ? "text-ink" : "text-black/35"}>{s}</span>)}</div>
+                      {real ? <div className="flex flex-col gap-2">{real.items.map((it, i) => <Link key={i} href={`/product/${it.product}`} className="flex items-center justify-between rounded-md bg-offwhite px-4 py-[10px] text-[13px]"><span><span className="font-medium">{it.name}</span> <span className="text-black/50">· {it.variant} · ×{it.qty}</span></span><span className="font-medium">{money(it.unit * it.qty, true)}</span></Link>)}<div className="mono mt-1 text-[11px] text-black/45">Shipping {money(real.shipping, true)}{real.credit ? ` · points −${money(real.credit, true)}` : ""}{real.promo ? ` · code ${real.promo}` : ""} · Kindred holds payment until each parcel scans.</div></div>
+                        : <div className="text-[12.5px] text-black/50">Demo order. Real orders you place show their pieces here.</div>}
+                    </div>
+                  )}
+                </div>); })}
             </div>
             {(alerts.length > 0 || notify.length > 0) && (
               <div className="mb-9"><h3 className="mb-4 text-[20px] font-semibold tracking-[-.025em]">Watching</h3><div className="flex flex-col gap-2">
