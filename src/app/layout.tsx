@@ -61,11 +61,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(siteJsonLd()) }} />
       </head>
       <body className="min-h-full flex flex-col">
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-sm focus:bg-ink focus:px-4 focus:py-2 focus:text-[12px] focus:font-semibold focus:text-paper">Skip to content</a>
         <AppProvider>
           <Personalize />
           <Suspense fallback={null}><Analytics /></Suspense>
           <TopNav />
-          <div className="flex-1 pb-20 md:pb-0">{children}<Footer /></div>
+          <div id="main" className="flex-1 pb-20 md:pb-0">{children}<Footer /></div>
           <MobileTabBar />
           <BagDrawer />
           <SearchOverlay />

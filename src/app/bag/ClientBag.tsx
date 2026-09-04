@@ -17,7 +17,20 @@ export default function BagPage() {
         <div>
           <h1 className="mb-[6px] text-[42px] md:text-[52px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Your bag</h1>
           <div className="mb-6 text-[13px] text-ink/50">{bagCount} pieces from {bagGroups.length} brands</div>
-          {bagGroups.length === 0 && <div className="card rounded-lg p-10 text-center text-[14px] text-ink/55">Nothing here yet. <Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></div>}
+          {bagGroups.length === 0 && (
+            <div className="card rounded-lg p-10 md:p-14 text-center">
+              <div className="mb-4 mx-auto grid h-16 w-16 place-items-center rounded-pill" style={{background:"var(--clay)"}}>
+                <span className="text-[24px]">⛭</span>
+              </div>
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Empty</div>
+              <h2 className="mb-2 text-[26px] md:text-[32px] leading-[1] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Nothing in your bag yet.</h2>
+              <p className="mx-auto mb-6 max-w-[380px] text-[13.5px] text-ink/60">Try the drops on Discover, or filter Explore by what you&apos;re feeling right now.</p>
+              <div className="flex justify-center gap-2">
+                <Link href="/explore"><span className="press inline-flex rounded-sm bg-ink px-5 py-[11px] text-[12px] font-semibold text-paper">Explore brands</span></Link>
+                <Link href="/"><span className="press inline-flex rounded-sm bg-white soft px-5 py-[11px] text-[12px] font-semibold text-ink">Back to Discover</span></Link>
+              </div>
+            </div>
+          )}
           {bagGroups.map((g) => (
             <div key={g.brand.slug} className="card mb-4 rounded-lg p-4 md:p-[22px]">
               <div className="mb-[6px] flex items-center gap-[11px] border-b border-ink/7 pb-[18px]">
@@ -62,7 +75,7 @@ export default function BagPage() {
           </div>
         </div>
       </div>
-      <div className="card fixed inset-x-4 bottom-[74px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
+      {bagGroups.length > 0 && <div className="card fixed inset-x-4 bottom-[74px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>}
       <div className="h-24 lg:hidden" />
     </Page>
   );
