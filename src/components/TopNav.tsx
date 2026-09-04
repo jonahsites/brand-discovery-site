@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import clsx from "clsx";
 import { useApp } from "@/lib/store";
 
 export default function TopNav() {
@@ -9,36 +10,36 @@ export default function TopNav() {
   const [notif, setNotif] = useState(false);
   const path = usePathname();
   if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell")) return null;
+  const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const links = [["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]];
   return (
     <header className="glass-bar sticky top-0 z-40 h-[56px] md:h-[64px]">
-      <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-10">
-        <Link href="/" className="font-display text-[24px] md:text-[27px] italic leading-none tracking-[-.02em]" style={{ fontFamily: "var(--font-display)" }}>Kindred</Link>
-        <nav className="hidden lg:flex items-center gap-1 ml-2">
-          {[["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]].map(([href, label]) => (
-            <Link key={href} href={href} className={`rounded-pill px-3 py-[6px] text-[13px] ${path === href ? "bg-white/70 text-ink font-medium" : "text-black/60 hover:text-ink"}`}>{label}</Link>
-          ))}
+      <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-8">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="grid h-[26px] w-[26px] place-items-center rounded-[9px] bg-ink text-[12px] font-bold text-paper">k</span>
+          <span className="text-[15px] font-bold tracking-[-.02em]">Kindred</span>
+        </Link>
+        <nav className="hidden lg:flex items-center rounded-pill bg-cream p-1 ml-2">
+          {links.map(([href, label]) => <Link key={href} href={href} className={clsx("rounded-pill px-4 py-[7px] text-[11px] font-semibold", path === href ? "bg-white text-ink shadow-[0_4px_12px_-8px_rgba(18,26,36,.5)]" : "text-ink/50 hover:text-ink")}>{label}</Link>)}
         </nav>
-        <button onClick={() => openSearch()} className="hidden md:flex flex-1 max-w-[420px] items-center gap-[10px] rounded-pill border border-black/8 bg-white/70 px-4 py-[8px] text-left">
-          <span className="text-[13px] text-black/40">⌕</span>
-          <span className="text-[13px] text-black/45">Search, or type how you feel…</span>
+        <button onClick={() => openSearch()} className="hidden md:flex flex-1 max-w-[380px] items-center justify-between rounded-pill bg-white px-4 py-[9px] text-left soft">
+          <span className="text-[12px] font-medium text-ink/40">Search brands, pieces, cities</span>
+          <span className="text-[12px] text-ink/40">⌕</span>
         </button>
-        <div className="ml-auto flex items-center gap-2 md:gap-[10px]">
-          <button onClick={() => openSearch()} aria-label="Search" className="press grid h-9 w-9 md:hidden place-items-center rounded-pill bg-white/80 text-[14px]">⌕</button>
+        <div className="ml-auto flex items-center gap-2 md:gap-3">
+          <button onClick={() => openSearch()} aria-label="Search" className="press grid h-9 w-9 md:hidden place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">⌕</button>
           <div className="relative hidden md:block">
-            <button onClick={() => setNotif(!notif)} aria-label="Notifications" className="press relative grid h-[42px] w-[42px] place-items-center rounded-pill border border-white/90 bg-white/66 text-[15px]">◔{notifications.length > 0 && <span className="absolute -right-[2px] -top-[2px] grid h-[18px] min-w-[18px] place-items-center rounded-pill bg-navy px-[5px] text-[10px] font-semibold text-white">{notifications.length}</span>}</button>
+            <button onClick={() => setNotif(!notif)} aria-label="Notifications" className="press relative grid h-10 w-10 place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">◎{notifications.length > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{notifications.length}</span>}</button>
             {notif && (
-              <div className="glass absolute right-0 top-[50px] z-50 w-[340px] rounded-lg p-2" onMouseLeave={() => setNotif(false)}>
+              <div className="glass absolute right-0 top-[48px] z-50 w-[340px] rounded-lg p-2" onMouseLeave={() => setNotif(false)}>
                 <div className="label px-3 pb-2 pt-2">Activity</div>
-                {notifications.slice(0, 8).map((n) => <Link key={n.id} href={n.href} onClick={() => setNotif(false)} className="flex items-start gap-3 rounded-md px-3 py-[10px] hover:bg-white/70"><span className="mt-[2px] grid h-7 w-7 flex-none place-items-center rounded-pill bg-white text-[12px]">{n.kind === "drop" ? "◔" : n.kind === "price" ? "↓" : n.kind === "order" ? "⌂" : "✉"}</span><span className="min-w-0"><span className="block truncate text-[13px] font-semibold">{n.title}</span><span className="block truncate text-[12px] text-black/55">{n.body}</span></span></Link>)}
-                {notifications.length === 0 && <div className="px-3 pb-3 text-[12.5px] text-black/50">Quiet for now. Follow a drop or set a price alert.</div>}
+                {notifications.slice(0, 8).map((n) => <Link key={n.id} href={n.href} onClick={() => setNotif(false)} className="flex items-start gap-3 rounded-md px-3 py-[10px] hover:bg-white"><span className="mt-[2px] grid h-7 w-7 flex-none place-items-center rounded-pill bg-cream text-[11px]">{n.kind === "drop" ? "◎" : n.kind === "price" ? "↓" : n.kind === "order" ? "⛭" : "✉"}</span><span className="min-w-0"><span className="block truncate text-[12px] font-semibold">{n.title}</span><span className="block truncate text-[11px] text-ink/50">{n.body}</span></span></Link>)}
+                {notifications.length === 0 && <div className="px-3 pb-3 text-[12px] text-ink/50">Quiet for now. Follow a drop or set a price alert.</div>}
               </div>
             )}
           </div>
-          <button onClick={() => openBag()} aria-label="Bag" className="press relative grid h-9 w-9 md:h-[42px] md:w-[42px] place-items-center rounded-pill border border-white/90 bg-white/66 text-[15px]">
-            ⌂
-            {bagCount > 0 && <span className="absolute -right-[2px] -top-[2px] grid h-[18px] min-w-[18px] place-items-center rounded-pill bg-slate px-[5px] text-[10px] font-semibold text-white">{bagCount}</span>}
-          </button>
-          <Link href="/account" className="hidden md:grid h-[42px] w-[42px] place-items-center rounded-pill bg-sky text-[13px] font-bold">{session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</Link>
+          <button onClick={() => openBag()} aria-label="Bag" className="press relative grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-pill bg-white text-[13px] soft">⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{bagCount}</span>}</button>
+          <Link href="/account" className="hidden md:grid h-10 w-10 place-items-center rounded-pill bg-sand text-[11px] font-semibold text-ink/60">{initials}</Link>
         </div>
       </div>
     </header>

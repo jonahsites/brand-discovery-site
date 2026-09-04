@@ -6,23 +6,18 @@ import { useApp } from "@/lib/store";
 
 export default function MobileTabBar() {
   const path = usePathname();
-  const { openBag, openSearch } = useApp();
+  const { openSearch, session } = useApp();
   if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell")) return null;
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const on = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
+  const c = (h: string) => clsx("grid h-10 w-10 place-items-center rounded-pill text-[15px]", on(h) ? "text-ink" : "text-ink/40");
   return (
-    <div className="glass fixed inset-x-5 bottom-[18px] z-40 flex h-[58px] items-center justify-between rounded-pill px-3 md:hidden">
-      <Tab href="/" icon="⌂" label="Home" on={active("/")} />
-      <Tab href="/explore" icon="⌕" label="Explore" on={active("/explore")} />
-      <button onClick={() => openSearch()} aria-label="Search" className="press grid h-[46px] w-[46px] -translate-y-[6px] place-items-center rounded-pill bg-black text-[22px] font-light text-white">+</button>
-      <button onClick={() => openBag()} aria-label="Bag" className="grid h-[42px] w-[42px] place-items-center rounded-pill text-[16px] text-black/55">⌂</button>
-      <Tab href="/account" icon="☺" label="You" on={active("/account")} />
-    </div>
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t border-ink/8 bg-paper/95 px-8 pb-[max(10px,env(safe-area-inset-bottom))] pt-[10px] backdrop-blur md:hidden">
+      <Link href="/" className={c("/")} aria-label="Discover">⌗</Link>
+      <Link href="/explore" className={c("/explore")} aria-label="Explore">◎</Link>
+      <button onClick={() => openSearch()} className="grid h-10 w-10 place-items-center rounded-pill text-[15px] text-ink/40" aria-label="Search">⌕</button>
+      <Link href="/account" className={c("/account")} aria-label="Saved">♡</Link>
+      <Link href="/account" className={clsx("grid h-8 w-8 place-items-center rounded-pill bg-sand text-[10px] font-semibold text-ink/60")}>{initials}</Link>
+    </nav>
   );
-  function Tab({ href, icon, label, on }: { href: string; icon: string; label: string; on: boolean }) {
-    return (
-      <Link href={href} className={clsx("flex items-center gap-[7px] rounded-pill", on ? "bg-white px-4 py-[9px] text-[12.5px] font-semibold" : "grid h-[42px] w-[42px] place-items-center text-[16px] text-black/55")}>
-        <span>{icon}</span>{on && <span>{label}</span>}
-      </Link>
-    );
-  }
 }

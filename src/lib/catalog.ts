@@ -9,7 +9,7 @@ export const findProduct = (slug: string, custom: Product[] = []) => allProducts
 
 export const slugify = (s: string) => s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 export const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "K";
-export const TINTS: [string, string][] = [["#C7DCEF", "#1A1A1A"], ["#DBE1EF", "#1A1A1A"], ["#1C3247", "#F6F7F9"], ["#456F94", "#fff"], ["#EDF1F4", "#1A1A1A"], ["#121212", "#fff"]];
+export const TINTS: [string, string][] = [["#DCD5C7", "#121A24"], ["#E5DFD3", "#121A24"], ["#121A24", "#F6F4EF"], ["#7C8C6F", "#F6F4EF"], ["#D6D9CE", "#121A24"], ["#CFC8B8", "#121A24"]];
 
 /* ---------- promos ---------- */
 export function activePromoFor(p: Product, promos: Promo[], now = Date.now()) {
@@ -25,7 +25,11 @@ export function effectivePrice(p: Product, promos: Promo[]) {
 export type Filters = {
   category?: string; price?: [number, number]; sizes?: string[]; tiers?: string[];
   materials?: string[]; values?: string[]; shipsFrom?: string[]; sale?: boolean; gender?: string[]; brand?: string;
+  priceBands?: string[]; leadTimes?: string[]; studio?: string[];
 };
+export const PRICE_BANDS: [string, number, number][] = [["Under $150", 0, 149], ["$150–$300", 150, 300], ["Over $300", 301, Infinity]];
+export const leadTimeOf = (b: Brand) => (b.batch === "one-off" ? "Made to order" : b.batch === "small" ? "Ships in 1 week" : "Ships in 2 days");
+export const studioOf = (b: Brand) => [...(b.batch === "one-off" || b.batch === "small" ? ["Under 10 people"] : []), ...(b.values.includes("Made locally") || b.values.includes("Repairs for life") ? ["Family-run"] : []), ...(b.materials.includes("Deadstock") || b.values.includes("Deadstock") ? ["Deadstock only"] : [])];
 const norm = (s: string) => s.toLowerCase();
 export function filterProducts(products: Product[], brands: Brand[], promos: Promo[], f: Filters) {
   const bmap = new Map(brands.map((b) => [b.slug, b]));
@@ -47,6 +51,9 @@ export function filterProducts(products: Product[], brands: Brand[], promos: Pro
     if (f.shipsFrom?.length && !f.shipsFrom.some((r) => norm(b.country) === norm(r) || norm(b.shipsFrom).includes(norm(r)) || norm(b.madeIn).includes(norm(r)))) return false;
     if (f.gender?.length && !f.gender.some((g) => b.gender.includes(g))) return false;
     if (f.sale && !compareAt) return false;
+    if (f.priceBands?.length && !f.priceBands.some((n) => { const band = PRICE_BANDS.find((x) => x[0] === n); return band && price >= band[1] && price <= band[2]; })) return false;
+    if (f.leadTimes?.length && !f.leadTimes.includes(leadTimeOf(b))) return false;
+    if (f.studio?.length && !f.studio.some((s) => studioOf(b).includes(s))) return false;
     return true;
   });
 }

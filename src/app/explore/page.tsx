@@ -2,90 +2,100 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { CHIPS, MATERIAL_OPTIONS, REGION_OPTIONS, VALUE_OPTIONS, SIZE_LADDER } from "@/lib/data";
-import { filterProducts, searchCatalog, type Filters } from "@/lib/catalog";
+import { CHIPS, MATERIAL_OPTIONS, VALUE_OPTIONS, SIZE_LADDER, brandTier } from "@/lib/data";
+import { PRICE_BANDS, filterProducts, leadTimeOf, searchCatalog, studioOf, type Filters } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
-import { Button, Chip, Label } from "@/components/ui";
 
-const TIERS = [["Indie", "Indie · under 1k followers"], ["Rising", "Rising · 1k–10k"], ["Established", "Established · 10k+"]];
 const SORTS = ["Newest", "Price · low to high", "Price · high to low", "Most followed"];
+type Key = "priceBands" | "leadTimes" | "studio" | "sizes" | "tiers" | "materials" | "values";
+const EMPTY: Filters = { priceBands: [], leadTimes: [], studio: [], sizes: [], tiers: [], materials: [], values: [] };
 
 export default function Explore() { return <Suspense><ExploreInner /></Suspense>; }
 
 function ExploreInner() {
   const sp = useSearchParams(); const router = useRouter();
-  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly } = useApp();
+  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch } = useApp();
   const q = sp.get("q") ?? "";
+  const gender = sp.get("gender") ?? undefined;
   const [chip, setChip] = useState(sp.get("cat") ?? "All");
   const [open, setOpen] = useState(false);
   const [sort, setSort] = useState(SORTS[0]);
-  const [f, setF] = useState<Filters>({ sizes: [], tiers: [], materials: [], values: [], shipsFrom: [], sale: false, price: [0, 700] });
-  const tog = (k: "sizes" | "tiers" | "materials" | "values" | "shipsFrom", v: string) => setF((p) => ({ ...p, [k]: p[k]!.includes(v) ? p[k]!.filter((x) => x !== v) : [...p[k]!, v] }));
+  const [f, setF] = useState<Filters>(EMPTY);
+  const tog = (k: Key, v: string) => setF((p) => ({ ...p, [k]: (p[k] ?? []).includes(v) ? (p[k] ?? []).filter((x) => x !== v) : [...(p[k] ?? []), v] }));
+  const count = (Object.keys(EMPTY) as Key[]).reduce((s, k) => s + (f[k]?.length ?? 0), 0) + (sizeOnly ? 1 : 0);
 
-  const results = useMemo(() => {
-    let base = products;
-    let why: string[] = [];
-    if (q) { const s = searchCatalog(q, brands, products, promos); base = s.products.map((h) => h.item); why = s.terms; if (s.maxPrice) why.push(`under $${s.maxPrice}`); }
-    let list = filterProducts(base, brands, promos, { ...f, category: chip, sizes: sizeOnly && !(f.sizes?.length) ? [mySizes.tops] : f.sizes });
+  const base = useMemo(() => { if (!q) return { list: products, why: [] as string[] }; const s = searchCatalog(q, brands, products, promos); const why = [...s.terms]; if (s.maxPrice) why.push(`under $${s.maxPrice}`); return { list: s.products.map((h) => h.item), why }; }, [q, products, brands, promos]);
+  const grid = useMemo(() => {
+    let list = filterProducts(base.list, brands, promos, { ...f, category: chip, gender: gender ? [gender] : undefined, sizes: sizeOnly && !(f.sizes?.length) ? [mySizes.tops] : f.sizes });
     const bmap = new Map(brands.map((b) => [b.slug, b]));
     if (sort === SORTS[1]) list = [...list].sort((a, b) => priceOf(a).price - priceOf(b).price);
     if (sort === SORTS[2]) list = [...list].sort((a, b) => priceOf(b).price - priceOf(a).price);
     if (sort === SORTS[3]) list = [...list].sort((a, b) => (bmap.get(b.brand)?.followers ?? 0) - (bmap.get(a.brand)?.followers ?? 0));
     if (sort === SORTS[0] && !q) list = [...list].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-    return { list, why };
-  }, [products, brands, promos, q, chip, f, sort, priceOf, sizeOnly, mySizes.tops]);
-  const grid = results.list;
-  const count = (f.sizes?.length ?? 0) + (f.tiers?.length ?? 0) + (f.materials?.length ?? 0) + (f.values?.length ?? 0) + (f.shipsFrom?.length ?? 0) + (f.sale ? 1 : 0) + (f.price && (f.price[0] > 0 || f.price[1] < 700) ? 1 : 0);
-  const brandCount = new Set(grid.map((p) => p.brand)).size;
+    return list;
+  }, [base.list, brands, promos, f, chip, gender, sort, priceOf, sizeOnly, mySizes.tops, q]);
+
+  // facet counts against the current chip + query (not the other filters), like the design's row counts
+  const pool = useMemo(() => filterProducts(base.list, brands, promos, { category: chip, gender: gender ? [gender] : undefined }), [base.list, brands, promos, chip, gender]);
+  const bOf = (slug: string) => brands.find((b) => b.slug === slug)!;
+  const cnt = (fn: (p: (typeof pool)[number]) => boolean) => pool.filter(fn).length;
+  const groups: { title: string; key: Key; rows: [string, number][] }[] = [
+    { title: "Price", key: "priceBands", rows: PRICE_BANDS.map(([n, lo, hi]) => [n, cnt((p) => { const pr = priceOf(p).price; return pr >= lo && pr <= hi; })]) },
+    { title: "Lead time", key: "leadTimes", rows: ["Ships in 2 days", "Ships in 1 week", "Made to order"].map((n) => [n, cnt((p) => leadTimeOf(bOf(p.brand)) === n)]) },
+    { title: "Studio", key: "studio", rows: ["Under 10 people", "Family-run", "Deadstock only"].map((n) => [n, cnt((p) => studioOf(bOf(p.brand)).includes(n))]) },
+    { title: "Brand size", key: "tiers", rows: ["Indie", "Rising", "Established"].map((n) => [n, cnt((p) => brandTier(bOf(p.brand).followers) === n)]) },
+    { title: "Size", key: "sizes", rows: SIZE_LADDER.slice(1, 7).map((n) => [n, cnt((p) => (p.sizes ?? ["S", "M", "L", "XL"]).includes(n))]) },
+    { title: "Materials", key: "materials", rows: MATERIAL_OPTIONS.map((n) => [n, cnt((p) => bOf(p.brand).materials.includes(n) || (p.materials ?? []).includes(n))] as [string, number]).filter((r) => r[1] > 0) },
+    { title: "Values", key: "values", rows: VALUE_OPTIONS.map((n) => [n, cnt((p) => bOf(p.brand).values.includes(n))] as [string, number]).filter((r) => r[1] > 0) },
+  ];
+  const title = q ? `“${q}”` : gender ? `${gender}` : chip === "All" ? "Everything new" : chip;
 
   return (
-    <>
-      <div className="glass-bar sticky top-[56px] md:top-[64px] z-30">
-        <div className="mx-auto flex h-[52px] md:h-[58px] max-w-[1440px] items-center gap-[10px] px-4 md:px-10">
-          <button onClick={() => setOpen(true)} className="press flex flex-none items-center gap-2 rounded-pill border border-black/12 bg-white px-4 md:px-5 py-[10px] text-[12.5px] font-semibold">≡ <span className="hidden sm:inline">Filters</span>{count > 0 && <span className="rounded-pill bg-sky px-[7px] py-[2px] text-[10px] font-semibold">{count}</span>}</button>
-          <div className="h-[26px] w-px bg-black/10" />
-          <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto">{CHIPS.map((c) => <Chip key={c} active={chip === c} onClick={() => setChip(c)}>{c}</Chip>)}</div>
+    <main className="mx-auto max-w-[1440px] px-4 md:px-8 pt-4 md:pt-7 pb-16">
+      <h1 className="mb-3 text-[26px] md:hidden">Explore</h1>
+      <div className="flex items-center gap-3 md:gap-4">
+        <button onClick={() => openSearch()} className="flex flex-1 items-center gap-3 rounded-pill bg-white px-4 md:px-5 py-3 md:py-[14px] text-left soft"><span className="text-[13px] text-ink/40">⌕</span><span className="truncate text-[12px] md:text-[13px] font-medium text-ink/40">{q || `Search ${brands.length} brands — cut, fabric, city, lead time`}</span>{q && <button onClick={(e) => { e.stopPropagation(); router.push("/explore"); }} className="ml-auto text-[11px] font-semibold text-ink/55">Clear ✕</button>}</button>
+        <button onClick={() => setOpen(!open)} className={clsx("press hidden md:block rounded-pill px-[22px] py-[14px] text-[12px] font-semibold", open ? "bg-ink text-paper" : "bg-white soft")}>Filters · {count}</button>
+        <select value={sort} onChange={(e) => setSort(e.target.value)} className="hidden md:block rounded-pill bg-white px-5 py-[14px] text-[12px] font-semibold outline-none soft">{SORTS.map((s) => <option key={s}>{s}</option>)}</select>
+      </div>
+      <div className="no-scrollbar mt-4 md:mt-5 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
+        <button onClick={() => setOpen(!open)} className={clsx("press flex-none rounded-pill px-[15px] py-[9px] text-[11px] font-semibold md:hidden", open ? "bg-ink text-paper" : "bg-white soft")}>Filters {count}</button>
+        {CHIPS.map((c) => <button key={c} onClick={() => setChip(c)} className={clsx("press flex-none rounded-pill px-4 py-[9px] text-[11px] font-semibold whitespace-nowrap", chip === c ? "bg-ink text-paper" : "bg-white text-ink/72 soft")}>{c}</button>)}
+      </div>
+      <div className="mt-5 md:mt-[26px] flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-[20px] md:text-[34px]">{title}</h2>
+        <div className="flex items-center gap-2 text-[11px] md:text-[12px] text-ink/50">{grid.length} pieces · {count ? `${count} filters on` : "no filters"}{base.why.length > 0 && <span className="hidden md:flex gap-1">{base.why.slice(0, 5).map((w) => <span key={w} className="rounded-pill bg-cream px-2 py-[2px] text-[10px] font-semibold text-ink/70">{w}</span>)}</span>}</div>
+      </div>
+
+      <div className="mt-4 md:mt-[18px] flex flex-col md:flex-row gap-5 items-start">
+        {open && (
+          <div className="w-full md:w-[250px] flex-none rounded-[24px] bg-cream p-5">
+            <div className="flex items-center justify-between"><div className="text-[15px] font-bold tracking-[-.02em]">Refine</div><button onClick={() => setOpen(false)} className="text-[13px] text-ink/45">✕</button></div>
+            <button onClick={() => setSizeOnly(!sizeOnly)} className="mt-4 flex w-full items-center gap-[10px] text-left"><span className={clsx("grid h-[17px] w-[17px] place-items-center rounded-[6px] text-[9px] font-semibold text-paper shadow-[inset_0_0_0_1px_rgba(18,26,36,.15)]", sizeOnly ? "bg-ink" : "bg-white/70")}>{sizeOnly ? "✓" : ""}</span><span className="flex-1 text-[12px] font-medium">Only my size · {mySizes.tops}</span></button>
+            <div className="md:block flex flex-wrap gap-x-6">
+              {groups.map((g) => (
+                <div key={g.title} className="mt-5 min-w-[45%]">
+                  <div className="label !tracking-[.12em]">{g.title}</div>
+                  <div className="mt-[11px] flex flex-col gap-[9px]">
+                    {g.rows.map(([label, n]) => { const on = (f[g.key] ?? []).includes(label); return (
+                      <button key={label} onClick={() => tog(g.key, label)} className="flex items-center gap-[10px] text-left">
+                        <span className={clsx("grid h-[17px] w-[17px] flex-none place-items-center rounded-[6px] text-[9px] font-semibold text-paper shadow-[inset_0_0_0_1px_rgba(18,26,36,.15)]", on ? "bg-ink" : "bg-white/70")}>{on ? "✓" : ""}</span>
+                        <span className="flex-1 text-[12px] font-medium">{label}</span>
+                        <span className="text-[11px] text-ink/40">{n}</span>
+                      </button>); })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { setF(EMPTY); setSizeOnly(false); }} className="mt-[22px] w-full rounded-pill bg-white py-3 text-[11px] font-semibold">Clear all</button>
+          </div>
+        )}
+        <div className={clsx("grid min-w-0 flex-1 w-full grid-cols-2 gap-[14px] md:gap-5", open ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-3 lg:grid-cols-4")}>
+          {grid.map((p) => <ProductCard key={p.slug} p={p} hoverAdd />)}
+          {grid.length === 0 && <div className="card col-span-full rounded-[24px] p-10 text-center text-[13px] text-ink/55">Nothing matches yet. <button onClick={() => { setF(EMPTY); setChip("All"); setSizeOnly(false); }} className="font-semibold text-ink">Clear everything</button>.</div>}
         </div>
       </div>
-      <main className="mx-auto max-w-[1440px] px-4 md:px-10 pt-6 pb-16">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="mb-[5px] text-[26px] md:text-[30px] font-bold leading-[1.05] tracking-[-.035em]">{q ? `“${q}”` : chip === "All" ? "Everything, everywhere" : chip}</h1>
-            <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-black/48">
-              <span>{grid.length} piece{grid.length === 1 ? "" : "s"} from {brandCount} independent brand{brandCount === 1 ? "" : "s"}</span>
-              {q && <>{results.why.slice(0, 6).map((w) => <span key={w} className="rounded-pill bg-peri px-2 py-[2px] text-[11px] font-medium text-ink">{w}</span>)}<button onClick={() => router.push("/explore")} className="text-[12px] font-semibold text-navy">Clear ✕</button></>}
-            </div>
-          </div>
-          <div className="flex items-center gap-2"><button onClick={() => setSizeOnly(!sizeOnly)} className={clsx("press rounded-pill border px-4 py-[10px] text-[12.5px] font-medium", sizeOnly ? "bg-sky border-sky" : "bg-white border-black/10")}>{sizeOnly ? "✓ " : ""}My size · {mySizes.tops}</button><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select></div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">{grid.map((p) => <ProductCard key={p.slug} p={p} hoverAdd tall />)}</div>
-        {grid.length === 0 && <div className="rounded-lg bg-white p-10 text-center text-[14px] text-black/55">Nothing matches yet. Try fewer filters, or <button onClick={() => { setF({ sizes: [], tiers: [], materials: [], values: [], shipsFrom: [], sale: false, price: [0, 700] }); setChip("All"); }} className="font-semibold text-navy">clear everything</button>.</div>}
-      </main>
-
-      {open && (
-        <div className="fixed inset-0 z-50">
-          <div onClick={() => setOpen(false)} className="absolute inset-0 bg-black/18 backdrop-blur-[2px]" />
-          <div className="glass absolute bottom-3 right-3 top-3 left-3 md:left-auto md:w-[392px] overflow-auto rounded-lg p-5 md:p-[26px]" style={{ backdropFilter: "blur(30px)" }}>
-            <div className="mb-6 flex items-center justify-between"><div className="text-[22px] font-bold tracking-[-.03em]">Filters</div><button onClick={() => setOpen(false)} className="press grid h-[38px] w-[38px] place-items-center rounded-pill border border-white/90 bg-white/80 text-[15px]">✕</button></div>
-            <Label className="mb-3">Price</Label>
-            <div className="mb-[10px] flex justify-between text-[13px] font-medium"><span>${f.price![0]}</span><span>${f.price![1]}{f.price![1] >= 700 ? "+" : ""}</span></div>
-            <div className="mb-6 flex gap-3"><input type="range" min={0} max={700} step={10} value={f.price![0]} onChange={(e) => setF((p) => ({ ...p, price: [Math.min(Number(e.target.value), p.price![1] - 10), p.price![1]] }))} className="w-full accent-black" /><input type="range" min={0} max={700} step={10} value={f.price![1]} onChange={(e) => setF((p) => ({ ...p, price: [p.price![0], Math.max(Number(e.target.value), p.price![0] + 10)] }))} className="w-full accent-black" /></div>
-            <Label className="mb-3">Size</Label>
-            <div className="mb-[26px] flex flex-wrap gap-[7px]">{SIZE_LADDER.slice(1, 7).map((s) => <button key={s} onClick={() => tog("sizes", s)} className={clsx("press min-w-[46px] rounded-pill border py-[10px] text-center text-[12.5px] font-medium", f.sizes!.includes(s) ? "bg-black text-white border-black" : "bg-white/75 border-black/10")}>{s}</button>)}</div>
-            <Label className="mb-3">Brand size</Label>
-            <div className="mb-[26px] flex flex-col gap-2">{TIERS.map(([k, l]) => <button key={k} onClick={() => tog("tiers", k)} className={clsx("flex items-center justify-between rounded-[10px] px-4 py-3 text-left text-[13px] font-medium", f.tiers!.includes(k) ? "bg-white/75" : "bg-white/50 text-black/60")}>{l}<span className={clsx("grid h-5 w-5 place-items-center rounded-[6px] text-[11px] font-semibold", f.tiers!.includes(k) ? "bg-black text-white" : "border border-black/18")}>{f.tiers!.includes(k) ? "✓" : ""}</span></button>)}</div>
-            <Label className="mb-3">Materials</Label>
-            <div className="mb-[26px] flex flex-wrap gap-[7px]">{MATERIAL_OPTIONS.map((m) => <button key={m} onClick={() => tog("materials", m)} className={clsx("press rounded-pill px-[13px] py-[8px] text-[12px] font-medium", f.materials!.includes(m) ? "bg-navy text-offwhite" : "bg-white/75 border border-black/8")}>{m}</button>)}</div>
-            <Label className="mb-3">Values</Label>
-            <div className="mb-[26px] flex flex-wrap gap-[7px]">{VALUE_OPTIONS.map((m) => <button key={m} onClick={() => tog("values", m)} className={clsx("press rounded-pill px-[13px] py-[8px] text-[12px] font-medium", f.values!.includes(m) ? "bg-navy text-offwhite" : "bg-white/75 border border-black/8")}>{m}</button>)}</div>
-            <Label className="mb-3">Ships from</Label>
-            <div className="mb-[26px] flex flex-wrap gap-[7px]">{["NL", "PT", "JP", "DK", "AU", ...REGION_OPTIONS.filter((r) => r !== "Worldwide")].map((m) => <button key={m} onClick={() => tog("shipsFrom", m)} className={clsx("press rounded-pill px-[13px] py-[8px] text-[12px] font-medium", f.shipsFrom!.includes(m) ? "bg-black text-white" : "bg-white/75 border border-black/8")}>{m}</button>)}</div>
-            <button onClick={() => setF((p) => ({ ...p, sale: !p.sale }))} className="mb-[26px] flex w-full items-center justify-between rounded-[10px] bg-white/50 px-4 py-[14px] text-[13px] font-medium">On sale only<span className={clsx("relative h-[26px] w-11 rounded-pill transition-colors", f.sale ? "bg-black" : "bg-black/14")}><span className={clsx("absolute top-[3px] h-5 w-5 rounded-pill bg-white transition-all", f.sale ? "left-[21px]" : "left-[3px]")} /></span></button>
-            <div className="flex gap-[10px]"><Button full size="lg" onClick={() => setOpen(false)}>Show {grid.length} piece{grid.length === 1 ? "" : "s"}</Button><Button variant="secondary" size="lg" onClick={() => setF({ sizes: [], tiers: [], materials: [], values: [], shipsFrom: [], sale: false, price: [0, 700] })}>Clear</Button></div>
-          </div>
-        </div>
-      )}
-    </>
+    </main>
   );
 }

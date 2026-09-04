@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, JetBrains_Mono, Instrument_Serif } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import TopNav from "@/components/TopNav";
@@ -9,12 +9,11 @@ import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
 import Toaster from "@/components/Toaster";
 
-const geist = Geist({
-  variable: "--font-geist",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
-const instrument = Instrument_Serif({ variable: "--font-instrument", subsets: ["latin"], weight: "400", style: ["normal", "italic"] });
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
@@ -27,18 +26,18 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f6f7f9",
+  themeColor: "#F6F4EF",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geist.variable} ${jetbrains.variable} ${instrument.variable} h-full antialiased`}>
+    <html lang="en" className={`${jakarta.variable} ${jetbrains.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AppProvider>
           <TopNav />
-          <div className="flex-1 pb-28 md:pb-0">{children}<Footer /></div>
+          <div className="flex-1 pb-20 md:pb-0">{children}<Footer /></div>
           <MobileTabBar />
           <BagDrawer />
           <SearchOverlay />

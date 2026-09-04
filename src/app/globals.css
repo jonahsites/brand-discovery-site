@@ -1,122 +1,121 @@
 @import "tailwindcss";
 
-/* Kindred tokens — off-white page, solid cards, glass only on floating chrome */
+/* Kindred v2 tokens — paper page, cream panels, sand tones, ink type, sage accent */
 :root {
-  --canvas: #e3e8ed;
-  --offwhite: #f6f7f9;
-  --sky: #c7dcef;
-  --peri: #dbe1ef;
-  --slate: #456f94;
-  --navy: #1c3247;
-  --black: #121212;
-  --ink: #1a1a1a;
-  --mist: #edf1f4;
+  --paper: #f6f4ef;
+  --cream: #ede8de;
+  --sand: #dcd5c7;
+  --sand-2: #e5dfd3;
+  --sand-3: #cfc8b8;
+  --moss: #d6d9ce;
+  --ink: #121a24;
+  --sage: #7c8c6f;
+  --card: #ffffff;
 }
 
 @theme inline {
-  --color-canvas: var(--canvas);
-  --color-offwhite: var(--offwhite);
-  --color-sky: var(--sky);
-  --color-peri: var(--peri);
-  --color-slate: var(--slate);
-  --color-navy: var(--navy);
-  --color-black: var(--black);
+  --color-paper: var(--paper);
+  --color-cream: var(--cream);
+  --color-sand: var(--sand);
+  --color-sand-2: var(--sand-2);
+  --color-sand-3: var(--sand-3);
+  --color-moss: var(--moss);
   --color-ink: var(--ink);
-  --color-mist: var(--mist);
+  --color-sage: var(--sage);
+  /* legacy names kept so every screen shifts palette at once */
+  --color-offwhite: var(--cream);
+  --color-sky: var(--sand);
+  --color-peri: var(--sand-2);
+  --color-slate: var(--sage);
+  --color-navy: var(--ink);
+  --color-black: var(--ink);
+  --color-mist: var(--moss);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 14px;
-  --radius-2xl: 16px;
-  --radius-3xl: 20px;
-  --radius-4xl: 24px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 26px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+  --radius-4xl: 30px;
   --radius-pill: 999px;
 
-  --font-sans: var(--font-geist), "Geist", "Inter", system-ui, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, Helvetica, Arial, sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
-  --font-display: var(--font-instrument), "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+
+  --shadow-card: 0 18px 40px -30px rgba(18, 26, 36, 0.8);
+  --shadow-soft: 0 6px 18px -10px rgba(18, 26, 36, 0.4);
+  --shadow-panel: 0 30px 70px -34px rgba(18, 26, 36, 0.5);
+  --shadow-float: 0 10px 24px -18px rgba(18, 26, 36, 0.8);
 }
 
-* { box-sizing: border-box; }
-
-body {
-  background: var(--offwhite);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  text-wrap: pretty;
+/* Base rules live in the base layer so utility classes (text-paper on a link, etc.) still win. */
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    text-wrap: pretty;
+  }
+  ::selection { background: var(--ink); color: var(--paper); }
+  /* Headlines run tight and heavy. */
+  h1, h2 { font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; }
+  h3 { font-weight: 700; letter-spacing: -0.02em; }
+  a { color: inherit; text-decoration: none; }
+  input, button, textarea, select { font-family: inherit; }
+  button { cursor: pointer; }
 }
-/* Display type: a light serif carries the headlines so the UI can stay quiet. */
-h1, h2 { font-family: var(--font-display); font-weight: 400 !important; letter-spacing: -0.015em !important; font-feature-settings: "kern"; }
-h1 em, h2 em, .display-italic { font-style: italic; }
-h3 { font-weight: 500 !important; letter-spacing: -0.01em !important; }
-a { color: inherit; text-decoration: none; }
-input, button, textarea, select { font-family: inherit; }
-button { cursor: pointer; }
 
-/* Liquid glass — floating surfaces only: nav, tab bar, drawers, sticky bars, toasts, popovers */
+/* Floating panels are solid paper with a long soft shadow (no glass in v2). */
 @utility glass {
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(26px) saturate(1.3);
-  -webkit-backdrop-filter: blur(26px) saturate(1.3);
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: var(--paper);
+  border: 1px solid rgba(18, 26, 36, 0.06);
+  box-shadow: var(--shadow-panel);
 }
 @utility glass-bar {
-  background: rgba(246, 247, 249, 0.74);
-  backdrop-filter: blur(28px) saturate(1.3);
-  -webkit-backdrop-filter: blur(28px) saturate(1.3);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(246, 244, 239, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(18, 26, 36, 0.07);
 }
 @utility glass-chip {
-  background: rgba(255, 255, 255, 0.74);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-float);
 }
 @utility glass-navy {
-  background: rgba(28, 50, 71, 0.78);
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
-  border: 1px solid rgba(246, 247, 249, 0.2);
+  background: var(--ink);
 }
 @utility press {
-  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.2s ease;
   &:active { transform: scale(0.985); }
 }
 
-/* Placeholder product art — striped, calm */
-@utility stripes {
-  background: radial-gradient(120% 90% at 30% 20%, #f3f5f8 0%, #e6eaef 100%);
-}
-@utility stripes-wide {
-  background: radial-gradient(120% 90% at 70% 30%, #eef1f5 0%, #dfe5eb 100%);
-}
+/* Tone placeholders */
+@utility stripes { background: var(--sand); }
+@utility stripes-wide { background: var(--sand-2); }
 
-/* Small caps label */
 @utility label {
-  font-weight: 500;
-  font-size: 10.5px;
+  font-weight: 600;
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.45);
+  color: rgba(18, 26, 36, 0.45);
 }
-@utility mono {
-  font-family: var(--font-mono);
-}
+@utility mono { font-family: var(--font-mono); }
 
-/* Cards */
 @utility card {
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: var(--shadow-card);
 }
+@utility soft { box-shadow: var(--shadow-soft); }
 @utility lift {
-  transition: transform 0.2s ease, border-color 0.2s ease;
-  &:hover { transform: translateY(-2px); border-color: rgba(0, 0, 0, 0.14); }
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover { transform: translateY(-2px); box-shadow: 0 24px 44px -28px rgba(18, 26, 36, 0.8); }
 }
-
-/* Hide scrollbars on chip rows */
 @utility no-scrollbar {
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
