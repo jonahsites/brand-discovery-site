@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono, Instrument_Serif, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { SITE, absUrl, orgJsonLd, siteJsonLd, ldScript } from "@/lib/seo";
 import { AppProvider } from "@/lib/store";
 import TopNav from "@/components/TopNav";
 import MobileTabBar from "@/components/MobileTabBar";
@@ -24,8 +25,24 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Kindred", template: "%s · Kindred" },
-  description: "Find your next favorite clothing brand. Independent labels, one bag, one checkout.",
+  metadataBase: new URL(SITE.url),
+  title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s · ${SITE.name}` },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: [...SITE.keywords],
+  authors: [{ name: SITE.name, url: SITE.url }],
+  creator: SITE.name,
+  publisher: SITE.name,
+  category: "shopping",
+  alternates: { canonical: SITE.url },
+  openGraph: {
+    type: "website", url: SITE.url, siteName: SITE.name, locale: SITE.locale,
+    title: `${SITE.name} — ${SITE.tagline}`, description: SITE.description,
+    images: [{ url: absUrl(SITE.ogImage), width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: { card: "summary_large_image", site: SITE.twitter, creator: SITE.twitter, title: `${SITE.name} — ${SITE.tagline}`, description: SITE.description, images: [absUrl(SITE.ogImage)] },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  formatDetection: { email: false, telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -40,6 +57,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         {/* Apply the saved look before first paint so the page never flashes the default palette. */}
         <script dangerouslySetInnerHTML={{ __html: `try{var s=JSON.parse(localStorage.getItem("kindred.v2")||"{}");if(s.look)document.documentElement.dataset.look=s.look}catch(e){}` }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(orgJsonLd()) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(siteJsonLd()) }} />
       </head>
       <body className="min-h-full flex flex-col">
         <AppProvider>
