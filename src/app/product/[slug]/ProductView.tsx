@@ -8,6 +8,7 @@ import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
+import { Fob } from "@/components/Fob";
 
 export default function ProductView({ slug }: { slug: string }) {
   const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, recordView, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
@@ -68,7 +69,7 @@ export default function ProductView({ slug }: { slug: string }) {
           {p.description && <p className="mb-6 max-w-[520px] text-[14px] leading-[1.6] text-ink/65">{p.description}</p>}
           <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-semibold text-ink/55 underline-offset-2 hover:underline">Size guide</button></div>
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
-            {sizes.map((s) => <button key={s} onClick={() => { setSize(s); setAdded(false); }} className={clsx("press flex-1 md:flex-none md:min-w-[58px] rounded-pill py-[11px] md:py-[12px] text-[12px] font-semibold", size === s ? "bg-ink text-paper" : "bg-white text-ink/72 soft")}>{s}</button>)}
+            {sizes.map((s) => <Fob key={s} active={size === s} onClick={() => { setSize(s); setAdded(false); }} className="min-w-[58px]">{s}</Fob>)}
           </div>
           <Label className="mb-3">Colour · {colors[color][0]}</Label>
           <div className="mb-6 md:mb-[30px] flex gap-3">

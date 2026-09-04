@@ -11,6 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Placeholder, Page } from "@/components/ui";
+import { Fob, FobRow } from "@/components/Fob";
 import { styleOverlap } from "@/lib/looks";
 
 const FEEDS = ["Dashboard", "Following", "Matched", "Saved"] as const;
@@ -98,7 +99,7 @@ function HomeInner() {
             </div>
 
             {/* mobile feed pills */}
-            <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto md:hidden">{FEEDS.map((f) => <button key={f} onClick={() => setFeed(f)} className={clsx("flex-none rounded-pill px-[15px] py-[9px] text-[11px] font-semibold", feed === f ? "bg-ink text-paper" : "bg-cream text-ink/55")}>{f}</button>)}</div>
+            <div className="mt-4 md:hidden"><FobRow scroll>{FEEDS.map((f) => <Fob key={f} active={feed === f} onClick={() => setFeed(f)} size="sm">{f}</Fob>)}</FobRow></div>
 
             {feed === "Dashboard" && (
               <>

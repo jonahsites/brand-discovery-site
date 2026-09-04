@@ -5,13 +5,14 @@ import clsx from "clsx";
 import { BRANDS, STEP_COPY, STYLE_CHOICES, brandMeta } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { Avatar, Label } from "@/components/ui";
+import { Fob, FobRow } from "@/components/Fob";
 
 const STEPS = ["Style", "Sizes", "Brands"];
 const TOPS = ["XS", "S", "M", "L", "XL", "XXL"];
 
 function Pills({ opts, v, set, label }: { opts: string[]; v: string; set: (s: string) => void; label: string }) {
   return (
-    <div><Label className="mb-3">{label}</Label><div className="flex flex-wrap gap-2 md:gap-[9px]">{opts.map((o) => <button key={o} onClick={() => set(o)} className={clsx("press min-w-[56px] md:min-w-[66px] rounded-sm py-[12px] md:py-[14px] text-center text-[13px] md:text-[14px] font-medium", v === o ? "bg-ink text-paper" : "bg-white soft")}>{o}</button>)}</div></div>
+    <div><Label className="mb-3">{label}</Label><FobRow>{opts.map((o) => <Fob key={o} active={v === o} onClick={() => set(o)} className="min-w-[56px]">{o}</Fob>)}</FobRow></div>
   );
 }
 
@@ -44,7 +45,7 @@ export default function Onboarding() {
           <h1 className="mb-2 text-[26px] leading-[1.05] tracking-[-.015em]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>{title}</h1>
           <p className="mb-6 text-[13px] leading-[1.55] text-ink/60">{body}</p>
           <div className="mb-6 flex-1">
-            {step === 0 && <div className="flex flex-wrap gap-2">{STYLE_CHOICES.map((c) => { const on = styles.includes(c); return <button key={c} onClick={() => setStyles((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])} className={clsx("press rounded-sm px-[15px] py-[10px] text-[12.5px] font-semibold", on ? "bg-ink text-paper" : "bg-cream")} type="button">{c}</button>; })}</div>}
+            {step === 0 && <FobRow>{STYLE_CHOICES.map((c) => { const on = styles.includes(c); return <Fob key={c} active={on} onClick={() => setStyles((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])}>{c}</Fob>; })}</FobRow>}
             {step === 1 && <div className="flex flex-col gap-5"><Pills label="Tops" opts={TOPS} v={top} set={setTop} /><Pills label="Trousers · waist" opts={["30", "32", "34", "36"]} v={waist} set={setWaist} /><Pills label="Shoes · EU" opts={["41", "42", "43", "44"]} v={shoe} set={setShoe} /></div>}
             {step === 2 && <div className="flex flex-col gap-2">{BRANDS.map((b) => { const on = follows.includes(b.slug); return (
               <button key={b.slug} onClick={() => toggleFollow(b.slug)} className={clsx("press flex items-center gap-3 rounded-sm p-3 text-left", on ? "bg-ink text-paper" : "bg-cream")} type="button">

@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { CHIPS, MATERIAL_OPTIONS, VALUE_OPTIONS, SIZE_LADDER, brandTier } from "@/lib/data";
 import { PRICE_BANDS, filterProducts, leadTimeOf, searchCatalog, studioOf, type Filters } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
+import { Fob } from "@/components/Fob";
 import { styleOverlap } from "@/lib/looks";
 import ProductCard from "@/components/ProductCard";
 
@@ -63,7 +64,7 @@ function ExploreInner() {
       </div>
       <div className="no-scrollbar mt-4 md:mt-5 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
         <button onClick={() => setOpen(!open)} className={clsx("press flex-none rounded-pill px-[15px] py-[9px] text-[11px] font-semibold md:hidden", open ? "bg-ink text-paper" : "bg-white soft")}>Filters {count}</button>
-        {CHIPS.map((c) => <button key={c} onClick={() => setChip(c)} className={clsx("press flex-none rounded-pill px-4 py-[9px] text-[11px] font-semibold whitespace-nowrap", chip === c ? "bg-ink text-paper" : "bg-white text-ink/72 soft")}>{c}</button>)}
+        {CHIPS.map((c) => <Fob key={c} active={chip === c} onClick={() => setChip(c)} size="sm">{c}</Fob>)}
       </div>
       <div className="mt-5 md:mt-[26px] flex flex-wrap items-end justify-between gap-2">
         <h2 className="text-[20px] md:text-[34px]">{title}</h2>
