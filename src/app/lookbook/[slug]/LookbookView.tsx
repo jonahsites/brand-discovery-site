@@ -12,7 +12,7 @@ export default function LookbookView({ slug }: { slug: string }) {
   const [spot, setSpot] = useState(0);
   const l = allLookbooks.find((x) => x.slug === slug);
   const b = l ? brands.find((x) => x.slug === l.brand) : undefined;
-  if (!l || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No lookbook here." : "Loading…"}</h1>{hydrated && <Link href="/lookbooks" className="font-semibold text-navy">All lookbooks →</Link>}</Page>;
+  if (!l || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No lookbook here." : "Loading…"}</h1>{hydrated && <Link href="/lookbooks" className="font-semibold text-ink">All lookbooks →</Link>}</Page>;
   const { looks, shoppable } = lookCount(l);
   const shopAll = () => { l.frames.forEach((f) => { const p = f.product && products.find((x) => x.slug === f.product); if (p) addToBag(p.slug, `${(p.sizes ?? ["M"])[0]} · ${(p.colors ?? ["Default"])[0]}`); }); openBag(); };
   return (
@@ -45,7 +45,7 @@ export default function LookbookView({ slug }: { slug: string }) {
         })}
       </div>
       <div className="card fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden"><div className="px-[10px] text-[12.5px] font-medium text-ink/60">{shoppable} shoppable</div><Button className="flex-1" onClick={shopAll}>Shop the looks</Button></div>
-      <div className="mt-10 flex items-center gap-3 rounded-lg bg-white p-4 soft"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1 text-[13.5px]"><span className="font-semibold">{b.name}</span> <span className="text-ink/50">· {b.city}, {b.country} · {looks} looks</span></div><Link href={`/brand/${b.slug}`} className="text-[12.5px] font-semibold text-navy">Visit brand →</Link></div>
+      <div className="mt-10 flex items-center gap-3 rounded-lg bg-white p-4 soft"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1 text-[13.5px]"><span className="font-semibold">{b.name}</span> <span className="text-ink/50">· {b.city}, {b.country} · {looks} looks</span></div><Link href={`/brand/${b.slug}`} className="text-[12.5px] font-semibold text-ink">Visit brand →</Link></div>
     </Page>
   );
 }

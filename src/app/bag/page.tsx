@@ -17,18 +17,18 @@ export default function BagPage() {
         <div>
           <h1 className="mb-[6px] text-[28px] md:text-[34px] font-extrabold leading-[1.05] tracking-[-.038em]">Your bag</h1>
           <div className="mb-6 text-[13px] text-ink/50">{bagCount} pieces from {bagGroups.length} brands</div>
-          {bagGroups.length === 0 && <div className="card rounded-lg p-10 text-center text-[14px] text-ink/55">Nothing here yet. <Link href="/explore" className="font-semibold text-navy">Explore brands →</Link></div>}
+          {bagGroups.length === 0 && <div className="card rounded-lg p-10 text-center text-[14px] text-ink/55">Nothing here yet. <Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></div>}
           {bagGroups.map((g) => (
             <div key={g.brand.slug} className="card mb-4 rounded-lg p-4 md:p-[22px]">
               <div className="mb-[6px] flex items-center gap-[11px] border-b border-ink/7 pb-[18px]">
                 <Avatar init={g.brand.init} tint={g.brand.tint} ink={g.brand.ink} size={36} />
                 <div className="flex-1"><Link href={`/brand/${g.brand.slug}`} className="text-[14px] font-semibold">{g.brand.name}</Link><div className="mono text-[11.5px] text-ink/42">{shipEstimate(g.brand.slug, g.brand.shipsFrom)}</div></div>
-                <span className="rounded-pill bg-offwhite px-[14px] py-[7px] text-[12px] font-medium">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span>
+                <span className="rounded-pill bg-cream px-[14px] py-[7px] text-[12px] font-medium">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span>
               </div>
               {g.items.map((it) => (
                 <div key={it.key} className="flex flex-wrap items-center gap-3 md:gap-4 py-4">
                   <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-sm" />
-                  <div className="min-w-0 flex-1"><Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link><div className="text-[12.5px] text-ink/50">{it.variant}{it.unit < it.p.price && <span className="ml-2 rounded-pill bg-peri px-2 py-[1px] text-[10.5px] font-semibold text-ink">promo</span>}</div><div className="mt-[7px] text-[13px] font-medium md:hidden">{money(it.total, true)}</div></div>
+                  <div className="min-w-0 flex-1"><Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link><div className="text-[12.5px] text-ink/50">{it.variant}{it.unit < it.p.price && <span className="ml-2 rounded-pill bg-sand-2 px-2 py-[1px] text-[10.5px] font-semibold text-ink">promo</span>}</div><div className="mt-[7px] text-[13px] font-medium md:hidden">{money(it.total, true)}</div></div>
                   <QtyStepper value={it.qty} onChange={(v) => setQty(it.key, v)} />
                   <span className="hidden md:inline rounded-pill bg-cream px-4 py-[9px] text-[13.5px] font-semibold">{money(it.total, true)}</span>
                   <button onClick={() => removeItem(it.key)} aria-label="Remove" className="text-[15px] text-ink/32">✕</button>
@@ -54,7 +54,7 @@ export default function BagPage() {
             {promoCode && <div className="mb-2 flex items-center justify-between rounded-pill bg-cream px-4 py-[11px] text-[13px]"><span className="mono font-semibold">{promoCode} applied</span><button onClick={clearPromoCode} className="text-[12px] font-semibold text-ink/55">Remove</button></div>}
             {giftCode && <div className="mb-2 flex items-center justify-between rounded-pill bg-moss px-4 py-[11px] text-[13px]"><span className="mono font-semibold">Gift card ····{giftCode.slice(-4)}</span><button onClick={clearGiftCode} className="text-[12px] font-semibold text-ink/55">Remove</button></div>}
             {(!promoCode || !giftCode) && <form onSubmit={(e) => { e.preventDefault(); const c = code.trim(); if (!c) return; if ((!promoCode && applyPromoCode(c)) || (!giftCode && applyGiftCode(c))) { setErr(""); setCode(""); } else setErr("That code isn't active."); }} className="flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} placeholder={promoCode ? "Gift card code" : giftCode ? "Promo code" : "Promo or gift card code"} className="min-w-0 flex-1 rounded-pill bg-cream px-4 py-[13px] text-[13px] outline-none placeholder:text-ink/45" /><Button variant="secondary" type="submit">Apply</Button></form>}
-            {err && <div className="mt-2 text-[12px] text-slate">{err}</div>}
+            {err && <div className="mt-2 text-[12px] text-sage">{err}</div>}
           </div>
           <div className="rounded-lg bg-cream p-6">
             {hint ? <><div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{hint.pct}% off {bagGroups.find((g) => g.brand.slug === hint.brand)?.brand.name}</div><div className="text-[12.5px] leading-[1.5] text-ink/60">Code <button onClick={() => { applyPromoCode(hint.code); }} className="mono font-semibold text-ink underline">{hint.code}</button> is running until {hint.ends ? new Date(hint.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "further notice"}.</div></>

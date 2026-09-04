@@ -23,7 +23,7 @@ export default function Countdown({ at, dark, compact }: { at: string; dark?: bo
   const cells = [[d, "d"], [h, "h"], [m, "m"], [s, "s"]] as const;
   return (
     <div className={clsx("flex gap-[6px]", compact && "gap-1")}>
-      {cells.map(([v, l]) => <div key={l} className={clsx("rounded-[8px] text-center", compact ? "min-w-[38px] px-2 py-1" : "min-w-[52px] px-2 py-2", dark ? "bg-offwhite/12" : "bg-white border border-ink/7")}><div className={clsx("mono font-medium tabular-nums", compact ? "text-[13px]" : "text-[18px]")}>{v === null ? "––" : String(v).padStart(2, "0")}</div><div className={clsx("text-[9px] uppercase tracking-[.1em]", dark ? "text-paper/50" : "text-ink/40")}>{l}</div></div>)}
+      {cells.map(([v, l]) => <div key={l} className={clsx("rounded-[8px] text-center", compact ? "min-w-[38px] px-2 py-1" : "min-w-[52px] px-2 py-2", dark ? "bg-cream/12" : "bg-white border border-ink/7")}><div className={clsx("mono font-medium tabular-nums", compact ? "text-[13px]" : "text-[18px]")}>{v === null ? "––" : String(v).padStart(2, "0")}</div><div className={clsx("text-[9px] uppercase tracking-[.1em]", dark ? "text-paper/50" : "text-ink/40")}>{l}</div></div>)}
     </div>
   );
 }

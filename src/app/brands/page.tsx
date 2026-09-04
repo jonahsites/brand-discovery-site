@@ -60,7 +60,7 @@ function BrandsInner() {
                   <Link href={`/brand/${b.slug}`} className="block truncate text-[19px] font-bold leading-tight tracking-[-.03em]">{b.name}</Link>
                   <div className="mono mb-2 text-[10.5px] text-ink/45">{b.city}, {b.country} · {own.length} items · {fmtFollowers(b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0))} followers</div>
                   <p className="mb-3 line-clamp-2 text-[13px] leading-[1.5] text-ink/62">{b.tagline}</p>
-                  <div className="mb-4 flex flex-wrap gap-[5px]">{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-offwhite px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
+                  <div className="mb-4 flex flex-wrap gap-[5px]">{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-cream px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
                   <div className="flex gap-2"><FollowButton slug={b.slug} size="sm" className="flex-1" /><Link href={`/brand/${b.slug}`} className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-white soft text-[13px]">↗</Link></div>
                 </div>
               </div>); })}

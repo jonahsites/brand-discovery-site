@@ -15,7 +15,7 @@ export function Avatar({ init, tint, ink, size = 44, radius, className, src }: {
 
 export function Placeholder({ label, className, style, children, wide, src, alt }: { label?: string; className?: string; style?: CSSProperties; children?: ReactNode; wide?: boolean; src?: string; alt?: string }) {
   return (
-    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", !src && (wide ? "stripes-wide" : "stripes"), src && "bg-mist", className)} style={style}>
+    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", !src && (wide ? "stripes-wide" : "stripes"), src && "bg-moss", className)} style={style}>
       {src ? <img src={src} alt={alt ?? label ?? ""} loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : label && <span className="mono text-[9px] font-medium uppercase tracking-[.1em] text-ink/30">{label}</span>}
       {children}
     </div>
@@ -55,8 +55,8 @@ export function IconCircle({ children, size = 42, variant = "white", className, 
         "press grid flex-none place-items-center rounded-pill text-[15px] leading-none",
         variant === "white" && "bg-white soft",
         variant === "soft" && "bg-cream",
-        variant === "sky" && "bg-sky",
-        variant === "peri" && "bg-peri",
+        variant === "sky" && "bg-sand",
+        variant === "peri" && "bg-sand-2",
         variant === "black" && "bg-ink text-paper",
         variant === "glass" && "glass-chip",
         className,
@@ -106,7 +106,7 @@ export function SectionHead({ title, sub, action, href }: { title: ReactNode; su
         <h3 className="text-[19px] md:text-[22px] leading-tight">{title}</h3>
         {sub && <div className="mt-1 text-[12.5px] text-ink/48">{sub}</div>}
       </div>
-      {action && <a href={href ?? "#"} className="text-[12.5px] font-semibold text-navy whitespace-nowrap">{action} →</a>}
+      {action && <a href={href ?? "#"} className="text-[12.5px] font-semibold text-ink whitespace-nowrap">{action} →</a>}
     </div>
   );
 }

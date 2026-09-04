@@ -107,7 +107,7 @@ function SearchPanel() {
               ))}
               {hitBrands.length === 0 && <div className="text-[13px] text-ink/45">No brands match “{q}” yet.</div>}
             </div>
-            <div className="mb-[14px] flex items-center justify-between"><Label>Products · {hitProducts.length}</Label>{hitProducts.length > 0 && <button onClick={goExplore} className="text-[12.5px] font-semibold text-navy">See all in Explore →</button>}</div>
+            <div className="mb-[14px] flex items-center justify-between"><Label>Products · {hitProducts.length}</Label>{hitProducts.length > 0 && <button onClick={goExplore} className="text-[12.5px] font-semibold text-ink">See all in Explore →</button>}</div>
             <div className="mb-[30px] grid grid-cols-2 gap-[10px] md:grid-cols-3 lg:grid-cols-5 md:gap-[14px]">
               {hitProducts.slice(0, 10).map((p) => (
                 <Link key={p.slug} href={`/product/${p.slug}`} onClick={close} className="rounded-md bg-white p-[11px] soft lift"><Placeholder className="h-[120px] md:h-[150px] rounded-sm" /><div className="px-[5px] pt-[11px] pb-[3px]"><div className="label mb-1 !text-[9.5px]">{bmap.get(p.brand)?.name}</div><div className="mb-[5px] text-[12.5px] font-medium leading-[1.25]">{p.name}</div><div className="text-[12.5px] font-medium">{money(priceOf(p).price)}</div></div></Link>

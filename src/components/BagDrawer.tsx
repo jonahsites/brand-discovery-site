@@ -18,7 +18,7 @@ export default function BagDrawer() {
           </div>
           <button onClick={() => openBag(false)} aria-label="Close" className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-white soft text-[15px]">✕</button>
         </div>
-        {bagGroups.length === 0 && <div className="rounded-md bg-white p-6 text-center soft text-[13.5px] text-ink/55">Your bag is empty. <Link href="/explore" className="font-semibold text-navy" onClick={() => openBag(false)}>Explore brands →</Link></div>}
+        {bagGroups.length === 0 && <div className="rounded-md bg-white p-6 text-center soft text-[13.5px] text-ink/55">Your bag is empty. <Link href="/explore" className="font-semibold text-ink" onClick={() => openBag(false)}>Explore brands →</Link></div>}
         {bagGroups.map((g) => (
           <div key={g.brand.slug} className="mb-3 rounded-md bg-white p-4 soft">
             <div className="mb-[10px] flex items-center gap-[9px]">
@@ -45,7 +45,7 @@ export default function BagDrawer() {
             <div className="mb-[14px] flex justify-between text-[13px] text-ink/60"><span>Shipping · {bagGroups.length} brands</span><span className="font-medium text-ink">{money(shipTotal, true)}</span></div>
             <div className="mb-[18px] flex items-baseline justify-between border-t border-ink/8 pt-[14px]"><span className="text-[14px] font-semibold">Total</span><span className="text-[23px] font-semibold tracking-[-.025em]">{money(total, true)}</span></div>
             <Link href="/checkout" onClick={() => openBag(false)}><Button full size="lg">Checkout</Button></Link>
-            <Link href="/bag" onClick={() => openBag(false)} className="mt-3 block text-center text-[12.5px] font-semibold text-navy">View full bag →</Link>
+            <Link href="/bag" onClick={() => openBag(false)} className="mt-3 block text-center text-[12.5px] font-semibold text-ink">View full bag →</Link>
           </div>
         )}
       </div>

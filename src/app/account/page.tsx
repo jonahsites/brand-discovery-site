@@ -49,7 +49,7 @@ function AccountInner() {
                 <div key={bd.id} className="card rounded-lg p-3">
                   <div className="mb-3 grid grid-cols-3 gap-1">{[0, 1, 2].map((i) => <Placeholder key={i} src={ps[i]?.image} className="h-[74px] rounded-sm" />)}</div>
                   <div className="flex items-center justify-between px-1"><div><div className="text-[14px] font-semibold tracking-[-.02em]">{bd.name}</div><div className="mono text-[10.5px] text-ink/45">{ps.length} piece{ps.length === 1 ? "" : "s"}</div></div><button onClick={() => deleteBoard(bd.id)} className="text-[12px] text-ink/40">✕</button></div>
-                  {ps.length > 0 && <div className="mt-2 flex flex-wrap gap-1 px-1">{ps.slice(0, 3).map((p) => <Link key={p.slug} href={`/product/${p.slug}`} className="rounded-pill bg-offwhite px-2 py-[3px] text-[11px]">{p.name}</Link>)}</div>}
+                  {ps.length > 0 && <div className="mt-2 flex flex-wrap gap-1 px-1">{ps.slice(0, 3).map((p) => <Link key={p.slug} href={`/product/${p.slug}`} className="rounded-pill bg-cream px-2 py-[3px] text-[11px]">{p.name}</Link>)}</div>}
                 </div>); })}
               <form onSubmit={(e) => { e.preventDefault(); if (!newBoard.trim()) return; createBoard(newBoard); setNewBoard(""); }} className="flex flex-col justify-center gap-2 rounded-lg bg-cream p-4"><Label>New board</Label><input value={newBoard} onChange={(e) => setNewBoard(e.target.value)} placeholder="Winter capsule" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit" className="self-start">Create</Button></form>
             </div>
@@ -71,7 +71,7 @@ function AccountInner() {
                     <div className="border-t border-ink/6 px-5 py-4 md:px-6">
                       <div className="mb-4 flex items-center gap-2">{STEPS.map((s, i) => <div key={s} className="flex flex-1 items-center gap-2"><div className={clsx("h-[6px] flex-1 rounded-pill", i <= idx ? "bg-sage" : "bg-ink/10")} /></div>)}</div>
                       <div className="mb-4 flex justify-between text-[10.5px] font-semibold uppercase tracking-[.1em]">{STEPS.map((s, i) => <span key={s} className={i <= idx ? "text-ink" : "text-ink/35"}>{s}</span>)}</div>
-                      {real ? <div className="flex flex-col gap-2">{real.items.map((it, i) => <Link key={i} href={`/product/${it.product}`} className="flex items-center justify-between rounded-md bg-offwhite px-4 py-[10px] text-[13px]"><span><span className="font-medium">{it.name}</span> <span className="text-ink/50">· {it.variant} · ×{it.qty}</span></span><span className="font-medium">{money(it.unit * it.qty, true)}</span></Link>)}<div className="mono mt-1 text-[11px] text-ink/45">Shipping {money(real.shipping, true)}{real.credit ? ` · points −${money(real.credit, true)}` : ""}{real.gift ? ` · gift card −${money(real.gift, true)}` : ""}{real.promo ? ` · code ${real.promo}` : ""} · Kindred holds payment until each parcel scans.</div></div>
+                      {real ? <div className="flex flex-col gap-2">{real.items.map((it, i) => <Link key={i} href={`/product/${it.product}`} className="flex items-center justify-between rounded-md bg-cream px-4 py-[10px] text-[13px]"><span><span className="font-medium">{it.name}</span> <span className="text-ink/50">· {it.variant} · ×{it.qty}</span></span><span className="font-medium">{money(it.unit * it.qty, true)}</span></Link>)}<div className="mono mt-1 text-[11px] text-ink/45">Shipping {money(real.shipping, true)}{real.credit ? ` · points −${money(real.credit, true)}` : ""}{real.gift ? ` · gift card −${money(real.gift, true)}` : ""}{real.promo ? ` · code ${real.promo}` : ""} · Kindred holds payment until each parcel scans.</div></div>
                         : <div className="text-[12.5px] text-ink/50">Demo order. Real orders you place show their pieces here.</div>}
                     </div>
                   )}
@@ -93,14 +93,14 @@ function AccountInner() {
             <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-sage" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
             <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => navigator.clipboard?.writeText("kindred.shop/r/jules")} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button><Link href="/gift" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Gift cards</Link></div>
           </div>
-          <div className="rounded-lg bg-navy p-6 md:p-7 text-paper">
+          <div className="rounded-lg bg-ink p-6 md:p-7 text-paper">
             <Label light className="mb-4">Style profile</Label>
             <p className="mb-[18px] text-[13px] leading-[1.6] text-paper/72">These tags decide what shows up in For You. Remove any that stopped feeling like you.</p>
             <div className="flex flex-wrap gap-2">
               {styleTags.map((t) => <button key={t} onClick={() => setStyleTags(styleTags.filter((x) => x !== t))} className="flex items-center gap-2 rounded-pill bg-paper/14 px-[15px] py-[9px] text-[12px] font-medium">{t}<span className="opacity-50">✕</span></button>)}
               <button onClick={() => setAddTag(!addTag)} className="rounded-pill bg-paper px-[15px] py-[9px] text-[12px] font-semibold text-ink">{addTag ? "Done" : "+ Add"}</button>
             </div>
-            {addTag && <div className="mt-3 flex flex-wrap gap-2 border-t border-paper/15 pt-3">{STYLE_OPTIONS.filter((s) => !styleTags.includes(s)).map((s) => <button key={s} onClick={() => setStyleTags([...styleTags, s])} className="rounded-pill bg-offwhite/8 px-3 py-[7px] text-[11.5px] text-paper/80">+ {s}</button>)}</div>}
+            {addTag && <div className="mt-3 flex flex-wrap gap-2 border-t border-paper/15 pt-3">{STYLE_OPTIONS.filter((s) => !styleTags.includes(s)).map((s) => <button key={s} onClick={() => setStyleTags([...styleTags, s])} className="rounded-pill bg-cream/8 px-3 py-[7px] text-[11.5px] text-paper/80">+ {s}</button>)}</div>}
           </div>
           <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-[18px]">Size profile</Label>
@@ -114,7 +114,7 @@ function AccountInner() {
           <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-[18px]">Following · {following.length}</Label>
             <div className="flex flex-col gap-3">
-              {following.map((b) => <div key={b.slug} className="flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} /><Link href={`/brand/${b.slug}`} className="min-w-0 flex-1"><div className="text-[13px] font-semibold">{b.name}</div><div className="mono text-[10.5px] text-ink/42">{brandMeta(b)}</div></Link><button onClick={() => toggleFollow(b.slug)} className="rounded-pill bg-offwhite px-[14px] py-[7px] text-[11.5px] font-semibold">Following</button></div>)}
+              {following.map((b) => <div key={b.slug} className="flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} /><Link href={`/brand/${b.slug}`} className="min-w-0 flex-1"><div className="text-[13px] font-semibold">{b.name}</div><div className="mono text-[10.5px] text-ink/42">{brandMeta(b)}</div></Link><button onClick={() => toggleFollow(b.slug)} className="rounded-pill bg-cream px-[14px] py-[7px] text-[11.5px] font-semibold">Following</button></div>)}
               {following.length === 0 && <div className="text-[13px] text-ink/50">Follow a few brands to fill your feed.</div>}
             </div>
           </div>

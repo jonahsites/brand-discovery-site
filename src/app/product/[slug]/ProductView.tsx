@@ -26,7 +26,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const [added, setAdded] = useState(false);
   const [rev, setRev] = useState({ stars: 5, fit: 2 as 1 | 2 | 3, body: "", open: false });
   const own = p ? [...reviews.filter((r) => r.product === p.slug), ...(p.createdAt ? [] : REVIEWS.map((r, i) => ({ ...r, id: "seed" + i, product: p.slug, stars: r.stars === "★ 5.0" ? 5 : 4, fit: 2 as const, size: r.meta.split(" ")[2] ?? "L", at: "" })))] : [];
-  if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
+  if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-ink">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
   const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
   while (gallery.length > 0 && gallery.length < 4) gallery.push(gallery[gallery.length % (p.images?.length ? gallery.length : 1)]);
@@ -48,7 +48,7 @@ export default function ProductView({ slug }: { slug: string }) {
         <div>
           <div className="card relative h-[340px] md:h-[660px] rounded-[24px] p-3 md:p-[26px]">
             <Placeholder src={gallery[thumb]} alt={p.name} label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[26px] rounded-[18px]", soldOut && "opacity-60")} />
-            {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121A24" fg="#fff">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#7C8C6F" fg="#fff">Final {p.stock} pieces</Tag></div> : null}
+            {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121A24" fg="#F6F4EF">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#7C8C6F" fg="#F6F4EF">Final {p.stock} pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
             {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-sm md:rounded-md p-[3px] transition", thumb === i ? "bg-ink" : "bg-transparent hover:bg-sand")}><Placeholder src={gallery[i]} alt={`${p.name} ${t}`} label={t} className="h-[74px] md:h-[130px] rounded-[10px] md:rounded-[15px]" /></button>)}
@@ -60,11 +60,11 @@ export default function ProductView({ slug }: { slug: string }) {
           </Link>
           <h1 className="mb-3 md:mb-[14px] text-[28px] md:text-[38px] font-extrabold leading-[1.05] tracking-[-.038em]">{p.name}</h1>
           <div className="mb-6 md:mb-[30px] flex flex-wrap items-baseline gap-3">
-            <span className="text-[24px] md:text-[26px] font-medium">{money(price)}</span>
+            <span className="text-[24px] md:text-[28px] font-bold tracking-[-.03em]">{money(price)}</span>
             {compareAt && <><span className="text-[17px] text-ink/35 line-through">{money(compareAt)}</span><Tag>{Math.round((1 - price / compareAt) * 100)}% off{promo ? ` · ${promo.label}` : ""}</Tag></>}
           </div>
           {p.description && <p className="mb-6 max-w-[520px] text-[14px] leading-[1.6] text-ink/65">{p.description}</p>}
-          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-medium text-navy">Size guide</button></div>
+          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-semibold text-ink/55 underline-offset-2 hover:underline">Size guide</button></div>
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
             {sizes.map((s) => <button key={s} onClick={() => { setSize(s); setAdded(false); }} className={clsx("press flex-1 md:flex-none md:min-w-[58px] rounded-pill py-[11px] md:py-[12px] text-[12px] font-semibold", size === s ? "bg-ink text-paper" : "bg-white text-ink/72 soft")}>{s}</button>)}
           </div>
@@ -86,7 +86,7 @@ export default function ProductView({ slug }: { slug: string }) {
               <form onSubmit={(e) => { e.preventDefault(); if (!boardName.trim()) return; createBoard(boardName, p.slug); toast(`Board “${boardName.trim()}” created`, "/account"); setBoardName(""); setBoardOpen(false); }} className="flex gap-2"><input value={boardName} onChange={(e) => setBoardName(e.target.value)} placeholder="New board name" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit">Create</Button></form>
             </div>
           )}
-          <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sky" : "bg-offwhite")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-ink text-paper" : "bg-offwhite")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
+          <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sand" : "bg-cream")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-ink text-paper" : "bg-cream")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
           <div className="mb-6 md:mb-[30px] text-[12.5px] text-ink/50">Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</div>
           <Accordion items={ACCORDIONS} />
         </div>
@@ -108,18 +108,18 @@ export default function ProductView({ slug }: { slug: string }) {
       {similar.length > 0 && <><SectionHead title="Similar from other brands" sub={`Matched on ${p.category.toLowerCase()} and ${b.moods.slice(0, 2).join(", ")}`} action="Explore" href={`/explore?q=${encodeURIComponent(p.category + " " + b.moods.slice(0, 2).join(" "))}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{similar.map((x) => <ProductCard key={x.slug} p={x} />)}</div></>}
 
       <div className="grid gap-5 md:gap-8 lg:grid-cols-[340px_1fr] items-start">
-        <div className="rounded-lg bg-navy p-7 md:p-[30px] text-paper">
+        <div className="rounded-lg bg-ink p-7 md:p-[30px] text-paper">
           <Label light className="mb-4">Reviews</Label>
           <div className="mb-[6px] text-[52px] font-bold leading-none tracking-[-.04em]">{avg}</div>
           <div className="mb-[26px] text-[12.5px] text-paper/70">from {own.length} verified buyer{own.length === 1 ? "" : "s"}</div>
           <Label light className="mb-[14px]">Fit</Label>
-          <div className="relative mb-3 h-[5px] rounded-pill bg-offwhite/20"><div className="absolute top-[-6px] h-[17px] w-[17px] -ml-2 rounded-pill bg-peri" style={{ left: `${((fitAvg - 1) / 2) * 100}%` }} /></div>
+          <div className="relative mb-3 h-[5px] rounded-pill bg-paper/20"><div className="absolute top-[-6px] h-[17px] w-[17px] -ml-2 rounded-pill bg-moss" style={{ left: `${((fitAvg - 1) / 2) * 100}%` }} /></div>
           <div className="mono mb-6 flex justify-between text-[11px] text-paper/65"><span>Runs small</span><span>True</span><span>Runs large</span></div>
-          <button onClick={() => setRev((r) => ({ ...r, open: !r.open }))} className="rounded-pill bg-peri px-4 py-2 text-[12px] font-semibold text-ink">{rev.open ? "Close" : "Write a review"}</button>
+          <button onClick={() => setRev((r) => ({ ...r, open: !r.open }))} className="rounded-pill bg-paper px-4 py-2 text-[12px] font-semibold text-ink">{rev.open ? "Close" : "Write a review"}</button>
         </div>
         <div className="flex flex-col gap-[14px]">
           {rev.open && (
-            <div className="card rounded-2xl p-5 md:p-6">
+            <div className="card rounded-lg p-5 md:p-6">
               <div className="mb-3 flex flex-wrap gap-4">
                 <div><Label className="mb-2">Stars</Label><div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <button key={n} onClick={() => setRev((r) => ({ ...r, stars: n }))} className={clsx("text-[20px]", n <= rev.stars ? "text-ink" : "text-ink/20")}>★</button>)}</div></div>
                 <div><Label className="mb-2">Fit</Label><div className="flex gap-2">{(["Runs small", "True", "Runs large"] as const).map((f, i) => <button key={f} onClick={() => setRev((r) => ({ ...r, fit: (i + 1) as 1 | 2 | 3 }))} className={clsx("rounded-pill px-3 py-[6px] text-[12px] font-medium", rev.fit === i + 1 ? "bg-ink text-paper" : "bg-cream")}>{f}</button>)}</div></div>
@@ -129,16 +129,16 @@ export default function ProductView({ slug }: { slug: string }) {
             </div>
           )}
           {own.map((r) => (
-            <div key={r.id} className="card rounded-2xl p-5 md:p-6">
+            <div key={r.id} className="card rounded-lg p-5 md:p-6">
               <div className="mb-[14px] flex items-center gap-[11px]">
                 <Avatar init={r.init} tint={r.tint} size={38} />
                 <div className="flex-1"><div className="text-[13.5px] font-semibold">{r.name}</div><div className="mono text-[11.5px] text-ink/40">Bought size {r.size}{r.at ? ` · ${new Date(r.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : " · 3 weeks ago"}</div></div>
-                <span className="rounded-pill bg-offwhite px-[13px] py-[6px] text-[11.5px] font-semibold">★ {r.stars.toFixed(1)}</span>
+                <span className="rounded-pill bg-cream px-[13px] py-[6px] text-[11.5px] font-semibold">★ {r.stars.toFixed(1)}</span>
               </div>
               <p className="text-[13.5px] leading-[1.6] text-ink/70">{r.body}</p>
             </div>
           ))}
-          {own.length === 0 && !rev.open && <div className="card rounded-2xl p-6 text-[13.5px] text-ink/55">No reviews yet. Be the first.</div>}
+          {own.length === 0 && !rev.open && <div className="card rounded-lg p-6 text-[13.5px] text-ink/55">No reviews yet. Be the first.</div>}
         </div>
       </div>
 
