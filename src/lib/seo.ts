@@ -12,7 +12,7 @@ export const SITE = {
   description:
     "Kindred is the marketplace for independent clothing brands. Search by how you feel, filter by materials, values and where a piece is made, and buy from many small labels in one bag and one checkout.",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://brand-discovery-site.vercel.app").replace(/\/$/, ""),
-  ogImage: "/og.png",
+  ogImage: "/opengraph-image",
   locale: "en_US",
   twitter: "@kindredshop",
   keywords: [

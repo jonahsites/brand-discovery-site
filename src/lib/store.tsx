@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
 import { computeCart, pointsEarned, type BagGroup } from "./cart";
 import { getSupabase, supabaseEnabled } from "./supabase";
+import { track } from "./analytics";
 import { slugify } from "./catalog";
 import { LOOKBOOKS } from "./data";
 import { allBrands, allProducts, effectivePrice } from "./catalog";
@@ -202,7 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
-    addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
+    addToBag: (product, variant, qty = 1) => { track("add_to_bag", { product, qty }); up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }); },
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
     clearBag: () => up(() => ({ bag: [], promoCode: undefined, giftCode: undefined })),
@@ -221,7 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     deletePromo: (id) => up((p) => ({ promos: p.promos.filter((x) => x.id !== id) })),
     upsertDrop: (d) => up((p) => ({ drops: [d, ...p.drops.filter((x) => x.id !== d.id)].sort((a, b) => a.at.localeCompare(b.at)) })),
     deleteDrop: (id) => up((p) => ({ drops: p.drops.filter((x) => x.id !== id) })),
-    placeOrder: () => {
+    placeOrder: () => { track("place_order", { brands: [...new Set(derived.bagGroups.map((g) => g.brand.slug))].length, total: derived.total });
       if (derived.bagGroups.length === 0) return undefined;
       const order: Order = {
         id: "UN-" + String(40912 + state.orders.length + 1), placedAt: new Date().toISOString(), status: "Placed", promo: state.promoCode,

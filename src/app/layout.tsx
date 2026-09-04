@@ -10,6 +10,8 @@ import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
 import Toaster from "@/components/Toaster";
 import Personalize from "@/components/Personalize";
+import Analytics from "@/components/Analytics";
+import { Suspense } from "react";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -61,6 +63,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <AppProvider>
           <Personalize />
+          <Suspense fallback={null}><Analytics /></Suspense>
           <TopNav />
           <div className="flex-1 pb-20 md:pb-0">{children}<Footer /></div>
           <MobileTabBar />
