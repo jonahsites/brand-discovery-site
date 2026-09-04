@@ -31,9 +31,9 @@ function DashInner() {
   const seeded = !brand.createdAt;
   const stats = [
     { label: "Sales · 30d", value: money((seeded ? 12408 : 0) + revenue), delta: seeded ? "↑ 34% vs prev" : `${myOrders.length} live orders`, bg: "#121A24", ink: "#F6F4EF" },
-    { label: "Orders", value: String((seeded ? 86 : 0) + myOrders.length), delta: seeded ? "↑ 12 vs prev" : "since launch", bg: "#fff", ink: "#121A24" },
+    { label: "Orders", value: String((seeded ? 86 : 0) + myOrders.length), delta: seeded ? "↑ 12 vs prev" : "since launch", bg: "#2A3A52", ink: "#F6F4EF" },
     { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) && !seeded ? 1 : 0)).toLocaleString(), delta: seeded ? "↑ 214 new" : "share your page", bg: "#EDE8DE", ink: "#121A24" },
-    { label: "Profile views", value: ((seeded ? 24100 : 0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#fff", ink: "#121A24" },
+    { label: "Profile views", value: ((seeded ? 24100 : 0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#4D6B52", ink: "#F6F4EF" },
   ];
   return (
     <div className="flex min-h-screen">
@@ -77,7 +77,7 @@ function Overview({ stats, mine, myOrders, seeded, brand }: { stats: { label: st
   const myPosts = posts.filter((p) => p.brand === brand);
   return (
     <>
-      <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{stats.map((t) => <div key={t.label} className={clsx("rounded-lg p-5 md:p-6", t.bg === "#fff" && "card")} style={{ background: t.bg, color: t.ink }}><div className="mb-[14px] text-[10px] font-semibold uppercase tracking-[.14em] opacity-62">{t.label}</div><div className="mb-2 text-[26px] md:text-[34px] font-extrabold leading-none tracking-[-.04em]">{t.value}</div><div className="mono text-[11.5px] opacity-62">{t.delta}</div></div>)}</div>
+      <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{stats.map((t) => <div key={t.label} className="lift rounded-lg p-5 md:p-6" style={{ background: t.bg, color: t.ink, boxShadow: "0 8px 22px -18px rgba(18,26,36,.55)" }}><div className="mb-[14px] text-[10px] font-semibold uppercase tracking-[.14em] opacity-62">{t.label}</div><div className="mb-2 text-[26px] md:text-[34px] font-extrabold leading-none tracking-[-.04em]">{t.value}</div><div className="mono text-[11.5px] opacity-62">{t.delta}</div></div>)}</div>
       <div className="mb-5 grid gap-5 xl:grid-cols-[1fr_380px] items-start">
         <div className="card rounded-lg p-5 md:p-[26px]"><div className="mb-6 flex items-baseline justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Sales</div><div className="mono text-[11.5px] text-ink/42">30 days</div></div><div className="flex h-[170px] items-end gap-[5px]">{DASH.chart.map((h, i) => <div key={i} className="flex-1 rounded-t-[4px]" style={{ height: seeded ? h : Math.max(4, (i > 24 ? myOrders.length * 30 : 0)), background: i > 26 ? "#121A24" : "#DCD5C7" }} />)}</div><div className="mono mt-3 flex justify-between text-[10.5px] text-ink/35"><span>Aug 4</span><span>Aug 18</span><span>Sep 2</span></div></div>
         <div className="card rounded-lg p-6">
