@@ -55,8 +55,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${jakarta.variable} ${jetbrains.variable} ${instrument.variable} ${space.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        {/* Apply the saved look before first paint so the page never flashes the default palette. */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var s=JSON.parse(localStorage.getItem("kindred.v2")||"{}");if(s.look)document.documentElement.dataset.look=s.look}catch(e){}` }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(orgJsonLd()) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldScript(siteJsonLd()) }} />
       </head>

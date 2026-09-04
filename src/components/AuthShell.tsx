@@ -39,4 +39,4 @@ export function Or() {
   return <div className="my-4 flex items-center gap-3 text-[10.5px] font-semibold uppercase tracking-[.12em] text-ink/35"><span className="h-px flex-1 bg-ink/10" />or<span className="h-px flex-1 bg-ink/10" /></div>;
 }
 
-export const authInput = "w-full rounded-sm bg-white px-3 py-[10px] text-[13px] font-medium outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)] placeholder:text-ink/35";
+export { inputCls as authInput } from "@/components/ui";

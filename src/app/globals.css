@@ -12,63 +12,12 @@
   --sage: #7c8c6f;
   --card: #ffffff;
   --ink-rgb: 18, 26, 36;
-  --r-sm: 12px; --r-md: 18px; --r-lg: 24px; --r-xl: 26px; --r-2xl: 24px; --r-3xl: 28px; --r-4xl: 30px; --r-pill: 999px;
-  --look-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
-  --look-display-weight: 800;
-  --look-display-tracking: -0.04em;
-  --sh-card: 0 18px 40px -30px rgba(var(--ink-rgb), 0.8);
-  --sh-soft: 0 6px 18px -10px rgba(var(--ink-rgb), 0.4);
+    --sh-card: 0 1px 0 rgba(var(--ink-rgb), 0.08), 0 14px 28px -22px rgba(var(--ink-rgb), 0.55);
+  --sh-soft: 0 1px 0 rgba(var(--ink-rgb), 0.06), 0 6px 14px -10px rgba(var(--ink-rgb), 0.35);
   --sh-panel: 0 30px 70px -34px rgba(var(--ink-rgb), 0.5);
   --sh-float: 0 10px 24px -18px rgba(var(--ink-rgb), 0.8);
-  --card-ring: 0 0 0 0 transparent;
+  --card-ring: inset 0 0 0 1px rgba(var(--ink-rgb), 0.06);
 }
-
-/* ---- Looks: set from onboarding style picks (src/lib/looks.ts) via <html data-look>. ---- */
-[data-look="heritage"] {
-  --paper: #f3ebdd; --cream: #e8dcc6; --sand: #d6c4a6; --sand-2: #dfd0b6; --sand-3: #c9b391; --moss: #d9d4b8;
-  --ink: #2b211a; --ink-rgb: 43, 33, 26; --sage: #8b5e34;
-  --r-sm: 8px; --r-md: 10px; --r-lg: 12px; --r-xl: 12px; --r-2xl: 12px; --r-3xl: 14px; --r-4xl: 14px; --r-pill: 8px;
-  --look-display: var(--font-instrument), Georgia, "Times New Roman", serif;
-  --look-display-weight: 400; --look-display-tracking: -0.015em;
-  --sh-card: 0 1px 0 rgba(43, 33, 26, 0.12), 0 14px 30px -26px rgba(43, 33, 26, 0.6);
-  --card-ring: inset 0 0 0 1px rgba(43, 33, 26, 0.12);
-}
-[data-look="street"] {
-  --paper: #ffffff; --cream: #f0f0f0; --sand: #e2e2e2; --sand-2: #ececec; --sand-3: #d4d4d4; --moss: #e9e9e9;
-  --ink: #0a0a0a; --ink-rgb: 10, 10, 10; --sage: #ff3b1f;
-  --r-sm: 4px; --r-md: 6px; --r-lg: 8px; --r-xl: 8px; --r-2xl: 8px; --r-3xl: 10px; --r-4xl: 10px; --r-pill: 6px;
-  --look-display: var(--font-space), "Space Grotesk", system-ui, sans-serif;
-  --look-display-weight: 700; --look-display-tracking: -0.03em;
-  --sh-card: 0 0 0 1.5px #0a0a0a; --sh-soft: 0 0 0 1.5px #0a0a0a; --sh-panel: 0 0 0 1.5px #0a0a0a; --sh-float: 0 0 0 1.5px #0a0a0a;
-}
-[data-look="tech"] {
-  --paper: #111315; --cream: #1b1e22; --sand: #262a2f; --sand-2: #2e333a; --sand-3: #343a41; --moss: #233129;
-  --ink: #f2f4f5; --ink-rgb: 242, 244, 245; --sage: #3ddc84; --card: #1b1e22; --color-white: #1b1e22;
-  --r-sm: 14px; --r-md: 18px; --r-lg: 22px; --r-xl: 22px; --r-2xl: 22px; --r-3xl: 24px; --r-4xl: 26px; --r-pill: 999px;
-  --look-display: var(--font-space), "Space Grotesk", system-ui, sans-serif;
-  --look-display-weight: 700; --look-display-tracking: -0.03em;
-  --sh-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 20px 40px -28px rgba(0, 0, 0, 0.9);
-  --sh-soft: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -2px 0 rgba(0, 0, 0, 0.55);
-  --sh-panel: 0 30px 70px -34px rgba(0, 0, 0, 0.9); --sh-float: 0 10px 24px -18px rgba(0, 0, 0, 0.9);
-  color-scheme: dark;
-}
-[data-look="cozy"] {
-  --paper: #f7f1ea; --cream: #efe3d6; --sand: #e2cdb8; --sand-2: #ead9c7; --sand-3: #d6bda3; --moss: #e4d9c5;
-  --ink: #3b2f2a; --ink-rgb: 59, 47, 42; --sage: #c4704f;
-  --r-sm: 16px; --r-md: 22px; --r-lg: 30px; --r-xl: 32px; --r-2xl: 30px; --r-3xl: 34px; --r-4xl: 36px;
-  --look-display-tracking: -0.03em;
-}
-[data-look="avant"] {
-  --paper: #f4f4f2; --cream: #e9e9e6; --sand: #d9d9d4; --sand-2: #e1e1dd; --sand-3: #cfcfc9; --moss: #e4e4df;
-  --ink: #000000; --ink-rgb: 0, 0, 0; --sage: #6b6b6b;
-  --r-sm: 0px; --r-md: 0px; --r-lg: 0px; --r-xl: 0px; --r-2xl: 0px; --r-3xl: 0px; --r-4xl: 0px; --r-pill: 0px;
-  --look-display: var(--font-instrument), Georgia, serif;
-  --look-display-weight: 400; --look-display-tracking: -0.02em;
-  --sh-card: 0 0 0 1px rgba(0, 0, 0, 0.14); --sh-soft: 0 0 0 1px rgba(0, 0, 0, 0.14); --sh-panel: 0 0 0 1px rgba(0, 0, 0, 0.14); --sh-float: 0 0 0 1px rgba(0, 0, 0, 0.14);
-}
-[data-look="avant"] h1, [data-look="avant"] h2 { font-style: italic; }
-[data-look="tech"] img { filter: saturate(0.92); }
-[data-look="tech"] .bg-ink { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 0 rgba(0, 0, 0, 0.45); }
 
 @theme inline {
   --color-paper: var(--paper);
@@ -88,19 +37,19 @@
   --color-black: var(--ink);
   --color-mist: var(--moss);
 
-  --radius-sm: var(--r-sm);
-  --radius-md: var(--r-md);
-  --radius-lg: var(--r-lg);
-  --radius-xl: var(--r-xl);
-  --radius-2xl: var(--r-2xl);
-  --radius-3xl: var(--r-3xl);
-  --radius-4xl: var(--r-4xl);
-  --radius-pill: var(--r-pill);
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 18px;
+  --radius-3xl: 22px;
+  --radius-4xl: 26px;
+  --radius-pill: 999px;
 
   --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, Helvetica, Arial, sans-serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
-  --font-display: var(--look-display);
   --font-instrument: var(--font-instrument-serif), Georgia, serif;
+  --font-display: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
 
   --shadow-card: var(--sh-card);
   --shadow-soft: var(--sh-soft);
@@ -123,7 +72,7 @@
   }
   ::selection { background: var(--ink); color: var(--paper); }
   /* Headlines run tight and heavy. */
-  h1, h2 { font-family: var(--font-display); font-weight: var(--look-display-weight); letter-spacing: var(--look-display-tracking); line-height: 1.05; }
+  h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.015em; line-height: 1.05; }
   h3 { font-weight: 700; letter-spacing: -0.02em; }
   a { color: inherit; text-decoration: none; }
   input, button, textarea, select { font-family: inherit; }

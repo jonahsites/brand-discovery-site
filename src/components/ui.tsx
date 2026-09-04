@@ -31,10 +31,10 @@ export function Button({ variant = "primary", size = "md", full, className, ...r
   return (
     <button
       className={clsx(
-        "press inline-flex min-w-0 items-center justify-center gap-2 rounded-pill font-semibold whitespace-nowrap",
-        size === "sm" && "px-4 py-[8px] text-[11px]",
-        size === "md" && "px-[22px] py-[12px] text-[12px]",
-        size === "lg" && "px-[26px] py-[14px] text-[12.5px]",
+        "press inline-flex min-w-0 items-center justify-center gap-2 rounded-sm font-semibold whitespace-nowrap",
+        size === "sm" && "px-4 py-[9px] text-[11px]",
+        size === "md" && "px-5 py-[11px] text-[12px]",
+        size === "lg" && "px-6 py-[13px] text-[12.5px]",
         variant === "primary" && "bg-ink text-paper",
         variant === "navy" && "bg-sage text-paper",
         variant === "secondary" && "bg-white text-ink soft",
@@ -115,4 +115,4 @@ export function Page({ children, className, narrow }: { children: ReactNode; cla
   return <main className={clsx("mx-auto w-full px-4 md:px-10 pb-16", narrow ? "max-w-[1100px]" : "max-w-[1440px]", className)}>{children}</main>;
 }
 
-export const inputCls = "w-full rounded-[16px] bg-white px-4 py-3 text-[13px] font-medium outline-none shadow-[inset_0_0_0_1px_rgba(18,26,36,.07)] focus:shadow-[inset_0_0_0_1.5px_rgba(18,26,36,.5)] placeholder:text-ink/38";
+export const inputCls = "w-full rounded-sm bg-white px-3 py-[10px] text-[13px] font-medium outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)] placeholder:text-ink/35";

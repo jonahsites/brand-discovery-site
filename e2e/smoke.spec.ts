@@ -92,8 +92,7 @@ test("brand onboarding creates a live brand page and dashboard", async ({ page }
   await expect(page.getByRole("heading", { name: "Test Atelier" })).toBeVisible();
 });
 
-test("first visit requires an account; onboarding picks a look that restyles the app", async ({ page }) => {
-  // Fresh device: no account at all.
+test("first visit requires an account; onboarding lands on Discover", async ({ page }) => {
   await page.addInitScript(() => { try { localStorage.removeItem("kindred.v2"); sessionStorage.setItem("e2e-reset", "1"); } catch {} });
   await page.goto("/explore");
   await expect(page).toHaveURL(/\/signup/);
@@ -105,11 +104,8 @@ test("first visit requires an account; onboarding picks a look that restyles the
   for (const s of ["Workwear", "Vintage revival", "Archive"]) await page.getByRole("button", { name: s, exact: true }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "See my look" }).click();
-  await expect(page.getByRole("heading", { name: /Your look is Heritage/ })).toBeVisible();
   await page.getByRole("button", { name: "Start browsing" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.look)).toBe("heritage");
   await page.goto("/brands");
-  await expect(page.getByText("Your look").first()).toBeVisible();
+  await expect(page.getByText("For you").first()).toBeVisible();
 });

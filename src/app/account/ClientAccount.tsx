@@ -7,13 +7,12 @@ import { ORDERS, STYLE_OPTIONS, SIZE_LADDER, brandMeta, money } from "@/lib/data
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { Avatar, Button, Label, Placeholder, Page, inputCls } from "@/components/ui";
-import { LOOKS, deriveLook, lookByKey } from "@/lib/looks";
 
 export default function Account() { return <Suspense><AccountInner /></Suspense>; }
 
 function AccountInner() {
   const sp = useSearchParams();
-  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo, referralCode, referredBy, applyReferral, toast, look, lookOverride, setLook, logOut, account } = useApp();
+  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads, renameShopper, boards, deleteBoard, createBoard, resetDemo, referralCode, referredBy, applyReferral, toast, logOut, account } = useApp();
   const [friendCode, setFriendCode] = useState("");
   const [friendErr, setFriendErr] = useState("");
   const [newBoard, setNewBoard] = useState("");
@@ -96,12 +95,7 @@ function AccountInner() {
             <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-sage" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
             <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => { navigator.clipboard?.writeText(`${location.origin}/r/${referralCode}`); toast("Referral link copied"); }} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button><Link href="/gift" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Gift cards</Link></div>
           </div>
-          <div className="card rounded-lg p-6 md:p-7">
-            <div className="mb-3 flex items-baseline justify-between"><Label>Your look · {lookByKey(look).name}</Label>{lookOverride && <button onClick={() => setLook(undefined)} className="text-[11.5px] font-semibold text-ink/50">Back to automatic</button>}</div>
-            <p className="mb-4 text-[12.5px] leading-[1.5] text-ink/60">{lookByKey(look).ui} {lookOverride ? "You chose this one yourself." : `Picked from your style tags (${lookByKey(deriveLook(styleTags)).name}).`}</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{LOOKS.map((l) => <button key={l.key} onClick={() => setLook(l.key === deriveLook(styleTags) && !lookOverride ? undefined : l.key)} className={clsx("press flex items-center gap-2 rounded-md px-3 py-[9px] text-left text-[12px] font-semibold", look === l.key ? "bg-ink text-paper" : "bg-cream")}><span className="h-5 w-5 flex-none rounded-pill" style={{ background: l.swatch[0], boxShadow: `inset 0 0 0 1px ${l.swatch[1]}33, inset 0 -6px 0 ${l.swatch[2]}` }} />{l.name}</button>)}</div>
-          </div>
-          <div className="card rounded-lg p-6 md:p-7">
+                    <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-2">Refer a friend</Label>
             <div className="mb-3 text-[13px] leading-[1.55] text-ink/60">Your link is <span className="mono font-semibold text-ink">/r/{referralCode}</span>. When a friend joins through it you both get 200 points after their first order.</div>
             {referredBy ? <div className="rounded-md bg-cream px-4 py-3 text-[12.5px]">You joined through <span className="mono font-semibold">{referredBy}</span> · 200 points added.</div>
@@ -134,7 +128,7 @@ function AccountInner() {
             </div>
           </div>
           <div className="md:hidden flex flex-col gap-2">{session.role === "brand" ? <Link href="/dashboard"><Button full variant="navy">Brand dashboard</Button></Link> : <Link href="/sell"><Button full variant="secondary">Open a brand account</Button></Link>}</div>
-          <div className="flex items-center gap-4 text-[12px] text-ink/40"><button onClick={() => { logOut(); }} className="underline-offset-2 hover:underline">Sign out{account ? ` (${account.email})` : ""}</button><button onClick={() => { if (confirm("Reset all demo data on this device? Bag, orders, brands you created, everything.")) resetDemo(); }} className="underline-offset-2 hover:underline">Reset demo data</button></div>
+          <div className="flex items-center gap-4 text-[12px] text-ink/40"><button onClick={() => { void logOut(); }} className="underline-offset-2 hover:underline">Sign out{account ? ` (${account.email})` : ""}</button><button onClick={() => { if (confirm("Reset all demo data on this device? Bag, orders, brands you created, everything.")) resetDemo(); }} className="underline-offset-2 hover:underline">Reset demo data</button></div>
         </div>
       </div>
     </Page>

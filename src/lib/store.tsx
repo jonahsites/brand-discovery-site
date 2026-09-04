@@ -2,8 +2,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
 import { computeCart, pointsEarned, type BagGroup } from "./cart";
+import { getSupabase, supabaseEnabled } from "./supabase";
 import { slugify } from "./catalog";
-import { deriveLook, type LookKey } from "./looks";
 import { LOOKBOOKS } from "./data";
 import { allBrands, allProducts, effectivePrice } from "./catalog";
 
@@ -21,7 +21,7 @@ type Persisted = {
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
   lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string; referredBy?: string;
-  account?: Account; onboarded: boolean; lookOverride?: LookKey; look?: LookKey;
+  account?: Account; onboarded: boolean;
   boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
 };
 type Toast = { id: string; text: string; href?: string };
@@ -49,8 +49,7 @@ type Ctx = State & {
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
   referralCode: string; applyReferral: (code: string) => boolean;
-  look: LookKey; setLook: (k?: LookKey) => void;
-  signUp: (a: { name: string; email: string; provider: Account["provider"] }) => void; logIn: (email: string) => boolean; logOut: () => void; completeOnboarding: () => void;
+  signUp: (a: { name: string; email: string; password?: string; provider: Account["provider"] }) => Promise<{ ok: true } | { ok: false; error: string }>; logIn: (email: string, password?: string) => Promise<{ ok: true } | { ok: false; error: string }>; logOut: () => Promise<void>; completeOnboarding: () => Promise<void>;
   buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
@@ -117,7 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     const { bagOpen: _b, searchOpen: _s, toasts: _t, ...persist } = state; void _b; void _s; void _t;
     // `look` is written resolved so the inline <head> script can apply it before hydration.
-    try { localStorage.setItem(LS, JSON.stringify({ ...persist, look: persist.lookOverride ?? deriveLook(persist.styleTags) })); } catch {}
+    try { localStorage.setItem(LS, JSON.stringify(persist)); } catch {}
   }, [state, hydrated]);
   useEffect(() => {
     document.body.style.overflow = state.bagOpen || state.searchOpen ? "hidden" : "";
@@ -150,10 +149,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
   const points = useMemo(() => 1240 + (state.referredBy ? 200 : 0) + state.orders.reduce((s, o) => s + pointsEarned(o), 0), [state.orders, state.referredBy]);
   const referralCode = useMemo(() => slugify(state.session.name) || "friend", [state.session.name]);
-  const look = useMemo<LookKey>(() => state.lookOverride ?? deriveLook(state.styleTags), [state.lookOverride, state.styleTags]);
 
   const value: Ctx = {
-    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications, look,
+    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
@@ -192,11 +190,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
     referralCode,
-    setLook: (lookOverride) => up(() => ({ lookOverride })),
-    signUp: ({ name, email, provider }) => up((p) => ({ account: { name, email, provider, signedIn: true, createdAt: new Date().toISOString() }, onboarded: false, styleTags: [], session: { ...p.session, role: "shopper", name } })),
-    logIn: (email) => { const a = state.account; if (!a || a.email.toLowerCase() !== email.trim().toLowerCase()) return false; up((p) => ({ account: { ...p.account!, signedIn: true }, session: { ...p.session, name: p.account!.name } })); return true; },
-    logOut: () => up((p) => (p.account ? { account: { ...p.account, signedIn: false } } : {})),
-    completeOnboarding: () => up(() => ({ onboarded: true })),
+signUp: async ({ name, email, password, provider }) => {
+      const clean = { name: name.trim(), email: email.trim().toLowerCase() };
+      const sb = getSupabase();
+      if (sb && provider === "email" && password) {
+        const { error } = await sb.auth.signUp({ email: clean.email, password, options: { data: { name: clean.name } } });
+        if (error) return { ok: false, error: error.message };
+      } else if (sb && provider !== "email") {
+        const { error } = await sb.auth.signInWithOAuth({ provider: provider === "x" ? "twitter" : provider, options: { redirectTo: `${location.origin}/onboarding` } });
+        if (error) return { ok: false, error: error.message };
+      }
+      up((p) => ({ account: { name: clean.name, email: clean.email, provider, signedIn: true, createdAt: new Date().toISOString() }, onboarded: false, styleTags: [], session: { ...p.session, role: "shopper", name: clean.name } }));
+      return { ok: true };
+    },
+    logIn: async (email, password) => {
+      const sb = getSupabase();
+      const clean = email.trim().toLowerCase();
+      if (sb && password) {
+        const { data, error } = await sb.auth.signInWithPassword({ email: clean, password });
+        if (error) return { ok: false, error: error.message };
+        const meta = (data.user?.user_metadata ?? {}) as { name?: string };
+        up((p) => ({ account: { name: meta.name ?? clean.split("@")[0], email: clean, provider: "email", signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString() }, session: { ...p.session, name: meta.name ?? p.session.name } }));
+        return { ok: true };
+      }
+      const a = state.account;
+      if (!a || a.email.toLowerCase() !== clean) return { ok: false, error: supabaseEnabled ? "That email needs a password with your Supabase account." : "No account on this device with that email." };
+      up((p) => ({ account: { ...p.account!, signedIn: true }, session: { ...p.session, name: p.account!.name } }));
+      return { ok: true };
+    },
+    logOut: async () => { const sb = getSupabase(); if (sb) await sb.auth.signOut(); up((p) => (p.account ? { account: { ...p.account, signedIn: false } } : {})); },
+    completeOnboarding: async () => {
+      const sb = getSupabase();
+      if (sb) {
+        const { data } = await sb.auth.getUser();
+        if (data.user) {
+          await sb.from("profiles").update({ onboarded: true }).eq("id", data.user.id);
+          if (state.styleTags.length) await sb.from("style_tags").upsert(state.styleTags.map((tag) => ({ user_id: data.user!.id, tag })), { onConflict: "user_id,tag" });
+          await sb.from("sizes").upsert({ user_id: data.user.id, ...state.sizes });
+        }
+      }
+      up(() => ({ onboarded: true }));
+    },
     applyReferral: (code) => { const c = code.trim().toLowerCase().replace(/^.*\/r\//, ""); if (!/^[a-z0-9-]{3,40}$/.test(c) || c === referralCode || state.referredBy) return false; up(() => ({ referredBy: c })); return true; },
     buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; up((p) => ({ giftCards: [{ code, amount, balance: amount, to, from, note, at: new Date().toISOString() }, ...p.giftCards] })); return code; },
     applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const g = state.giftCards.find((x) => x.code === c); if (!g || g.balance <= 0) return false; up(() => ({ giftCode: c })); return true; },
