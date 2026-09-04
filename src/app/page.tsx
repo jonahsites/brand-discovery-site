@@ -23,7 +23,7 @@ function HomeInner() {
   const [feed, setFeed] = useState<Feed>(FEEDS.includes(initial) ? initial : "Dashboard");
   const now = useNow();
   const app = useApp();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes } = app;
+  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes, recent } = app;
   const week = Math.floor(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / (7 * 864e5));
   const seedBrands = brands.filter((b) => !b.createdAt);
   const featBrand = brands.find((b) => b.slug === featured) ?? seedBrands[week % Math.max(1, seedBrands.length)] ?? brands[0];
@@ -45,6 +45,7 @@ function HomeInner() {
     Saved: { kicker: `Saved · ${savedP.length} pieces`, t1: "Back in stock", t2: "in your size", cta: "View saved", foot: `Size ${sizes.tops} · ${savedP.filter((p) => p.stock !== 0).length} available now`, href: "/account", img: savedP[0]?.image },
   }[feed];
   const gridM = (feed === "Following" ? followingP : feed === "Saved" ? savedP : matched).slice(0, 4);
+  const recentP = recent.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p).slice(0, 8);
   const collections = [
     { title: "Men", meta: `${products.filter((p) => brands.find((b) => b.slug === p.brand)?.gender.some((g) => g === "Men" || g === "Unisex")).length} pieces`, tone: "#D6D9CE", href: "/explore?gender=Men", img: products.find((p) => p.slug === "panel-work-jacket")?.image },
     { title: "Women", meta: `${products.filter((p) => brands.find((b) => b.slug === p.brand)?.gender.some((g) => g === "Women" || g === "Unisex")).length} pieces`, tone: "#DCD5C7", href: "/explore?gender=Women", img: products.find((p) => p.slug === "boxy-poplin-shirt")?.image },
@@ -136,6 +137,7 @@ function HomeInner() {
               </>
             )}
 
+            {feed === "Dashboard" && recentP.length > 0 && <div className="mt-5 md:mt-7"><div className="mb-3 flex items-baseline justify-between"><h3 className="text-[15px] md:text-[18px]">Recently viewed</h3><Link href="/explore" className="text-[12px] font-semibold text-ink/50">Keep browsing →</Link></div><div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:gap-[14px] md:px-0">{recentP.map((p) => <div key={p.slug} className="w-[150px] flex-none md:w-[200px]"><ProductCard p={p} /></div>)}</div></div>}
             {(feed !== "Dashboard" || true) && (
               <div className={clsx("mt-4 md:mt-6", feed === "Dashboard" && "md:hidden")}>
                 <div className="mb-3 flex items-baseline justify-between"><h3 className="text-[15px] md:text-[18px]">{feed === "Following" ? "New from brands you follow" : feed === "Saved" ? "Your saved pieces" : feed === "Matched" ? "Matched to your profile" : "Popular now"}</h3><Link href={feed === "Saved" ? "/account" : "/explore"} className="text-[11px] font-semibold text-ink/55">See all →</Link></div>

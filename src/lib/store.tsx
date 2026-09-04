@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review, type Post, type Thread, type Lookbook } from "./data";
+import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
 import { LOOKBOOKS } from "./data";
 import { allBrands, allProducts, effectivePrice, findProduct } from "./catalog";
 
@@ -15,7 +15,7 @@ type Persisted = {
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
-  lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number;
+  lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string;
   boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
 };
 type Toast = { id: string; text: string; href?: string };
@@ -25,7 +25,7 @@ type BagGroup = { brand: Brand; items: (BagItem & { p: Product; unit: number; to
 type Ctx = State & {
   hydrated: boolean;
   brands: Brand[]; products: Product[];
-  bagCount: number; bagGroups: BagGroup[]; subtotal: number; shipTotal: number; discount: number; promoDiscount: number; credit: number; total: number;
+  bagCount: number; bagGroups: BagGroup[]; subtotal: number; shipTotal: number; discount: number; promoDiscount: number; credit: number; giftCredit: number; total: number;
   priceOf: (p: Product) => ReturnType<typeof effectivePrice>;
   addToBag: (product: string, variant: string, qty?: number) => void;
   setQty: (key: string, qty: number) => void; removeItem: (key: string) => void; clearBag: () => void;
@@ -43,6 +43,7 @@ type Ctx = State & {
   setStyleTags: (t: string[]) => void; setSizes: (s: Persisted["sizes"]) => void;
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
+  buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
   setSizeOnly: (v: boolean) => void;
@@ -84,7 +85,7 @@ const DEFAULTS: Persisted = {
     { id: "post-os-1", brand: "onda-studio", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=900&q=75&auto=format&fit=crop", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
-  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0,
+  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [],
   boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},
 };
 
@@ -142,9 +143,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const code = state.promoCode ? state.promos.find((pr) => pr.active && pr.code.toLowerCase() === state.promoCode!.toLowerCase()) : undefined;
     const promoDiscount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
     const credit = Math.min(state.redeem / 100, Math.max(0, subtotal + shipTotal - promoDiscount));
-    const discount = promoDiscount + credit;
-    return { bagGroups, subtotal, shipTotal, discount, promoDiscount, credit, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
-  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, state.redeem, brands]);
+    const giftCard = state.giftCode ? state.giftCards.find((g) => g.code === state.giftCode) : undefined;
+    const giftCredit = giftCard ? Math.min(giftCard.balance, Math.max(0, subtotal + shipTotal - promoDiscount - credit)) : 0;
+    const discount = promoDiscount + credit + giftCredit;
+    return { bagGroups, subtotal, shipTotal, discount, promoDiscount, credit, giftCredit, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
+  }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, state.redeem, state.giftCode, state.giftCards, brands]);
   const allLookbooks = useMemo(() => [...state.lookbooks, ...LOOKBOOKS.filter((l) => !state.lookbooks.some((c) => c.slug === l.slug))], [state.lookbooks]);
   const notifications = useMemo(() => {
     const out: Ctx["notifications"] = [];
@@ -161,7 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
-    clearBag: () => up(() => ({ bag: [], promoCode: undefined })),
+    clearBag: () => up(() => ({ bag: [], promoCode: undefined, giftCode: undefined })),
     toggleFollow: (slug) => up((p) => ({ follows: toggleIn(p.follows, slug) })),
     isFollowing: (s) => state.follows.includes(s),
     toggleSaved: (slug) => up((p) => ({ saved: toggleIn(p.saved, slug) })),
@@ -182,9 +185,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const order: Order = {
         id: "UN-" + String(40912 + state.orders.length + 1), placedAt: new Date().toISOString(), status: "Placed", promo: state.promoCode,
         items: derived.bagGroups.flatMap((g) => g.items.map((i) => ({ product: i.p.slug, name: i.p.name, brand: g.brand.slug, variant: i.variant, qty: i.qty, unit: i.unit }))),
-        subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit,
+        subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit, gift: derived.giftCredit || undefined,
       };
-      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, redeem: 0, customProducts: p.customProducts.map((cp) => { const bought = order.items.filter((i) => i.product === cp.slug).reduce((s, i) => s + i.qty, 0); return bought && cp.stock !== undefined ? { ...cp, stock: Math.max(0, cp.stock - bought) } : cp; }) }));
+      up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, giftCode: undefined, redeem: 0, giftCards: derived.giftCredit && p.giftCode ? p.giftCards.map((g) => (g.code === p.giftCode ? { ...g, balance: Math.max(0, Math.round((g.balance - derived.giftCredit) * 100) / 100) } : g)) : p.giftCards, customProducts: p.customProducts.map((cp) => { const bought = order.items.filter((i) => i.product === cp.slug).reduce((s, i) => s + i.qty, 0); return bought && cp.stock !== undefined ? { ...cp, stock: Math.max(0, cp.stock - bought) } : cp; }) }));
       return order;
     },
     setOrderStatus: (id, status) => up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })),
@@ -195,6 +198,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleAlert: (slug) => up((p) => ({ alerts: toggleIn(p.alerts, slug) })),
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
+    buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; up((p) => ({ giftCards: [{ code, amount, balance: amount, to, from, note, at: new Date().toISOString() }, ...p.giftCards] })); return code; },
+    applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const g = state.giftCards.find((x) => x.code === c); if (!g || g.balance <= 0) return false; up(() => ({ giftCode: c })); return true; },
+    clearGiftCode: () => up(() => ({ giftCode: undefined })),
     addPost: (post) => up((p) => ({ posts: [{ ...post, id: uid(), at: new Date().toISOString(), likes: 0 }, ...p.posts] })),
     deletePost: (id) => up((p) => ({ posts: p.posts.filter((x) => x.id !== id) })),
     likePost: (id) => up((p) => ({ posts: p.posts.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x)) })),

@@ -13,7 +13,7 @@ function AddrField({ k, addr, setAddr, span, placeholder }: { k: keyof Addr; add
 const Step = ({ n, t }: { n: number; t: string }) => <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-pill bg-ink text-[12px] font-semibold text-paper">{n}</span><span className="text-[18px] font-semibold tracking-[-.02em]">{t}</span></div>;
 
 export default function Checkout() {
-  const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, total, ship, setShip, placeOrder, session, promoCode, points, redeem, setRedeem } = useApp();
+  const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, promoCode, points, redeem, setRedeem } = useApp();
   const [addr, setAddr] = useState<Addr>({ name: session.name, email: "jules@renard.co", line: "41 Rue des Panoyaux", city: "Paris", zip: "75020", country: "France" });
   const [card, setCard] = useState({ number: "4242 4242 4242 4242", exp: "09 / 29", cvc: "123" });
   const [done, setDone] = useState<Order | null>(null);
@@ -68,6 +68,7 @@ export default function Checkout() {
             <div className="flex justify-between"><span>Shipping · {bagGroups.length} parcels</span><span className="font-medium text-ink">{money(shipTotal, true)}</span></div>
             {promoDiscount > 0 && <div className="flex justify-between text-navy"><span>Code {promoCode}</span><span className="font-medium">−{money(promoDiscount, true)}</span></div>}
             {credit > 0 && <div className="flex justify-between text-navy"><span>Kindred points</span><span className="font-medium">−{money(credit, true)}</span></div>}
+            {giftCredit > 0 && <div className="flex justify-between text-navy"><span>Gift card ····{giftCode?.slice(-4)}</span><span className="font-medium">−{money(giftCredit, true)}</span></div>}
             <div className="flex justify-between"><span>VAT included</span><span className="font-medium text-ink">—</span></div>
           </div>
           {points >= 100 && <div className="mt-4 rounded-md bg-cream p-3"><div className="mb-2 flex justify-between text-[12.5px]"><span className="font-semibold">Spend points</span><span className="text-ink/55">{points.toLocaleString()} available · 100 = $1</span></div><input type="range" min={0} max={Math.min(points, Math.floor((subtotal + shipTotal - promoDiscount) * 100))} step={100} value={redeem} onChange={(e) => setRedeem(Number(e.target.value))} className="w-full accent-ink" /><div className="mono mt-1 text-[11px] text-ink/55">Using {redeem.toLocaleString()} points = {money(redeem / 100, true)}</div></div>}

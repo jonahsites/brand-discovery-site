@@ -10,11 +10,11 @@ import Accordion from "@/components/Accordion";
 import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead, Tag, Verified, Page, inputCls } from "@/components/ui";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, recordView, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
   const [boardOpen, setBoardOpen] = useState(false);
   const [guide, setGuide] = useState(false);
   const [boardName, setBoardName] = useState("");
-  useEffect(() => { markViewed(slug); }, [slug, markViewed]);
+  useEffect(() => { markViewed(slug); recordView(slug); }, [slug, markViewed, recordView]);
   const p = products.find((x) => x.slug === slug);
   const b = p ? brands.find((x) => x.slug === p.brand) : undefined;
   const sizes = p?.sizes?.length ? p.sizes : b ? sizesBetween(b.sizeRange) : SIZES;

@@ -7,7 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import { Avatar, Button, Label, Placeholder, QtyStepper, SectionHead, Page } from "@/components/ui";
 
 export default function BagPage() {
-  const { bagGroups, bagCount, subtotal, discount, total, setQty, removeItem, products, promoCode, applyPromoCode, clearPromoCode, promos } = useApp();
+  const { bagGroups, bagCount, subtotal, promoDiscount, credit, giftCredit, giftCode, total, setQty, removeItem, products, promoCode, applyPromoCode, clearPromoCode, applyGiftCode, clearGiftCode, promos } = useApp();
   const [code, setCode] = useState(""); const [err, setErr] = useState("");
   const also = products.filter((p) => !bagGroups.some((g) => g.items.some((i) => i.product === p.slug))).slice(0, 4);
   const hint = promos.find((p) => p.active && bagGroups.some((g) => g.brand.slug === p.brand) && p.code !== promoCode);
@@ -44,13 +44,16 @@ export default function BagPage() {
             <div className="flex flex-col gap-[13px] text-[13.5px] text-ink/65">
               <div className="flex justify-between"><span>Subtotal</span><span className="font-medium text-ink">{money(subtotal, true)}</span></div>
               {bagGroups.map((g) => <div key={g.brand.slug} className="flex justify-between"><span>{g.brand.name} shipping</span><span className="font-medium text-ink">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span></div>)}
-              {discount > 0 && <div className="flex justify-between text-navy"><span>Code {promoCode}</span><span className="font-medium">−{money(discount, true)}</span></div>}
+              {promoDiscount > 0 && <div className="flex justify-between text-sage"><span>Code {promoCode}</span><span className="font-medium">−{money(promoDiscount, true)}</span></div>}
+              {credit > 0 && <div className="flex justify-between text-sage"><span>Kindred points</span><span className="font-medium">−{money(credit, true)}</span></div>}
+              {giftCredit > 0 && <div className="flex justify-between text-sage"><span>Gift card ····{giftCode?.slice(-4)}</span><span className="font-medium">−{money(giftCredit, true)}</span></div>}
             </div>
             <div className="my-5 h-px bg-ink/8" />
             <div className="mb-[22px] flex items-baseline justify-between"><span className="text-[15px] font-semibold">Total</span><span className="text-[26px] font-semibold tracking-[-.025em]">{money(total, true)}</span></div>
             <Link href="/checkout"><Button full size="lg" className="mb-3">Checkout</Button></Link>
-            {promoCode ? <div className="flex items-center justify-between rounded-pill bg-peri px-4 py-[11px] text-[13px]"><span className="mono font-semibold">{promoCode} applied</span><button onClick={clearPromoCode} className="text-[12px] font-semibold text-ink/55">Remove</button></div>
-              : <form onSubmit={(e) => { e.preventDefault(); if (applyPromoCode(code)) { setErr(""); setCode(""); } else setErr("That code isn't active."); }} className="flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Promo code" className="min-w-0 flex-1 rounded-pill bg-offwhite px-4 py-[13px] text-[13px] outline-none placeholder:text-ink/45" /><Button variant="secondary" type="submit">Apply</Button></form>}
+            {promoCode && <div className="mb-2 flex items-center justify-between rounded-pill bg-cream px-4 py-[11px] text-[13px]"><span className="mono font-semibold">{promoCode} applied</span><button onClick={clearPromoCode} className="text-[12px] font-semibold text-ink/55">Remove</button></div>}
+            {giftCode && <div className="mb-2 flex items-center justify-between rounded-pill bg-moss px-4 py-[11px] text-[13px]"><span className="mono font-semibold">Gift card ····{giftCode.slice(-4)}</span><button onClick={clearGiftCode} className="text-[12px] font-semibold text-ink/55">Remove</button></div>}
+            {(!promoCode || !giftCode) && <form onSubmit={(e) => { e.preventDefault(); const c = code.trim(); if (!c) return; if ((!promoCode && applyPromoCode(c)) || (!giftCode && applyGiftCode(c))) { setErr(""); setCode(""); } else setErr("That code isn't active."); }} className="flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} placeholder={promoCode ? "Gift card code" : giftCode ? "Promo code" : "Promo or gift card code"} className="min-w-0 flex-1 rounded-pill bg-cream px-4 py-[13px] text-[13px] outline-none placeholder:text-ink/45" /><Button variant="secondary" type="submit">Apply</Button></form>}
             {err && <div className="mt-2 text-[12px] text-slate">{err}</div>}
           </div>
           <div className="rounded-lg bg-cream p-6">

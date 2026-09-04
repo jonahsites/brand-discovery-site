@@ -3,13 +3,13 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { CATEGORY_OPTIONS, COLORS, DASH, SIZE_LADDER, money, lookCount, type Drop, type Product, type Promo, type LookFrame } from "@/lib/data";
+import { CATEGORY_OPTIONS, COLORS, DASH, SIZE_LADDER, money, lookCount, type Brand, type Drop, type Product, type Promo, type LookFrame } from "@/lib/data";
 import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Button, Label, Placeholder, inputCls } from "@/components/ui";
 
-const NAV = ["Overview", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Settings"];
+const NAV = ["Overview", "Audience", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Settings"];
 
 export default function Dashboard() { return <Suspense><DashInner /></Suspense>; }
 
@@ -53,6 +53,7 @@ function DashInner() {
           <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4"><div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.038em]">{nav}</h1><div className="text-[12.5px] text-ink/50">{nav === "Overview" ? "Last 30 days · compared to the 30 before" : nav === "Products" ? `${mine.length} listed` : nav === "Promos" ? "Codes shoppers can apply at checkout" : nav === "Drops" ? "Scheduled releases with countdowns" : nav === "Orders" ? `${myOrders.length} live orders` : "Your onboarding facts drive filters and search"}</div></div>{nav === "Overview" && <div className="flex gap-[10px]"><Button variant={app.featured === brand.slug ? "navy" : "secondary"} onClick={() => app.setFeatured(app.featured === brand.slug ? undefined : brand.slug)}>{app.featured === brand.slug ? "✓ Featured on home" : "Feature on home · $40/wk"}</Button><Button onClick={() => setNav("Products")}>+ New product</Button></div>}</div>
 
           {nav === "Overview" && <Overview stats={stats} mine={mine} myOrders={myOrders} seeded={seeded} brand={brand.slug} />}
+          {nav === "Audience" && <Audience brand={brand} mine={mine} seeded={seeded} />}
           {nav === "Products" && <Products brand={brand.slug} mine={mine} />}
           {nav === "Promos" && <Promos brand={brand.slug} mine={mine} myPromos={myPromos} />}
           {nav === "Drops" && <Drops brand={brand.slug} mine={mine} myDrops={myDrops} />}
@@ -302,5 +303,64 @@ function LookbookBuilder({ brand, mine }: { brand: string; mine: Product[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+const SEED_FOLLOWERS: [string, string, string][] = [["Mara Lindqvist", "Stockholm", "3 orders"], ["Theo Okafor", "London", "1 order"], ["Yuki Hamada", "Osaka", "saved 4 pieces"], ["Lena Baur", "Zürich", "2 orders"], ["Sam Whitfield", "Portland", "on a waitlist"], ["Ines Ferreira", "Porto", "saved 2 pieces"], ["Daniel Ruiz", "Madrid", "1 order"], ["Priya Nair", "Berlin", "new this week"]];
+const BASE_VIEWS = [1840, 1210, 960, 720, 540, 410, 300, 220];
+
+function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seeded: boolean }) {
+  const { views, saved, waitlist, follows, orders, threads, session } = useApp();
+  const shopperFollows = follows.includes(brand.slug);
+  const shopperName = session.role === "brand" ? "Jules Renard" : session.name;
+  const followers: [string, string, string][] = [...(shopperFollows ? [[shopperName, "Paris", "following from this device"] as [string, string, string]] : []), ...(seeded ? SEED_FOLLOWERS : [])];
+  const rows = mine.map((p, i) => {
+    const base = seeded ? BASE_VIEWS[i] ?? 120 : 0;
+    const v = base + (views[p.slug] ?? 0);
+    const s = (seeded ? Math.round(base * 0.11) : 0) + (saved.includes(p.slug) ? 1 : 0);
+    const w = (seeded && p.stock === 0 ? 14 : 0) + (waitlist.includes(p.slug) ? 1 : 0);
+    const o = orders.reduce((n, ord) => n + ord.items.filter((it) => it.product === p.slug).reduce((a, it) => a + it.qty, 0), 0) + (seeded ? Math.round(base * 0.028) : 0);
+    return { p, v, s, w, o };
+  }).sort((a, b) => b.v - a.v);
+  const profileViews = (seeded ? 24100 : 0) + (views[brand.slug] ?? 0);
+  const productViews = rows.reduce((a, r) => a + r.v, 0);
+  const saves = rows.reduce((a, r) => a + r.s, 0);
+  const ordered = rows.reduce((a, r) => a + r.o, 0);
+  const pct = (n: number, d: number, digits = 0) => (d > 0 ? `${Math.min(100, (n / d) * 100).toFixed(digits)}%` : "—");
+  const cards = [
+    { label: "Followers", value: (brand.followers + (shopperFollows && !seeded ? 1 : 0)).toLocaleString(), sub: seeded ? "↑ 214 this month" : shopperFollows ? "1 from this device" : "share your page to grow this" },
+    { label: "Profile → piece", value: pct(productViews, profileViews), sub: "profile visits that open a piece" },
+    { label: "Save rate", value: pct(saves, productViews, 1), sub: `${saves.toLocaleString()} saves across ${mine.length} pieces` },
+    { label: "Conversion", value: pct(ordered, productViews, 1), sub: `${ordered.toLocaleString()} pieces ordered` },
+  ];
+  const open = threads.filter((t) => t.brand === brand.slug).length;
+  const copyCsv = () => { navigator.clipboard?.writeText(["name,city,note", ...followers.map((f) => f.join(","))].join("\n")); };
+  return (
+    <>
+      <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{cards.map((c) => <div key={c.label} className="card rounded-lg p-5 md:p-6"><div className="label mb-[14px]">{c.label}</div><div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{c.value}</div><div className="text-[12px] text-ink/50">{c.sub}</div></div>)}</div>
+      <div className="grid gap-5 xl:grid-cols-[1fr_360px] items-start">
+        <div className="card rounded-lg p-5 md:p-[26px]">
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2"><div className="text-[16px] font-semibold tracking-[-.02em]">Pieces, by attention</div><div className="mono text-[11px] text-ink/42">views · saves · waitlist · ordered</div></div>
+          {rows.length === 0 && <div className="text-[13px] text-ink/50">Add a product and this fills in as shoppers open it.</div>}
+          <div className="flex flex-col gap-2">
+            {rows.map(({ p, v, s, w, o }) => (
+              <Link key={p.slug} href={`/product/${p.slug}`} className="flex items-center gap-3 rounded-md bg-cream px-3 py-[10px]">
+                <Placeholder src={p.image} className="h-11 w-11 flex-none rounded-sm" />
+                <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-semibold">{p.name}</div><div className="mt-[6px] h-[5px] w-full max-w-[220px] rounded-pill bg-sand"><div className="h-full rounded-pill bg-ink" style={{ width: `${rows[0].v ? Math.max(4, (v / rows[0].v) * 100) : 0}%` }} /></div></div>
+                <div className="mono flex gap-2 text-right text-[11.5px] text-ink/55 sm:gap-4"><span className="w-12 font-semibold text-ink">{v.toLocaleString()}</span><span className="w-8">{s}</span><span className="w-8">{w}</span><span className="w-8">{o}</span></div>
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="card rounded-lg p-5 md:p-[26px]">
+          <div className="mb-4 flex items-baseline justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Followers · {followers.length}</div>{followers.length > 0 && <button onClick={copyCsv} className="text-[12px] font-semibold text-ink/50">Copy CSV</button>}</div>
+          <div className="flex flex-col gap-3">
+            {followers.map(([n, c, note]) => <div key={n} className="flex items-center gap-3"><Avatar init={n.split(" ").map((w) => w[0]).join("").slice(0, 2)} tint="#DCD5C7" size={36} /><div className="min-w-0 flex-1"><div className="text-[13px] font-semibold">{n}</div><div className="mono text-[10.5px] text-ink/45">{c} · {note}</div></div></div>)}
+            {followers.length === 0 && <div className="text-[13px] text-ink/50">Nobody yet. Post from Overview and feature a piece; followers see every post in their Following feed.</div>}
+          </div>
+          <div className="mt-5 rounded-md bg-cream p-4 text-[12.5px] leading-[1.5] text-ink/60">{open} open conversation{open === 1 ? "" : "s"} in Messages. Answering within a day keeps the “usually replies within a day” line on your page.</div>
+        </div>
+      </div>
+    </>
   );
 }
