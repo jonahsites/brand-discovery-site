@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
 
 /** Paths that work without an account. Everything else needs a signed-in, onboarded shopper. */
-export const OPEN_PATHS = ["/login", "/signup", "/r/", "/design-system", "/verify-email", "/forgot-password", "/reset-password"];
+export const OPEN_PATHS = ["/login", "/signup", "/r/", "/design-system", "/verify-email", "/forgot-password", "/reset-password", "/about", "/contact", "/privacy", "/terms", "/shipping-and-returns"];
 export const isOpenPath = (path: string) => OPEN_PATHS.some((p) => (p.endsWith("/") ? path.startsWith(p) : path === p));
 
 /** Enforces the account gate: no account → /signup, signed out → /login, not onboarded → /onboarding. */

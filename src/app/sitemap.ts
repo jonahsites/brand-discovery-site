@@ -5,7 +5,7 @@ import { SITE, absUrl } from "@/lib/seo";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const home = { url: SITE.url + "/", lastModified: now, changeFrequency: "daily" as const, priority: 1 };
-  const staticRoutes = ["/explore", "/brands", "/lookbooks", "/gift", "/sell", "/design-system", "/signup"].map((p) => ({
+  const staticRoutes = ["/explore", "/brands", "/lookbooks", "/gift", "/sell", "/design-system", "/signup", "/about", "/contact", "/privacy", "/terms", "/shipping-and-returns"].map((p) => ({
     url: absUrl(p), lastModified: now, changeFrequency: "weekly" as const, priority: 0.9,
   }));
   const brands = BRANDS.map((b) => ({
