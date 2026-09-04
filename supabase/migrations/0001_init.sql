@@ -72,7 +72,8 @@ drop policy if exists "own saves" on public.saves;
 create policy "own saves" on public.saves for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- On sign-up: mirror the auth row into public.profiles.
-create or replace function public.handle_new_user() returns trigger language plpgsql security definer as $$
+create or replace function public.handle_new_user() returns trigger
+  language plpgsql security definer set search_path = public, pg_temp as $$
 begin
   insert into public.profiles (id, name, email, provider, referral_code)
   values (
@@ -86,6 +87,12 @@ begin
   return new;
 end;
 $$;
+
+-- The function is called only via the trigger below; nobody should be able to invoke it
+-- as an RPC because it runs with definer privileges.
+revoke execute on function public.handle_new_user() from public;
+revoke execute on function public.handle_new_user() from anon;
+revoke execute on function public.handle_new_user() from authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users

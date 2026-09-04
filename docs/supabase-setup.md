@@ -40,20 +40,24 @@ supabase link --project-ref <ref>
 supabase db push
 ```
 
-## 4. Turn on the sign-in providers you want
+## 4. Turn off email confirmation for early testing
+
+Auth → Providers → Email → **Confirm email**: turn it OFF while you're testing locally. Otherwise every new account has to click a link in an inbox before it's signed in, and the free tier caps the confirmation-email volume at ~2 per hour. Turn it back on before launching to real users.
+
+## 5. Turn on the sign-in providers you want
 
 **Email + password** works out of the box. From **Authentication → Providers → Email**, turn on Email confirmations later; for now the demo signs the user in immediately.
 
 **Google, Apple, X:** each provider on the same page has a toggle plus the OAuth client id and secret you paste in from that provider's developer console. Add the callback URL Supabase gives you as the redirect URI on the provider side. Once turned on, the three social buttons on `/signup` and `/login` in Kindred will use them; when they're off, those buttons still work locally (they create a demo account tagged with the provider name).
 
-## 5. What the app does with all this
+## 6. What the app does with all this
 
 - `src/lib/supabase.ts` creates one browser client. Missing vars → `getSupabase()` returns `null` and the store keeps using the local demo account.
 - `signUp`, `logIn`, `logOut` in `src/lib/store.tsx` call `supabase.auth.signUp` / `signInWithPassword` / `signOut` when the client is live, and fall back locally otherwise. In both modes the shape of `account` in the store is the same, so no screen has to know.
 - `completeOnboarding` writes the profile back to Supabase: it sets `profiles.onboarded = true` and inserts one row into `style_tags` per pick and one row into `sizes`.
 - Follows and saves fall through the same pattern: local `follows` and `saves` arrays in the store are the source of truth; if Supabase is live, every toggle upserts into the matching table so the same shopper on another device sees the same lists.
 
-## 6. Verify it works
+## 7. Verify it works
 
 With env vars set:
 
