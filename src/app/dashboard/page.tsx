@@ -8,6 +8,7 @@ import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Button, Label, Placeholder, inputCls } from "@/components/ui";
+import { looksOfBrand, styleOverlap } from "@/lib/looks";
 
 const NAV = ["Overview", "Audience", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Settings"];
 
@@ -311,8 +312,10 @@ const SEED_FOLLOWERS: [string, string, string][] = [["Mara Lindqvist", "Stockhol
 const BASE_VIEWS = [1840, 1210, 960, 720, 540, 410, 300, 220];
 
 function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seeded: boolean }) {
-  const { views, saved, waitlist, follows, orders, threads, session } = useApp();
+  const { views, saved, waitlist, follows, orders, threads, session, styleTags } = useApp();
   const shopperFollows = follows.includes(brand.slug);
+  const brandLooks = looksOfBrand(brand.styles);
+  const reach = (seeded ? 3120 : 0) + brandLooks.length * (seeded ? 640 : 0) + (styleOverlap(brand.styles, styleTags) > 0 ? 1 : 0);
   const shopperName = session.role === "brand" ? "Jules Renard" : session.name;
   const followers: [string, string, string][] = [...(shopperFollows ? [[shopperName, "Paris", "following from this device"] as [string, string, string]] : []), ...(seeded ? SEED_FOLLOWERS : [])];
   const rows = mine.map((p, i) => {
@@ -338,6 +341,11 @@ function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seed
   const copyCsv = () => { navigator.clipboard?.writeText(["name,city,note", ...followers.map((f) => f.join(","))].join("\n")); };
   return (
     <>
+      <div className="mb-5 rounded-lg bg-ink p-6 text-paper md:p-7">
+        <div className="label mb-2 !text-paper/55">Who sees you first</div>
+        <div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{reach.toLocaleString()} shoppers in {brandLooks.length ? brandLooks.map((l) => l.name).join(" + ") : "no look yet"}</div>
+        <div className="max-w-[640px] text-[13px] leading-[1.55] text-paper/70">Kindred dresses itself to each shopper&apos;s look, chosen from the same style tags you picked in onboarding{brand.styles.length ? ` (${brand.styles.join(", ")})` : ""}. Your pieces rank first on Explore for these shoppers and your brand appears in their “Brands in your look” row on Discover.{styleOverlap(brand.styles, styleTags) > 0 ? " The shopper on this device is one of them." : ""}</div>
+      </div>
       <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{cards.map((c) => <div key={c.label} className="card rounded-lg p-5 md:p-6"><div className="label mb-[14px]">{c.label}</div><div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{c.value}</div><div className="text-[12px] text-ink/50">{c.sub}</div></div>)}</div>
       <div className="grid gap-5 xl:grid-cols-[1fr_360px] items-start">
         <div className="card rounded-lg p-5 md:p-[26px]">

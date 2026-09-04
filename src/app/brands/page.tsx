@@ -7,6 +7,7 @@ import { STYLE_OPTIONS, VALUE_OPTIONS, brandTier, fmtFollowers } from "@/lib/dat
 import { useApp } from "@/lib/store";
 import { FollowButton } from "@/components/BrandCard";
 import { Avatar, Chip, Label, Page, Placeholder } from "@/components/ui";
+import { styleOverlap } from "@/lib/looks";
 
 const TIERS = ["Indie", "Rising", "Established"];
 const SORTS = ["Trending", "Newest", "Most followed", "A–Z"];
@@ -15,7 +16,7 @@ export default function Brands() { return <Suspense><BrandsInner /></Suspense>; 
 
 function BrandsInner() {
   const sp = useSearchParams();
-  const { brands, products, follows, promos, drops } = useApp();
+  const { brands, products, follows, promos, drops, styleTags } = useApp();
   const [tier, setTier] = useState<string[]>([]);
   const [style, setStyle] = useState(sp.get("style") ?? "All");
   const [values, setValues] = useState<string[]>([]);
@@ -60,7 +61,7 @@ function BrandsInner() {
                   <Link href={`/brand/${b.slug}`} className="block truncate text-[19px] font-bold leading-tight tracking-[-.03em]">{b.name}</Link>
                   <div className="mono mb-2 text-[10.5px] text-ink/45">{b.city}, {b.country} · {own.length} items · {fmtFollowers(b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0))} followers</div>
                   <p className="mb-3 line-clamp-2 text-[13px] leading-[1.5] text-ink/62">{b.tagline}</p>
-                  <div className="mb-4 flex flex-wrap gap-[5px]">{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-cream px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
+                  <div className="mb-4 flex flex-wrap gap-[5px]">{styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[9px] py-[4px] text-[10.5px] font-semibold text-paper">Your look</span>}{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-cream px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
                   <div className="flex gap-2"><FollowButton slug={b.slug} size="sm" className="flex-1" /><Link href={`/brand/${b.slug}`} className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-white soft text-[13px]">↗</Link></div>
                 </div>
               </div>); })}

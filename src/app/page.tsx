@@ -11,6 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Placeholder, Page } from "@/components/ui";
+import { lookByKey, styleOverlap } from "@/lib/looks";
 
 const FEEDS = ["Dashboard", "Following", "Matched", "Saved"] as const;
 type Feed = (typeof FEEDS)[number];
@@ -23,7 +24,9 @@ function HomeInner() {
   const [feed, setFeed] = useState<Feed>(FEEDS.includes(initial) ? initial : "Dashboard");
   const now = useNow();
   const app = useApp();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes, recent } = app;
+  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes, recent, look } = app;
+  const LOOK = lookByKey(look);
+  const lookBrands = brands.map((b) => ({ b, n: styleOverlap(b.styles, styleTags) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 6);
   const week = Math.floor(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / (7 * 864e5));
   const seedBrands = brands.filter((b) => !b.createdAt);
   const featBrand = brands.find((b) => b.slug === featured) ?? seedBrands[week % Math.max(1, seedBrands.length)] ?? brands[0];
@@ -39,7 +42,7 @@ function HomeInner() {
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   const hero = {
-    Dashboard: { kicker: promo ? `${promo.label} · ${promoBrand?.name}` : "This week", t1: promo ? "Get up to" : "Find your next", t2: promo ? `${promo.pct}% off` : "favorite brand", cta: promo ? "Get discount" : "Start exploring", foot: promo?.ends ? `Valid until ${new Date(promo.ends).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}` : `${brands.length} independent brands live`, href: promo ? `/brand/${promo.brand}` : "/explore", img: products.find((p) => p.brand === featBrand.slug && p.image)?.image },
+    Dashboard: { kicker: promo ? `${promo.label} · ${promoBrand?.name}` : `${LOOK.name} · your look`, t1: promo ? "Get up to" : "Dressed for", t2: promo ? `${promo.pct}% off` : `the ${LOOK.name.toLowerCase()} in you`, cta: promo ? "Get discount" : "Start exploring", foot: promo?.ends ? `Valid until ${new Date(promo.ends).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}` : `${brands.length} independent brands live`, href: promo ? `/brand/${promo.brand}` : "/explore", img: products.find((p) => p.brand === featBrand.slug && p.image)?.image },
     Following: { kicker: `Following · ${follows.length} brands`, t1: "New from", t2: "your makers", cta: "See what dropped", foot: `${followingP.length} pieces from brands you follow`, href: "/explore", img: followingP[0]?.image },
     Matched: { kicker: "Matched for you", t1: "Cut and fit", t2: "you buy in", cta: "Refine my match", foot: `Based on ${styleTags.slice(0, 3).join(", ")}`, href: "/onboarding", img: matched[0]?.image },
     Saved: { kicker: `Saved · ${savedP.length} pieces`, t1: "Back in stock", t2: "in your size", cta: "View saved", foot: `Size ${sizes.tops} · ${savedP.filter((p) => p.stock !== 0).length} available now`, href: "/account", img: savedP[0]?.image },
@@ -68,7 +71,7 @@ function HomeInner() {
         {/* mobile greeting */}
         <div className="mb-4 flex items-center gap-3 md:hidden">
           <Link href="/account" className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-sand text-[11px] font-semibold text-ink/60">{initials}</Link>
-          <div className="flex-1"><div className="text-[10px] text-ink/45">{greet}</div><div className="text-[14px] font-bold tracking-[-.02em]">{session.name}</div></div>
+          <div className="flex-1"><div className="text-[10px] text-ink/45">{greet} · {LOOK.name} look</div><div className="text-[14px] font-bold tracking-[-.02em]">{session.name}</div></div>
           <button onClick={() => openBag()} className="relative grid h-[34px] w-[34px] place-items-center rounded-pill bg-white text-[12px] soft" aria-label="Bag">⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-4 min-w-4 place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{bagCount}</span>}</button>
         </div>
 
@@ -137,6 +140,7 @@ function HomeInner() {
               </>
             )}
 
+            {feed === "Dashboard" && lookBrands.length > 0 && <div className="mt-5 md:mt-7"><div className="mb-3 flex items-baseline justify-between"><h3 className="text-[15px] md:text-[18px]">Brands in your look</h3><Link href="/brands" className="text-[12px] font-semibold text-ink/50">All brands →</Link></div><div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:px-0 lg:grid-cols-6">{lookBrands.map(({ b, n }) => <Link key={b.slug} href={`/brand/${b.slug}`} className="card flex w-[200px] flex-none items-center gap-3 rounded-md p-3 md:w-auto lift"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><span className="min-w-0"><span className="block truncate text-[13px] font-semibold">{b.name}</span><span className="block truncate text-[10.5px] text-sage">{n} shared {n === 1 ? "tag" : "tags"} · {b.styles.filter((s) => styleTags.includes(s)).slice(0, 2).join(", ")}</span></span></Link>)}</div></div>}
             {feed === "Dashboard" && recentP.length > 0 && <div className="mt-5 md:mt-7"><div className="mb-3 flex items-baseline justify-between"><h3 className="text-[15px] md:text-[18px]">Recently viewed</h3><Link href="/explore" className="text-[12px] font-semibold text-ink/50">Keep browsing →</Link></div><div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:gap-[14px] md:px-0">{recentP.map((p) => <div key={p.slug} className="w-[150px] flex-none md:w-[200px]"><ProductCard p={p} /></div>)}</div></div>}
             {(feed !== "Dashboard" || true) && (
               <div className={clsx("mt-4 md:mt-6", feed === "Dashboard" && "md:hidden")}>

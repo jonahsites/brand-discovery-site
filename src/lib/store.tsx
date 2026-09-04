@@ -3,12 +3,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
 import { computeCart, pointsEarned, type BagGroup } from "./cart";
 import { slugify } from "./catalog";
+import { deriveLook, type LookKey } from "./looks";
 import { LOOKBOOKS } from "./data";
 import { allBrands, allProducts, effectivePrice } from "./catalog";
 
 export type { BagItem, BagGroup, BagLine } from "./cart";
 import type { BagItem } from "./cart";
 export type Session = { role: "shopper" | "brand"; name: string; brand?: string };
+export type Account = { name: string; email: string; provider: "email" | "x" | "apple" | "google"; signedIn: boolean; createdAt: string };
 
 type Persisted = {
   bag: BagItem[]; follows: string[]; saved: string[]; ship: Record<string, number>;
@@ -19,6 +21,7 @@ type Persisted = {
   notify: string[]; alerts: string[]; promoCode?: string;
   posts: Post[]; threads: Thread[]; sizeOnly: boolean;
   lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string; referredBy?: string;
+  account?: Account; onboarded: boolean; lookOverride?: LookKey; look?: LookKey;
   boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
 };
 type Toast = { id: string; text: string; href?: string };
@@ -46,6 +49,8 @@ type Ctx = State & {
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
   referralCode: string; applyReferral: (code: string) => boolean;
+  look: LookKey; setLook: (k?: LookKey) => void;
+  signUp: (a: { name: string; email: string; provider: Account["provider"] }) => void; logIn: (email: string) => boolean; logOut: () => void; completeOnboarding: () => void;
   buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
   sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
@@ -88,7 +93,7 @@ const DEFAULTS: Persisted = {
     { id: "post-os-1", brand: "onda-studio", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=900&q=75&auto=format&fit=crop", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
-  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [],
+  ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [], onboarded: false,
   boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},
 };
 
@@ -111,7 +116,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     const { bagOpen: _b, searchOpen: _s, toasts: _t, ...persist } = state; void _b; void _s; void _t;
-    try { localStorage.setItem(LS, JSON.stringify(persist)); } catch {}
+    // `look` is written resolved so the inline <head> script can apply it before hydration.
+    try { localStorage.setItem(LS, JSON.stringify({ ...persist, look: persist.lookOverride ?? deriveLook(persist.styleTags) })); } catch {}
   }, [state, hydrated]);
   useEffect(() => {
     document.body.style.overflow = state.bagOpen || state.searchOpen ? "hidden" : "";
@@ -144,9 +150,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
   const points = useMemo(() => 1240 + (state.referredBy ? 200 : 0) + state.orders.reduce((s, o) => s + pointsEarned(o), 0), [state.orders, state.referredBy]);
   const referralCode = useMemo(() => slugify(state.session.name) || "friend", [state.session.name]);
+  const look = useMemo<LookKey>(() => state.lookOverride ?? deriveLook(state.styleTags), [state.lookOverride, state.styleTags]);
 
   const value: Ctx = {
-    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications,
+    ...state, ...derived, hydrated, brands, products, priceOf, points, allLookbooks, notifications, look,
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
@@ -185,6 +192,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
     referralCode,
+    setLook: (lookOverride) => up(() => ({ lookOverride })),
+    signUp: ({ name, email, provider }) => up((p) => ({ account: { name, email, provider, signedIn: true, createdAt: new Date().toISOString() }, onboarded: false, styleTags: [], session: { ...p.session, role: "shopper", name } })),
+    logIn: (email) => { const a = state.account; if (!a || a.email.toLowerCase() !== email.trim().toLowerCase()) return false; up((p) => ({ account: { ...p.account!, signedIn: true }, session: { ...p.session, name: p.account!.name } })); return true; },
+    logOut: () => up((p) => (p.account ? { account: { ...p.account, signedIn: false } } : {})),
+    completeOnboarding: () => up(() => ({ onboarded: true })),
     applyReferral: (code) => { const c = code.trim().toLowerCase().replace(/^.*\/r\//, ""); if (!/^[a-z0-9-]{3,40}$/.test(c) || c === referralCode || state.referredBy) return false; up(() => ({ referredBy: c })); return true; },
     buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; up((p) => ({ giftCards: [{ code, amount, balance: amount, to, from, note, at: new Date().toISOString() }, ...p.giftCards] })); return code; },
     applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const g = state.giftCards.find((x) => x.code === c); if (!g || g.balance <= 0) return false; up(() => ({ giftCode: c })); return true; },

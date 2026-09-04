@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 // Every test starts from a clean device: the app persists to localStorage under kindred.v2.
 test.beforeEach(async ({ page }) => {
   // Wipe persisted state once per test (each test gets a fresh context, so sessionStorage is the per-test flag).
-  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.removeItem("kindred.v2"); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
+  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" }, onboarded: true })); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
 });
 
 const isMobile = (page: Page) => page.viewportSize()!.width < 768;
@@ -90,4 +90,26 @@ test("brand onboarding creates a live brand page and dashboard", async ({ page }
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.goto("/brand/test-atelier");
   await expect(page.getByRole("heading", { name: "Test Atelier" })).toBeVisible();
+});
+
+test("first visit requires an account; onboarding picks a look that restyles the app", async ({ page }) => {
+  // Fresh device: no account at all.
+  await page.addInitScript(() => { try { localStorage.removeItem("kindred.v2"); sessionStorage.setItem("e2e-reset", "1"); } catch {} });
+  await page.goto("/explore");
+  await expect(page).toHaveURL(/\/signup/);
+  await page.getByPlaceholder("Jules Renard").fill("Ada Okafor");
+  await page.locator('input[type="email"]').fill("ada@example.com");
+  await page.locator('input[type="password"]').fill("hunter22");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/onboarding/);
+  for (const s of ["Workwear", "Vintage revival", "Archive"]) await page.getByRole("button", { name: s, exact: true }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "See my look" }).click();
+  await expect(page.getByRole("heading", { name: /Your look is Heritage/ })).toBeVisible();
+  await page.getByRole("button", { name: "Start browsing" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.look)).toBe("heritage");
+  await page.goto("/brands");
+  await expect(page.getByText("Your look").first()).toBeVisible();
 });

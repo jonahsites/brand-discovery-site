@@ -10,11 +10,12 @@ import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
 import { Button, Label, Placeholder, Verified, Page } from "@/components/ui";
 import Countdown, { useNow } from "@/components/Countdown";
+import { styleOverlap } from "@/lib/looks";
 
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views, styleTags } = useApp();
   const router = useRouter();
   const counted = useRef<string | null>(null);
   useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
@@ -43,6 +44,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
           <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[30px] md:text-[40px]">{b.name}</h1>{b.verified && <Verified size={20} />}</div>
           <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
           <div className="mb-6 flex flex-wrap gap-2">
+            {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">In your look · {styleOverlap(b.styles, styleTags)} shared</span>}
             {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill bg-cream px-[14px] py-2 text-[11px] font-semibold text-ink/72">{t}</Link>)}
           </div>
           <div className="mt-auto flex flex-wrap items-center gap-3">

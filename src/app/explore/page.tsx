@@ -5,9 +5,10 @@ import clsx from "clsx";
 import { CHIPS, MATERIAL_OPTIONS, VALUE_OPTIONS, SIZE_LADDER, brandTier } from "@/lib/data";
 import { PRICE_BANDS, filterProducts, leadTimeOf, searchCatalog, studioOf, type Filters } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
+import { styleOverlap } from "@/lib/looks";
 import ProductCard from "@/components/ProductCard";
 
-const SORTS = ["Newest", "Price · low to high", "Price · high to low", "Most followed"];
+const SORTS = ["For you", "Newest", "Price · low to high", "Price · high to low", "Most followed"];
 type Key = "priceBands" | "leadTimes" | "studio" | "sizes" | "tiers" | "materials" | "values";
 const EMPTY: Filters = { priceBands: [], leadTimes: [], studio: [], sizes: [], tiers: [], materials: [], values: [] };
 
@@ -15,7 +16,7 @@ export default function Explore() { return <Suspense><ExploreInner /></Suspense>
 
 function ExploreInner() {
   const sp = useSearchParams(); const router = useRouter();
-  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch } = useApp();
+  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch, styleTags } = useApp();
   const q = sp.get("q") ?? "";
   const gender = sp.get("gender") ?? undefined;
   const [chip, setChip] = useState(sp.get("cat") ?? "All");
@@ -29,12 +30,13 @@ function ExploreInner() {
   const grid = useMemo(() => {
     let list = filterProducts(base.list, brands, promos, { ...f, category: chip, gender: gender ? [gender] : undefined, sizes: sizeOnly && !(f.sizes?.length) ? [mySizes.tops] : f.sizes });
     const bmap = new Map(brands.map((b) => [b.slug, b]));
-    if (sort === SORTS[1]) list = [...list].sort((a, b) => priceOf(a).price - priceOf(b).price);
-    if (sort === SORTS[2]) list = [...list].sort((a, b) => priceOf(b).price - priceOf(a).price);
-    if (sort === SORTS[3]) list = [...list].sort((a, b) => (bmap.get(b.brand)?.followers ?? 0) - (bmap.get(a.brand)?.followers ?? 0));
-    if (sort === SORTS[0] && !q) list = [...list].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    if (sort === SORTS[2]) list = [...list].sort((a, b) => priceOf(a).price - priceOf(b).price);
+    if (sort === SORTS[3]) list = [...list].sort((a, b) => priceOf(b).price - priceOf(a).price);
+    if (sort === SORTS[4]) list = [...list].sort((a, b) => (bmap.get(b.brand)?.followers ?? 0) - (bmap.get(a.brand)?.followers ?? 0));
+    if (sort === SORTS[1] && !q) list = [...list].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    if (sort === SORTS[0] && !q) list = [...list].sort((a, b) => styleOverlap(bmap.get(b.brand)?.styles ?? [], styleTags) - styleOverlap(bmap.get(a.brand)?.styles ?? [], styleTags) || (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     return list;
-  }, [base.list, brands, promos, f, chip, gender, sort, priceOf, sizeOnly, mySizes.tops, q]);
+  }, [base.list, brands, promos, f, chip, gender, sort, priceOf, sizeOnly, mySizes.tops, q, styleTags]);
 
   // facet counts against the current chip + query (not the other filters), like the design's row counts
   const pool = useMemo(() => filterProducts(base.list, brands, promos, { category: chip, gender: gender ? [gender] : undefined }), [base.list, brands, promos, chip, gender]);

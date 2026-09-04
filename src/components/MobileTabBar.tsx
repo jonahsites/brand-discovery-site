@@ -7,7 +7,7 @@ import { useApp } from "@/lib/store";
 export default function MobileTabBar() {
   const path = usePathname();
   const { openSearch, session } = useApp();
-  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell")) return null;
+  if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/checkout") || path.startsWith("/sell") || path === "/login" || path === "/signup") return null;
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const on = (h: string) => (h === "/" ? path === "/" : path.startsWith(h));
   const c = (h: string) => clsx("grid h-10 w-10 place-items-center rounded-pill text-[15px]", on(h) ? "text-ink" : "text-ink/40");
