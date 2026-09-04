@@ -29,7 +29,7 @@ export default function TopNav() {
         <div className="ml-auto flex items-center gap-2 md:gap-3">
           <button onClick={() => openSearch()} aria-label="Search" className="press grid h-9 w-9 md:hidden place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">⌕</button>
           <div className="relative hidden md:block">
-            <button onClick={() => setNotif(!notif)} aria-label="Notifications" className="press relative grid h-10 w-10 place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">◎{notifications.length > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{notifications.length}</span>}</button>
+            <button onClick={() => setNotif(!notif)} aria-label="Notifications" className="press relative grid h-10 w-10 place-items-center rounded-pill bg-white text-[13px] text-ink/60 soft">◎{notifications.length > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-rust px-1 text-[9px] font-bold text-paper">{notifications.length}</span>}</button>
             {notif && (
               <div className="card absolute right-0 top-[48px] z-50 w-[340px] rounded-lg p-2" onMouseLeave={() => setNotif(false)}>
                 <div className="label px-3 pb-2 pt-2">Activity</div>
@@ -38,7 +38,7 @@ export default function TopNav() {
               </div>
             )}
           </div>
-          <button onClick={() => openBag()} aria-label="Bag" className="press relative grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-pill bg-white text-[13px] soft">⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{bagCount}</span>}</button>
+          <button onClick={() => openBag()} aria-label="Bag" className="press relative grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-pill bg-white text-[13px] soft">⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-rust px-1 text-[9px] font-bold text-paper">{bagCount}</span>}</button>
           <Link href="/account" className="hidden md:grid h-10 w-10 place-items-center rounded-pill bg-sand text-[11px] font-semibold text-ink/60">{initials}</Link>
         </div>
       </div>

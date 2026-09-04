@@ -92,7 +92,7 @@ function AccountInner() {
             <Label className="mb-2 !text-ink/48">Kindred points</Label>
             <div className="mb-1 text-[34px] font-bold leading-none tracking-[-.04em]">{points.toLocaleString()}</div>
             <div className="mb-4 text-[12.5px] text-ink/60">{points >= 2000 ? "Regular · free EU shipping on every order" : `${(2000 - points).toLocaleString()} points to Regular tier`} · 1 point per $1, spendable at any brand</div>
-            <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-sage" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
+            <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-rust" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
             <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => { navigator.clipboard?.writeText(`${location.origin}/r/${referralCode}`); toast("Referral link copied"); }} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button><Link href="/gift" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Gift cards</Link></div>
           </div>
                     <div className="card rounded-lg p-6 md:p-7">

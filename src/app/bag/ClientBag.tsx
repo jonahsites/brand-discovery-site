@@ -15,7 +15,7 @@ export default function BagPage() {
     <Page className="pt-6 md:pt-[34px]">
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
         <div>
-          <h1 className="mb-[6px] text-[28px] md:text-[34px] font-extrabold leading-[1.05] tracking-[-.038em]">Your bag</h1>
+          <h1 className="mb-[6px] text-[42px] md:text-[52px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Your bag</h1>
           <div className="mb-6 text-[13px] text-ink/50">{bagCount} pieces from {bagGroups.length} brands</div>
           {bagGroups.length === 0 && <div className="card rounded-lg p-10 text-center text-[14px] text-ink/55">Nothing here yet. <Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></div>}
           {bagGroups.map((g) => (
@@ -44,9 +44,9 @@ export default function BagPage() {
             <div className="flex flex-col gap-[13px] text-[13.5px] text-ink/65">
               <div className="flex justify-between"><span>Subtotal</span><span className="font-medium text-ink">{money(subtotal, true)}</span></div>
               {bagGroups.map((g) => <div key={g.brand.slug} className="flex justify-between"><span>{g.brand.name} shipping</span><span className="font-medium text-ink">{g.shipCost === 0 ? "Free" : money(g.shipCost, true)}</span></div>)}
-              {promoDiscount > 0 && <div className="flex justify-between text-sage"><span>Code {promoCode}</span><span className="font-medium">−{money(promoDiscount, true)}</span></div>}
-              {credit > 0 && <div className="flex justify-between text-sage"><span>Kindred points</span><span className="font-medium">−{money(credit, true)}</span></div>}
-              {giftCredit > 0 && <div className="flex justify-between text-sage"><span>Gift card ····{giftCode?.slice(-4)}</span><span className="font-medium">−{money(giftCredit, true)}</span></div>}
+              {promoDiscount > 0 && <div className="flex justify-between text-rust"><span>Code {promoCode}</span><span className="font-medium">−{money(promoDiscount, true)}</span></div>}
+              {credit > 0 && <div className="flex justify-between text-rust"><span>Kindred points</span><span className="font-medium">−{money(credit, true)}</span></div>}
+              {giftCredit > 0 && <div className="flex justify-between text-rust"><span>Gift card ····{giftCode?.slice(-4)}</span><span className="font-medium">−{money(giftCredit, true)}</span></div>}
             </div>
             <div className="my-5 h-px bg-ink/8" />
             <div className="mb-[22px] flex items-baseline justify-between"><span className="text-[15px] font-semibold">Total</span><span className="text-[26px] font-semibold tracking-[-.025em]">{money(total, true)}</span></div>

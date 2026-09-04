@@ -61,7 +61,7 @@ export default function ProductView({ slug }: { slug: string }) {
           <Link href={`/brand/${b.slug}`} className="mb-4 md:mb-5 inline-flex items-center gap-[10px] rounded-pill bg-white soft py-[7px] pl-[7px] pr-4">
             <Avatar init={b.init} tint={b.tint} ink={b.ink} size={32} /><span className="text-[13px] font-semibold">{b.name}</span>{b.verified && <Verified />}<span className="mono text-[11.5px] text-ink/40">{b.city}</span>
           </Link>
-          <h1 className="mb-3 md:mb-[14px] text-[28px] md:text-[38px] font-extrabold leading-[1.05] tracking-[-.038em]">{p.name}</h1>
+          <h1 className="mb-3 md:mb-[14px] text-[34px] md:text-[46px] leading-[.98] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{p.name}</h1>
           <div className="mb-6 md:mb-[30px] flex flex-wrap items-baseline gap-3">
             <span className="text-[24px] md:text-[28px] font-bold tracking-[-.03em]">{money(price)}</span>
             {compareAt && <><span className="text-[17px] text-ink/35 line-through">{money(compareAt)}</span><Tag>{Math.round((1 - price / compareAt) * 100)}% off{promo ? ` · ${promo.label}` : ""}</Tag></>}

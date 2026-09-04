@@ -41,7 +41,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
               <button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-cream text-[14px]" aria-label="Share">↗</button>
             </div>
           </div>
-          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[30px] md:text-[40px]">{b.name}</h1>{b.verified && <Verified size={20} />}</div>
+          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.name}</h1>{b.verified && <Verified size={20} />}</div>
           <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
           <div className="mb-6 flex flex-wrap gap-2">
             {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>}
@@ -64,8 +64,8 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
 
       {(drop || promo) && (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {drop && <div className="rounded-lg bg-ink p-6 text-paper"><Label light className="mb-2">Next drop</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{drop.title}</div><div className="mb-4 text-[13px] text-paper/70">{drop.pieces} pieces · {drop.blurb}</div><Countdown at={drop.at} dark /></div>}
-          {promo && <div className="rounded-lg bg-cream p-6"><Label className="mb-2">Promo running</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{promo.pct}% off · {promo.label}</div><div className="text-[13px] text-ink/60" suppressHydrationWarning>Use code <span className="mono font-semibold text-ink">{promo.code}</span> at checkout{promo.ends ? ` · ends ${new Date(promo.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</div></div>}
+          {drop && <div className="rounded-lg p-6 text-paper" style={{background:"var(--indigo)"}}><Label light className="mb-2">Next drop</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{drop.title}</div><div className="mb-4 text-[13px] text-paper/70">{drop.pieces} pieces · {drop.blurb}</div><Countdown at={drop.at} dark /></div>}
+          {promo && <div className="rounded-lg p-6" style={{background:"var(--clay)",color:"var(--ink)"}}><Label className="mb-2">Promo running</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{promo.pct}% off · {promo.label}</div><div className="text-[13px] text-ink/60" suppressHydrationWarning>Use code <span className="mono font-semibold text-ink">{promo.code}</span> at checkout{promo.ends ? ` · ends ${new Date(promo.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</div></div>}
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] items-start">
           <div className="card rounded-lg p-6 md:p-[38px]">
             <Label className="mb-[18px]">The story</Label>
-            <h3 className="mb-4 text-[24px] md:text-[28px] font-bold leading-[1.15] tracking-[-.035em]">{b.tagline}</h3>
+            <h3 className="mb-4 text-[26px] md:text-[32px] leading-[1.1] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.tagline}</h3>
             {(b.story ?? "").split(/\n+/).map((para, i) => <p key={i} className="mb-[14px] text-[14.5px] leading-[1.7] text-ink/68">{para}</p>)}
             <div className="mt-3 flex flex-wrap gap-2">
               {b.values.map((t, i) => <span key={t} className={`rounded-pill px-[18px] py-[10px] text-[12px] font-semibold ${i === 0 ? "bg-moss" : i === 1 ? "bg-sand" : "bg-cream"}`}>{t}</span>)}

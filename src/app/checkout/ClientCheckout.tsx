@@ -24,19 +24,19 @@ export default function Checkout() {
     <Page narrow className="pt-16 text-center">
       <div className="mx-auto max-w-[560px] rounded-lg bg-cream p-10">
         <div className="label mb-4 !text-ink/48">Order #{done.id} placed</div>
-        <h1 className="mb-3 text-[34px] font-extrabold leading-[1.05] tracking-[-.04em]">Thanks, {addr.name.split(" ")[0]}.</h1>
+        <h1 className="mb-3 text-[42px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Thanks, {addr.name.split(" ")[0]}.</h1>
         <p className="mb-6 text-[14.5px] leading-[1.55] text-ink/66">{new Set(done.items.map((i) => i.brand)).size} parcels from {new Set(done.items.map((i) => i.brand)).size} workshops, {money(done.total, true)} total. Kindred holds payment until each brand scans your parcel.</p>
         <div className="flex justify-center gap-3"><Link href="/account?tab=Orders"><Button>Track order</Button></Link><Link href="/"><Button variant="ghost">Back to Discover</Button></Link></div>
       </div>
     </Page>
   );
-  if (bagGroups.length === 0) return <Page narrow className="pt-16 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">Your bag is empty.</h1><Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></Page>;
+  if (bagGroups.length === 0) return <Page narrow className="pt-16 text-center"><h1 className="mb-2 text-[36px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Your bag is empty.</h1><Link href="/explore" className="font-semibold text-ink">Explore brands →</Link></Page>;
   return (
     <Page className="pt-6 md:pt-[34px]">
       <div className="mono mb-4 hidden md:block text-[12px] text-ink/45">Secure checkout · {bagGroups.length} brands</div>
       <div className="grid gap-8 lg:grid-cols-[1fr_400px] items-start">
         <div>
-          <h1 className="mb-5 text-[28px] md:text-[34px] font-extrabold leading-[1.05] tracking-[-.038em]">Checkout</h1>
+          <h1 className="mb-5 text-[42px] md:text-[52px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Checkout</h1>
           <div className="mb-6 grid grid-cols-2 gap-[10px] sm:grid-cols-3"><Button size="lg" onClick={pay}>Apple Pay</Button><Button size="lg" variant="secondary" onClick={pay}>Google Pay</Button><div className="hidden sm:block"><Button full size="lg" variant="secondary" onClick={pay}>Shop Pay</Button></div></div>
           <div className="mono mb-6 flex items-center gap-[14px] text-[11.5px] text-ink/38"><span className="h-px flex-1 bg-ink/10" />or pay by card<span className="h-px flex-1 bg-ink/10" /></div>
           <div className="card mb-4 rounded-lg p-5 md:p-[30px]"><div className="mb-[22px]"><Step n={1} t="Delivery address" /></div><div className="grid gap-3 sm:grid-cols-2"><AddrField k="name" addr={addr} setAddr={setAddr} placeholder="Full name" /><AddrField k="email" addr={addr} setAddr={setAddr} placeholder="Email" /><AddrField k="line" addr={addr} setAddr={setAddr} span placeholder="Street address" /><AddrField k="city" addr={addr} setAddr={setAddr} placeholder="City" /><AddrField k="zip" addr={addr} setAddr={setAddr} placeholder="Postcode" /><AddrField k="country" addr={addr} setAddr={setAddr} span placeholder="Country" /></div></div>
