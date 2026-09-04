@@ -30,7 +30,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   const isOwner = session.role === "brand" && session.brand === b.slug;
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   return (
-    <Page className="pt-4 md:pt-6">
+    <Page className="pt-4 md:pt-6" style={{ ["--sage" as string]: b.accent ?? "var(--sage)", background: b.bg ?? "transparent" }}>
       <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-stretch">
         <div className="card order-2 flex flex-col rounded-lg p-6 md:p-8 lg:order-1">
           <div className="mb-5 flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
               <button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-cream text-[14px]" aria-label="Share">↗</button>
             </div>
           </div>
-          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.name}</h1>{b.verified && <Verified size={20} />}</div>
+          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1>{b.verified && <Verified size={20} />}</div>
           <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
           <div className="mb-6 flex flex-wrap gap-2">
             {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>}
@@ -62,6 +62,18 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         {[[own.length, "Items"], [followers.toLocaleString(), "Followers"], ["4.7", "Rating"]].map(([v, l]) => <div key={l}><div className="text-[16px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
       </div>
 
+      {(b.intro || b.quote) && (
+        <section className="mt-8 grid gap-4 md:grid-cols-[1.5fr_1fr] items-start">
+          {b.intro && <div className="card rounded-lg p-6 md:p-8 text-[15px] leading-[1.65] text-ink/75" style={{whiteSpace:"pre-wrap"}}>{b.intro}</div>}
+          {b.quote && (
+            <div className="rounded-lg p-6 md:p-8 text-paper" style={{ background: b.accent ?? "var(--sage)" }}>
+              <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-paper/70">In their own words</div>
+              <blockquote className="text-[22px] md:text-[26px] leading-[1.2] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>&ldquo;{b.quote}&rdquo;</blockquote>
+              {b.quoteBy && <div className="mt-4 text-[12px] text-paper/70">— {b.quoteBy}</div>}
+            </div>
+          )}
+        </section>
+      )}
       {(drop || promo) && (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {drop && <div className="rounded-lg p-6 text-paper" style={{background:"var(--indigo)"}}><Label light className="mb-2">Next drop</Label><div className="mb-1 text-[22px] font-bold tracking-[-.03em]">{drop.title}</div><div className="mb-4 text-[13px] text-paper/70">{drop.pieces} pieces · {drop.blurb}</div><Countdown at={drop.at} dark /></div>}

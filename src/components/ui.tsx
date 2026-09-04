@@ -115,8 +115,8 @@ export function SectionHead({ title, sub, action, href }: { title: ReactNode; su
   );
 }
 
-export function Page({ children, className, narrow }: { children: ReactNode; className?: string; narrow?: boolean }) {
-  return <main className={clsx("mx-auto w-full px-4 md:px-10 pb-16", narrow ? "max-w-[1100px]" : "max-w-[1440px]", className)}>{children}</main>;
+export function Page({ children, className, narrow, style }: { children: ReactNode; className?: string; narrow?: boolean; style?: CSSProperties }) {
+  return <main style={style} className={clsx("mx-auto w-full px-4 md:px-10 pb-16", narrow ? "max-w-[1100px]" : "max-w-[1440px]", className)}>{children}</main>;
 }
 
 export const inputCls = "w-full rounded-sm bg-white px-3 py-[10px] text-[13px] font-medium outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)] placeholder:text-ink/35";

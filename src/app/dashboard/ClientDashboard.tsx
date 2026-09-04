@@ -247,7 +247,7 @@ function Orders({ brand, myOrders, seeded }: { brand: string; myOrders: ReturnTy
 function Settings({ brand }: { brand: string }) {
   const { brands, upsertBrand } = useApp();
   const b = brands.find((x) => x.slug === brand)!;
-  const [f, setF] = useState({ tagline: b.tagline, story: b.story ?? "", moods: b.moods.join(", "), styles: b.styles.join(", "), materials: b.materials.join(", "), values: b.values.join(", "), website: b.website ?? "", logo: b.logo ?? "", cover: b.cover ?? "" });
+  const [f, setF] = useState({ tagline: b.tagline, story: b.story ?? "", moods: b.moods.join(", "), styles: b.styles.join(", "), materials: b.materials.join(", "), values: b.values.join(", "), website: b.website ?? "", logo: b.logo ?? "", cover: b.cover ?? "", accent: b.accent ?? "", bg: b.bg ?? "", headlineFont: (b.headlineFont ?? "serif") as "serif" | "sans", intro: b.intro ?? "", quote: b.quote ?? "", quoteBy: b.quoteBy ?? "" });
   const split = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
   const [saved, setSaved] = useState(false);
   return (
@@ -262,7 +262,19 @@ function Settings({ brand }: { brand: string }) {
         <div><Label className="mb-2">Materials</Label><input className={inputCls} value={f.materials} onChange={(e) => setF({ ...f, materials: e.target.value })} /></div>
         <div><Label className="mb-2">Values</Label><input className={inputCls} value={f.values} onChange={(e) => setF({ ...f, values: e.target.value })} /></div>
         <div><Label className="mb-2">Story</Label><textarea className={clsx(inputCls, "min-h-[140px] resize-y leading-[1.6]")} value={f.story} onChange={(e) => setF({ ...f, story: e.target.value })} /></div>
-        <div className="flex items-center gap-3"><Button onClick={() => { upsertBrand({ ...b, tagline: f.tagline.trim(), story: f.story.trim(), website: f.website.trim() || undefined, logo: f.logo.trim() || undefined, cover: f.cover.trim() || undefined, styles: split(f.styles), moods: split(f.moods), materials: split(f.materials), values: split(f.values) }); setSaved(true); setTimeout(() => setSaved(false), 1500); }}>Save changes</Button>{saved && <span className="text-[12.5px] font-medium text-ink">Saved ✓</span>}</div>
+        <div className="mt-4 rounded-md bg-cream p-5">
+          <div className="mb-4 text-[13px] font-semibold">Make it yours</div>
+          <div className="mb-3 text-[12px] text-ink/55">Everything below only affects your brand page. Shoppers who land there see your accent, your fonts, your intro — not the Kindred template.</div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div><Label className="mb-2">Accent colour · hex</Label><div className="flex items-center gap-3"><input className={clsx(inputCls, "!w-[130px]")} value={f.accent} onChange={(e) => setF({ ...f, accent: e.target.value })} placeholder="#3A5A3F" /><span className="h-9 w-9 flex-none rounded-md" style={{ background: f.accent || "var(--sage)" }} /></div></div>
+            <div><Label className="mb-2">Page background · hex</Label><div className="flex items-center gap-3"><input className={clsx(inputCls, "!w-[130px]")} value={f.bg} onChange={(e) => setF({ ...f, bg: e.target.value })} placeholder="#F4F4F2" /><span className="h-9 w-9 flex-none rounded-md border border-ink/10" style={{ background: f.bg || "var(--paper)" }} /></div></div>
+            <div><Label className="mb-2">Headline font</Label><div className="flex gap-2">{(["serif", "sans"] as const).map((v) => <button key={v} type="button" onClick={() => setF({ ...f, headlineFont: v })} className={clsx("press rounded-md px-4 py-[10px] text-[12px] font-semibold", f.headlineFont === v ? "bg-ink text-paper" : "bg-white soft")}>{v === "serif" ? "Instrument Serif" : "Plus Jakarta Sans"}</button>)}</div></div>
+            <div className="md:col-span-2"><Label className="mb-2">Intro paragraph</Label><textarea className={clsx(inputCls, "min-h-[110px] resize-y leading-[1.55]")} value={f.intro} onChange={(e) => setF({ ...f, intro: e.target.value })} placeholder="A longer paragraph shown on your brand page, right below the hero card. Two or three honest lines about who you are." /></div>
+            <div><Label className="mb-2">Pull quote</Label><input className={inputCls} value={f.quote} onChange={(e) => setF({ ...f, quote: e.target.value })} placeholder="From a press piece, or a customer." /></div>
+            <div><Label className="mb-2">Attributed to</Label><input className={inputCls} value={f.quoteBy} onChange={(e) => setF({ ...f, quoteBy: e.target.value })} placeholder="e.g. Vogue Business" /></div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3"><Button onClick={() => { upsertBrand({ ...b, tagline: f.tagline.trim(), story: f.story.trim(), website: f.website.trim() || undefined, logo: f.logo.trim() || undefined, cover: f.cover.trim() || undefined, styles: split(f.styles), moods: split(f.moods), materials: split(f.materials), values: split(f.values), accent: f.accent.trim() || undefined, bg: f.bg.trim() || undefined, headlineFont: f.headlineFont, intro: f.intro.trim() || undefined, quote: f.quote.trim() || undefined, quoteBy: f.quoteBy.trim() || undefined }); setSaved(true); setTimeout(() => setSaved(false), 1500); }}>Save changes</Button>{saved && <span className="text-[12.5px] font-medium text-sage">Saved ✓</span>}</div>
       </div>
     </div>
   );

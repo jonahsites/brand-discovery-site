@@ -15,6 +15,13 @@ export type Brand = {
   shipsTo: string[]; shipsFrom: string;
   createdAt?: string;
   logo?: string; cover?: string; verification?: "pending";
+  /* --- Personalisation the brand controls from Dashboard → Settings --- */
+  accent?: string;          // hex, e.g. #4D6B52 — used as their page accent
+  bg?: string;              // hex — the brand-page ground colour
+  headlineFont?: "serif" | "sans"; // display face for their h1/h2s
+  intro?: string;           // longer paragraph shown on their brand page top
+  quote?: string;           // pull quote (from press or a customer)
+  quoteBy?: string;         // attribution
 };
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
