@@ -14,6 +14,7 @@ export type Brand = {
   priceBand: [number, number]; sizeRange: [string, string];
   shipsTo: string[]; shipsFrom: string;
   createdAt?: string;
+  logo?: string; cover?: string;
 };
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
@@ -62,7 +63,11 @@ export type Product = {
   tag?: string; tagBg?: string; tagFg?: string; category: string;
   sizes?: string[]; colors?: string[]; materials?: string[]; tags?: string[];
   stock?: number; description?: string; createdAt?: string;
+  image?: string; images?: string[];
 };
+export type Post = { id: string; brand: string; caption: string; image?: string; products: string[]; at: string; likes: number };
+export type Message = { id: string; from: "shopper" | "brand"; text: string; at: string };
+export type Thread = { id: string; brand: string; shopper: string; messages: Message[] };
 
 export const PRODUCTS: Product[] = [
   { slug: "panel-work-jacket", brand: "form-and-void", name: "Panel Work Jacket", price: 248, compareAt: 310, tag: "20% off", tagBg: "#DBE1EF", tagFg: "#1A1A1A", category: "Outerwear" },

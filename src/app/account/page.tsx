@@ -12,13 +12,13 @@ export default function Account() { return <Suspense><AccountInner /></Suspense>
 
 function AccountInner() {
   const sp = useSearchParams();
-  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops } = useApp();
+  const { saved, follows, toggleFollow, products, brands, orders, styleTags, setStyleTags, sizes, setSizes, session, setSession, alerts, notify, drops, points, threads } = useApp();
   const [tab, setTab] = useState(sp.get("tab") ?? "Saved");
   const [addTag, setAddTag] = useState(false);
   const savedP = products.filter((p) => saved.includes(p.slug));
   const following = brands.filter((b) => follows.includes(b.slug));
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const allOrders = [...orders.map((o) => ({ key: o.id, title: `${[...new Set(o.items.map((i) => brands.find((b) => b.slug === i.brand)?.name))].join(" + ")} · ${o.items.reduce((s, i) => s + i.qty, 0)} pieces`, meta: `#${o.id} · placed ${new Date(o.placedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, status: o.status, tint: o.status === "Delivered" ? "#F6F7F9" : "#C7DCEF", ink: o.status === "Delivered" ? "rgba(0,0,0,.6)" : "#1A1A1A", total: money(o.total, true) })), ...ORDERS.map((o) => ({ key: o.meta, ...o }))];
+  const allOrders = [...orders.map((o) => ({ key: o.id, title: `${[...new Set(o.items.map((i) => brands.find((b) => b.slug === i.brand)?.name))].join(" + ")} · ${o.items.reduce((s, i) => s + i.qty, 0)} piece${o.items.reduce((s, i) => s + i.qty, 0) === 1 ? "" : "s"}`, meta: `#${o.id} · placed ${new Date(o.placedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, status: o.status, tint: o.status === "Delivered" ? "#F6F7F9" : "#C7DCEF", ink: o.status === "Delivered" ? "rgba(0,0,0,.6)" : "#1A1A1A", total: money(o.total, true) })), ...ORDERS.map((o) => ({ key: o.meta, ...o }))];
   return (
     <Page className="pt-6 md:pt-9">
       <div className="mb-6 md:mb-[34px] flex items-center gap-4 md:gap-[22px]">
@@ -61,6 +61,13 @@ function AccountInner() {
           </div>
         </div>
         <div className={clsx("flex flex-col gap-4", tab !== "Profile" && "hidden md:flex")}>
+          <div className="rounded-lg bg-sky p-6 md:p-7">
+            <Label className="mb-2 !text-black/48">Kindred points</Label>
+            <div className="mb-1 text-[34px] font-bold leading-none tracking-[-.04em]">{points.toLocaleString()}</div>
+            <div className="mb-4 text-[12.5px] text-black/60">{points >= 2000 ? "Regular · free EU shipping on every order" : `${(2000 - points).toLocaleString()} points to Regular tier`} · 1 point per $1, spendable at any brand</div>
+            <div className="h-[6px] rounded-pill bg-white/70"><div className="h-full rounded-pill bg-navy" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
+            <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => navigator.clipboard?.writeText("kindred.shop/r/jules")} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button></div>
+          </div>
           <div className="rounded-lg bg-navy p-6 md:p-7 text-offwhite">
             <Label light className="mb-4">Style profile</Label>
             <p className="mb-[18px] text-[13px] leading-[1.6] text-offwhite/72">These tags decide what shows up in For You. Remove any that stopped feeling like you.</p>

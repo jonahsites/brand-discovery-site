@@ -1,21 +1,22 @@
+/* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 import clsx from "clsx";
 import type { ReactNode, ButtonHTMLAttributes, CSSProperties } from "react";
 
-export function Avatar({ init, tint, ink, size = 44, radius, className }: { init: string; tint: string; ink?: string; size?: number; radius?: number; className?: string }) {
+export function Avatar({ init, tint, ink, size = 44, radius, className, src }: { init: string; tint: string; ink?: string; size?: number; radius?: number; className?: string; src?: string }) {
   return (
     <div
-      className={clsx("grid flex-none place-items-center font-bold", className)}
+      className={clsx("grid flex-none place-items-center overflow-hidden font-bold", className)}
       style={{ width: size, height: size, borderRadius: radius ?? 999, background: tint, color: ink ?? "#1A1A1A", fontSize: Math.round(size * 0.3), letterSpacing: "-.03em" }}
     >
-      {init}
+      {src ? <img src={src} alt={init} className="h-full w-full object-cover" /> : init}
     </div>
   );
 }
 
-export function Placeholder({ label, className, style, children, wide }: { label?: string; className?: string; style?: CSSProperties; children?: ReactNode; wide?: boolean }) {
+export function Placeholder({ label, className, style, children, wide, src, alt }: { label?: string; className?: string; style?: CSSProperties; children?: ReactNode; wide?: boolean; src?: string; alt?: string }) {
   return (
-    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", wide ? "stripes-wide" : "stripes", className)} style={style}>
-      {label && <span className="mono text-[9px] font-medium uppercase tracking-[.1em] text-black/30">{label}</span>}
+    <div className={clsx(!className?.includes("absolute") && "relative", "grid place-items-center overflow-hidden", !src && (wide ? "stripes-wide" : "stripes"), src && "bg-mist", className)} style={style}>
+      {src ? <img src={src} alt={alt ?? label ?? ""} loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : label && <span className="mono text-[9px] font-medium uppercase tracking-[.1em] text-black/30">{label}</span>}
       {children}
     </div>
   );

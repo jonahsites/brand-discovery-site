@@ -15,7 +15,7 @@ export default function Explore() { return <Suspense><ExploreInner /></Suspense>
 
 function ExploreInner() {
   const sp = useSearchParams(); const router = useRouter();
-  const { products, brands, promos, priceOf } = useApp();
+  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly } = useApp();
   const q = sp.get("q") ?? "";
   const [chip, setChip] = useState(sp.get("cat") ?? "All");
   const [open, setOpen] = useState(false);
@@ -27,14 +27,14 @@ function ExploreInner() {
     let base = products;
     let why: string[] = [];
     if (q) { const s = searchCatalog(q, brands, products, promos); base = s.products.map((h) => h.item); why = s.terms; if (s.maxPrice) why.push(`under $${s.maxPrice}`); }
-    let list = filterProducts(base, brands, promos, { ...f, category: chip });
+    let list = filterProducts(base, brands, promos, { ...f, category: chip, sizes: sizeOnly && !(f.sizes?.length) ? [mySizes.tops] : f.sizes });
     const bmap = new Map(brands.map((b) => [b.slug, b]));
     if (sort === SORTS[1]) list = [...list].sort((a, b) => priceOf(a).price - priceOf(b).price);
     if (sort === SORTS[2]) list = [...list].sort((a, b) => priceOf(b).price - priceOf(a).price);
     if (sort === SORTS[3]) list = [...list].sort((a, b) => (bmap.get(b.brand)?.followers ?? 0) - (bmap.get(a.brand)?.followers ?? 0));
     if (sort === SORTS[0] && !q) list = [...list].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     return { list, why };
-  }, [products, brands, promos, q, chip, f, sort, priceOf]);
+  }, [products, brands, promos, q, chip, f, sort, priceOf, sizeOnly, mySizes.tops]);
   const grid = results.list;
   const count = (f.sizes?.length ?? 0) + (f.tiers?.length ?? 0) + (f.materials?.length ?? 0) + (f.values?.length ?? 0) + (f.shipsFrom?.length ?? 0) + (f.sale ? 1 : 0) + (f.price && (f.price[0] > 0 || f.price[1] < 700) ? 1 : 0);
   const brandCount = new Set(grid.map((p) => p.brand)).size;
@@ -57,7 +57,7 @@ function ExploreInner() {
               {q && <>{results.why.slice(0, 6).map((w) => <span key={w} className="rounded-pill bg-peri px-2 py-[2px] text-[11px] font-medium text-ink">{w}</span>)}<button onClick={() => router.push("/explore")} className="text-[12px] font-semibold text-navy">Clear ✕</button></>}
             </div>
           </div>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select>
+          <div className="flex items-center gap-2"><button onClick={() => setSizeOnly(!sizeOnly)} className={clsx("press rounded-pill border px-4 py-[10px] text-[12.5px] font-medium", sizeOnly ? "bg-sky border-sky" : "bg-white border-black/10")}>{sizeOnly ? "✓ " : ""}My size · {mySizes.tops}</button><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill border border-black/10 bg-white px-[18px] py-[10px] text-[12.5px] font-medium outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select></div>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">{grid.map((p) => <ProductCard key={p.slug} p={p} hoverAdd tall />)}</div>
         {grid.length === 0 && <div className="rounded-lg bg-white p-10 text-center text-[14px] text-black/55">Nothing matches yet. Try fewer filters, or <button onClick={() => { setF({ sizes: [], tiers: [], materials: [], values: [], shipsFrom: [], sale: false, price: [0, 700] }); setChip("All"); }} className="font-semibold text-navy">clear everything</button>.</div>}

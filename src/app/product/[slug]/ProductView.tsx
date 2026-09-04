@@ -24,6 +24,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const own = p ? [...reviews.filter((r) => r.product === p.slug), ...(p.createdAt ? [] : REVIEWS.map((r, i) => ({ ...r, id: "seed" + i, product: p.slug, stars: r.stars === "★ 5.0" ? 5 : 4, fit: 2 as const, size: r.meta.split(" ")[2] ?? "L", at: "" })))] : [];
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-black/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
+  const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
   const more = products.filter((x) => x.brand === b.slug && x.slug !== p.slug).concat(products.filter((x) => x.brand !== b.slug)).slice(0, 4);
   const soldOut = p.stock === 0;
   const add = () => { if (soldOut) return; addToBag(p.slug, `${size} · ${colors[color][0]}`, qty); setAdded(true); openBag(); };
@@ -38,11 +39,11 @@ export default function ProductView({ slug }: { slug: string }) {
       <div className="mb-10 md:mb-14 grid gap-6 md:gap-10 lg:grid-cols-[minmax(0,660px)_1fr] items-start">
         <div>
           <div className="card relative h-[340px] md:h-[660px] rounded-2xl md:rounded-lg p-3 md:p-[34px]">
-            <Placeholder label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[34px] rounded-md", soldOut && "opacity-60")} />
+            <Placeholder src={gallery[thumb]} alt={p.name} label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[34px] rounded-md", soldOut && "opacity-60")} />
             {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121212" fg="#fff">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#456F94" fg="#fff">Final {p.stock} pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
-            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-[10px] md:rounded-md border-2", thumb === i ? "border-ink" : "border-transparent")}><Placeholder label={t} className="h-[74px] md:h-[130px] rounded-[8px] md:rounded-[10px]" /></button>)}
+            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-[10px] md:rounded-md border-2", thumb === i ? "border-ink" : "border-transparent")}><Placeholder src={gallery[i]} alt={`${p.name} ${t}`} label={t} className="h-[74px] md:h-[130px] rounded-[8px] md:rounded-[10px]" /></button>)}
           </div>
         </div>
         <div className="md:pt-[6px]">

@@ -15,7 +15,7 @@ const FEEDS = ["For you", "Following", "Drops"];
 export default function Home() {
   const [feed, setFeed] = useState("For you");
   const now = useNow();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf } = useApp();
+  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost } = useApp();
   const arva = brands.find((b) => b.slug === "studio-arva") ?? brands[0];
   const onda = brands.find((b) => b.slug === "onda-studio") ?? brands[1];
   const pick = useMemo(() => dailyPick(products), [products]);
@@ -71,6 +71,13 @@ export default function Home() {
 
           {feed === "Following" && (
             <div className="mb-6">
+              {posts.filter((x) => follows.includes(x.brand)).map((x) => { const b = brands.find((y) => y.slug === x.brand); if (!b) return null; return (
+                <div key={x.id} className="card mb-4 rounded-lg p-4 md:p-6">
+                  <div className="mb-4 flex items-center gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1"><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><div className="text-[12px] text-black/45">{new Date(x.at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div></div><FollowButton slug={b.slug} size="sm" /></div>
+                  <Placeholder src={x.image} label="Post" className="mb-4 h-[260px] md:h-[380px] rounded-md" />
+                  <p className="mb-3 text-[14px] leading-[1.6] text-black/72">{x.caption}</p>
+                  <div className="flex flex-wrap items-center gap-2">{x.products.map((s) => { const p = products.find((y) => y.slug === s); return p ? <Link key={s} href={`/product/${s}`} className="rounded-pill bg-offwhite px-3 py-[6px] text-[12px] font-medium">{p.name} · {money(priceOf(p).price)}</Link> : null; })}<button onClick={() => likePost(x.id)} className="ml-auto text-[13px] font-medium text-black/55">♡ {x.likes}</button></div>
+                </div>); })}
               {followingProducts.length ? <><SectionHead title="New from brands you follow" /><div className="mb-8 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{followingProducts.map((p) => <ProductCard key={p.slug} p={p} />)}</div></>
                 : <div className="card mb-6 rounded-lg p-10 text-center text-[14px] text-black/55">You aren&apos;t following anyone yet. <Link href="/onboarding" className="font-semibold text-navy">Pick five brands →</Link></div>}
             </div>

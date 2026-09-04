@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review } from "./data";
+import { SHIP_OPTS, type Brand, type Product, type Promo, type Drop, type Order, type Review, type Post, type Thread } from "./data";
 import { allBrands, allProducts, effectivePrice, findProduct } from "./catalog";
 
 export type BagItem = { key: string; product: string; variant: string; qty: number };
@@ -13,6 +13,7 @@ type Persisted = {
   promos: Promo[]; drops: Drop[]; orders: Order[]; reviews: Review[];
   styleTags: string[]; sizes: { tops: string; waist: string; shoe: string };
   notify: string[]; alerts: string[]; promoCode?: string;
+  posts: Post[]; threads: Thread[]; sizeOnly: boolean;
 };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean };
 
@@ -38,6 +39,10 @@ type Ctx = State & {
   setStyleTags: (t: string[]) => void; setSizes: (s: Persisted["sizes"]) => void;
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
+  addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
+  sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
+  setSizeOnly: (v: boolean) => void;
+  points: number;
 };
 
 const DEFAULT_BAG: BagItem[] = [
@@ -62,6 +67,7 @@ const DEFAULTS: Persisted = {
   customBrands: [], customProducts: [], removedProducts: [], promos: DEFAULT_PROMOS, drops: DEFAULT_DROPS, orders: [], reviews: [],
   styleTags: ["Japanese streetwear", "Workwear", "Minimalist", "Deadstock", "Unisex", "Knitwear", "Under $200"],
   sizes: { tops: "L", waist: "32", shoe: "43" }, notify: [], alerts: [],
+  posts: [], threads: [], sizeOnly: false,
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -115,9 +121,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const discount = code ? Math.round(bagGroups.filter((g) => g.brand.slug === code.brand).reduce((s, g) => s + g.items.reduce((a, i) => a + (i.p.price === i.unit ? i.total * code.pct / 100 : 0), 0), 0)) : 0;
     return { bagGroups, subtotal, shipTotal, discount, total: subtotal + shipTotal - discount, bagCount: state.bag.reduce((s, b) => s + b.qty, 0) };
   }, [state.bag, state.ship, state.promos, state.customProducts, state.removedProducts, state.promoCode, brands]);
+  const points = useMemo(() => 1240 + state.orders.reduce((s, o) => s + Math.round(o.subtotal), 0), [state.orders]);
 
   const value: Ctx = {
-    ...state, ...derived, hydrated, brands, products, priceOf,
+    ...state, ...derived, hydrated, brands, products, priceOf, points,
     addToBag: (product, variant, qty = 1) => up((p) => { const key = product + "|" + variant; const ex = p.bag.find((b) => b.key === key); return { bag: ex ? p.bag.map((b) => (b.key === key ? { ...b, qty: b.qty + qty } : b)) : [...p.bag, { key, product, variant, qty }] }; }),
     setQty: (key, qty) => up((p) => ({ bag: p.bag.map((b) => (b.key === key ? { ...b, qty: Math.max(1, qty) } : b)) })),
     removeItem: (key) => up((p) => ({ bag: p.bag.filter((b) => b.key !== key) })),
@@ -155,6 +162,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleAlert: (slug) => up((p) => ({ alerts: toggleIn(p.alerts, slug) })),
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
+    addPost: (post) => up((p) => ({ posts: [{ ...post, id: uid(), at: new Date().toISOString(), likes: 0 }, ...p.posts] })),
+    deletePost: (id) => up((p) => ({ posts: p.posts.filter((x) => x.id !== id) })),
+    likePost: (id) => up((p) => ({ posts: p.posts.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x)) })),
+    sendMessage: (brand, text, from) => {
+      const shopper = state.session.role === "brand" ? "Jules Renard" : state.session.name;
+      const existing = state.threads.find((t) => t.brand === brand && t.shopper === shopper);
+      const id = existing?.id ?? uid();
+      const msg = { id: uid(), from, text, at: new Date().toISOString() };
+      up((p) => ({ threads: existing ? p.threads.map((t) => (t.id === id ? { ...t, messages: [...t.messages, msg] } : t)) : [{ id, brand, shopper, messages: [msg] }, ...p.threads] }));
+      return id;
+    },
+    setSizeOnly: (sizeOnly) => up(() => ({ sizeOnly })),
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

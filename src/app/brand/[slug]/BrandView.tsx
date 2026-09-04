@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { LOOKBOOKS, POSTS, brandTier } from "@/lib/data";
 import { useApp } from "@/lib/store";
@@ -12,7 +14,8 @@ import Countdown, { useNow } from "@/components/Countdown";
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage } = useApp();
+  const router = useRouter();
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
@@ -25,12 +28,12 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   return (
     <Page className="pt-0 md:pt-6">
-      <Placeholder label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-lg">
+      <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-lg">
         {isOwner && <Link href="/dashboard" className="absolute right-5 top-5 rounded-pill bg-black px-4 py-2 text-[12px] font-semibold text-white">Edit in dashboard</Link>}
       </Placeholder>
 
       <div className="relative -mt-[38px] md:-mt-[52px] flex flex-col md:flex-row md:items-end gap-4 md:gap-6 md:px-2">
-        <div className="grid h-[78px] w-[78px] md:h-[132px] md:w-[132px] flex-none place-items-center rounded-[14px] md:rounded-[20px] border-4 md:border-[5px] border-offwhite text-[21px] md:text-[34px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.init}</div>
+        <div className="grid h-[78px] w-[78px] md:h-[132px] md:w-[132px] flex-none place-items-center overflow-hidden rounded-[14px] md:rounded-[20px] border-4 md:border-[5px] border-offwhite text-[21px] md:text-[34px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
         <div className="flex-1 md:pb-2">
           <div className="mb-[7px] flex items-center gap-[9px]"><h1 className="text-[24px] md:text-[34px] font-bold leading-none tracking-[-.038em]">{b.name}</h1>{b.verified && <Verified size={20} />}<span className="rounded-pill bg-offwhite px-[10px] py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-black/55">{brandTier(followers)}</span></div>
           <div className="text-[13px] md:text-[14px] text-black/58">{b.city}, {b.country} · {b.tagline}</div>
@@ -39,7 +42,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
           <div className="hidden md:block text-right"><div className="text-[20px] font-semibold tracking-[-.02em]">{own.length}</div><div className="label !text-[10px]">Items</div></div>
           <div className="hidden md:block text-right"><div className="text-[20px] font-semibold tracking-[-.02em]">{followers.toLocaleString()}</div><div className="label !text-[10px]">Followers</div></div>
           <FollowButton slug={b.slug} size="lg" className="flex-1 md:flex-none" />
-          <Button variant="secondary" className="flex-1 md:flex-none">Message</Button>
+          <Button variant="secondary" className="flex-1 md:flex-none" onClick={() => { const id = sendMessage(b.slug, `Hi ${b.name} — quick question about sizing.`, "shopper"); router.push(`/messages?t=${id}`); }}>Message</Button>
         </div>
       </div>
 
@@ -67,13 +70,19 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         : <div className="card rounded-lg p-10 text-center text-[14px] text-black/55">{isOwner ? <>No products yet. <Link href="/dashboard?tab=Products" className="font-semibold text-navy">Add your first piece →</Link></> : "This brand hasn't listed anything yet. Follow to hear about the first drop."}</div>)}
       {tab === "Posts" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.filter((x) => x.brand === b.slug).map((x) => (
+            <div key={x.id} className="card overflow-hidden rounded-2xl">
+              <Placeholder src={x.image} label="Post" className="h-[300px]">{x.products.length > 0 && <span className="glass-chip absolute bottom-[14px] left-[14px] rounded-pill px-[14px] py-[7px] text-[11.5px] font-medium">{x.products.length} tagged</span>}</Placeholder>
+              <div className="flex items-center justify-between gap-3 px-[18px] py-4"><span className="text-[13px] text-black/65">{x.caption}</span><button onClick={() => likePost(x.id)} className="flex-none text-[12.5px] font-medium text-black/45">♡ {x.likes}</button></div>
+            </div>
+          ))}
           {(b.createdAt ? [] : POSTS).map((g) => (
             <div key={g.ph} className="card overflow-hidden rounded-2xl">
               <Placeholder label={g.ph} className="h-[300px]"><span className="glass-chip absolute bottom-[14px] left-[14px] rounded-pill px-[14px] py-[7px] text-[11.5px] font-medium">{g.tag}</span></Placeholder>
               <div className="flex items-center justify-between px-[18px] py-4"><span className="text-[13px] text-black/65">{g.caption}</span><span className="text-[12.5px] font-medium text-black/45">♡ {g.likes}</span></div>
             </div>
           ))}
-          {b.createdAt && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-black/55">No posts yet.</div>}
+          {b.createdAt && posts.filter((x) => x.brand === b.slug).length === 0 && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-black/55">No posts yet.</div>}
         </div>
       )}
       {tab === "Lookbooks" && (
