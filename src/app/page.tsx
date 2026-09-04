@@ -96,7 +96,7 @@ function HomeInner() {
               <div className="relative mb-6 flex flex-col md:flex-row items-stretch md:items-center gap-6 md:gap-[34px] overflow-hidden rounded-lg bg-sky p-6 md:p-[38px]">
                 <div className="flex-1">
                   <div className="label mb-[14px] !text-black/48">Brand of the week</div>
-                  <h2 className="mb-3 text-[30px] md:text-[40px] font-bold leading-[1.02] tracking-[-.04em]">{arva.slug === "studio-arva" ? "Minimalism for the messy." : arva.tagline}</h2>
+                  <h2 className="mb-3 text-[34px] md:text-[46px] leading-[1.02]">{arva.slug === "studio-arva" ? <>Minimalism for the <em>messy.</em></> : arva.tagline}</h2>
                   <p className="mb-[22px] max-w-[390px] text-[14.5px] leading-[1.55] text-black/66">{arva.slug === "studio-arva" ? `${arva.name} cuts heavyweight cotton in a two-person ${arva.city} workshop. ${products.filter((p) => p.brand === arva.slug).length} pieces, no seasons.` : `${arva.name}, ${arva.city}. ${(arva.story?.split(/(?<=\.)\s/)[0] ?? "").replace(/\.$/, "")}. ${products.filter((p) => p.brand === arva.slug).length} piece${products.filter((p) => p.brand === arva.slug).length === 1 ? "" : "s"}.`}</p>
                   <div className="flex flex-wrap items-center gap-[10px]"><Link href={`/brand/${arva.slug}`}><Button>Shop the drop</Button></Link><Link href={`/brand/${arva.slug}?tab=About`}><Button variant="ghost">Read the story</Button></Link></div>
                 </div>
@@ -105,7 +105,7 @@ function HomeInner() {
 
               {pick && (
                 <Link href={`/product/${pick.slug}`} className="card mb-6 flex items-center gap-5 rounded-lg p-4 md:p-5 lift">
-                  <Placeholder label="Today" className="h-[96px] w-[84px] flex-none rounded-[10px]" />
+                  <Placeholder src={pick.image} label="Today" className="h-[96px] w-[84px] flex-none rounded-[10px]" />
                   <div className="min-w-0 flex-1">
                     <div className="label mb-1" suppressHydrationWarning>Today&apos;s pick · {new Date().toLocaleDateString(undefined, { weekday: "long" })}</div>
                     <div className="text-[17px] font-semibold tracking-[-.02em]">{pick.name}</div>

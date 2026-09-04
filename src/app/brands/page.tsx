@@ -55,8 +55,10 @@ function BrandsInner() {
             {list.map((b) => { const own = products.filter((p) => p.brand === b.slug); const promo = promos.find((p) => p.active && p.brand === b.slug); const drop = drops.find((d) => d.brand === b.slug); return (
               <div key={b.slug} className="card overflow-hidden rounded-lg lift">
                 <Link href={`/brand/${b.slug}`}><Placeholder src={b.cover} wide className="h-[120px]" label="Cover">{(promo || drop) && <span className="glass-chip absolute left-3 top-3 rounded-pill px-3 py-[5px] text-[10.5px] font-semibold">{promo ? `${promo.pct}% off` : "Drop soon"}</span>}</Placeholder></Link>
-                <div className="p-4">
-                  <div className="-mt-9 mb-3 flex items-end gap-3"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={52} radius={14} src={b.logo} className="border-[3px] border-white" /><div className="min-w-0 flex-1 pb-1"><Link href={`/brand/${b.slug}`} className="block truncate text-[15px] font-semibold tracking-[-.02em]">{b.name}</Link><div className="mono text-[10.5px] text-black/45">{b.city}, {b.country} · {own.length} items · {fmtFollowers(b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0))} followers</div></div></div>
+                <div className="p-4 pt-0">
+                  <div className="-mt-7 mb-2"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={52} radius={14} src={b.logo} className="border-[3px] border-white" /></div>
+                  <Link href={`/brand/${b.slug}`} className="block truncate text-[20px] leading-tight" style={{ fontFamily: "var(--font-display)" }}>{b.name}</Link>
+                  <div className="mono mb-2 text-[10.5px] text-black/45">{b.city}, {b.country} · {own.length} items · {fmtFollowers(b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0))} followers</div>
                   <p className="mb-3 line-clamp-2 text-[13px] leading-[1.5] text-black/62">{b.tagline}</p>
                   <div className="mb-4 flex flex-wrap gap-[5px]">{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-offwhite px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
                   <div className="flex gap-2"><FollowButton slug={b.slug} size="sm" className="flex-1" /><Link href={`/brand/${b.slug}`} className="grid h-[34px] w-[34px] place-items-center rounded-pill border border-black/10 bg-white text-[13px]">↗</Link></div>
