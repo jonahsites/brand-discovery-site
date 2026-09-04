@@ -27,9 +27,9 @@ function AccountInner() {
   return (
     <Page className="pt-6 md:pt-9">
       <div className="mb-6 md:mb-[34px] flex items-center gap-4 md:gap-[22px]">
-        <div className="grid h-[66px] w-[66px] md:h-[104px] md:w-[104px] flex-none place-items-center rounded-[14px] md:rounded-lg bg-sky text-[20px] md:text-[30px] font-extrabold tracking-[-.04em]">{initials}</div>
+        <div className="grid h-[66px] w-[66px] md:h-[104px] md:w-[104px] flex-none place-items-center rounded-md md:rounded-lg bg-sand text-[20px] md:text-[30px] font-extrabold tracking-[-.04em]">{initials}</div>
         <div className="flex-1">
-          {editName ? <form onSubmit={(e) => { e.preventDefault(); renameShopper(nameDraft); setEditName(false); }} className="mb-[6px] flex gap-2"><input autoFocus value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} className={clsx(inputCls, "!w-auto !py-2")} /><Button size="sm" type="submit">Save</Button></form> : <h1 className="mb-[6px] text-[20px] md:text-[32px] font-bold leading-[1.05] tracking-[-.038em]">{session.name}</h1>}
+          {editName ? <form onSubmit={(e) => { e.preventDefault(); renameShopper(nameDraft); setEditName(false); }} className="mb-[6px] flex gap-2"><input autoFocus value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} className={clsx(inputCls, "!w-auto !py-2")} /><Button size="sm" type="submit">Save</Button></form> : <h1 className="mb-[6px] text-[20px] md:text-[32px] font-extrabold leading-[1.05] tracking-[-.038em]">{session.name}</h1>}
           <div className="hidden md:block text-[13.5px] text-ink/55">Paris, FR · joined March 2025 · {following.length} brands followed · {alerts.length} price alerts · {notify.length} drop reminders</div>
           <div className="mono md:hidden text-[11.5px] text-ink/45">{following.length} following · {savedP.length} saved</div>
         </div>
@@ -39,7 +39,7 @@ function AccountInner() {
           {session.role === "brand" && <Button variant="secondary" onClick={() => setSession({ role: "shopper", name: "Jules Renard" })}>Switch to shopper</Button>}
         </div>
       </div>
-      <div className="mb-[22px] flex gap-2 md:hidden">{["Saved", "Orders", "Profile"].map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("flex-1 rounded-pill py-3 text-center text-[12.5px] font-semibold", tab === t ? "bg-ink text-white" : "bg-white border border-ink/10")}>{t}</button>)}</div>
+      <div className="mb-[22px] flex gap-2 md:hidden">{["Saved", "Orders", "Profile"].map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("flex-1 rounded-pill py-3 text-center text-[12.5px] font-semibold", tab === t ? "bg-ink text-paper" : "bg-white soft")}>{t}</button>)}</div>
       <div className="grid gap-7 lg:grid-cols-[1fr_400px] items-start">
         <div>
           <div className={clsx(tab !== "Saved" && "hidden md:block")}>
@@ -47,11 +47,11 @@ function AccountInner() {
             <div className="mb-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {boards.map((bd) => { const ps = bd.products.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p); return (
                 <div key={bd.id} className="card rounded-lg p-3">
-                  <div className="mb-3 grid grid-cols-3 gap-1">{[0, 1, 2].map((i) => <Placeholder key={i} src={ps[i]?.image} className="h-[74px] rounded-[8px]" />)}</div>
+                  <div className="mb-3 grid grid-cols-3 gap-1">{[0, 1, 2].map((i) => <Placeholder key={i} src={ps[i]?.image} className="h-[74px] rounded-sm" />)}</div>
                   <div className="flex items-center justify-between px-1"><div><div className="text-[14px] font-semibold tracking-[-.02em]">{bd.name}</div><div className="mono text-[10.5px] text-ink/45">{ps.length} piece{ps.length === 1 ? "" : "s"}</div></div><button onClick={() => deleteBoard(bd.id)} className="text-[12px] text-ink/40">✕</button></div>
                   {ps.length > 0 && <div className="mt-2 flex flex-wrap gap-1 px-1">{ps.slice(0, 3).map((p) => <Link key={p.slug} href={`/product/${p.slug}`} className="rounded-pill bg-offwhite px-2 py-[3px] text-[11px]">{p.name}</Link>)}</div>}
                 </div>); })}
-              <form onSubmit={(e) => { e.preventDefault(); if (!newBoard.trim()) return; createBoard(newBoard); setNewBoard(""); }} className="flex flex-col justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-ink/14 p-4"><Label>New board</Label><input value={newBoard} onChange={(e) => setNewBoard(e.target.value)} placeholder="Winter capsule" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit" className="self-start">Create</Button></form>
+              <form onSubmit={(e) => { e.preventDefault(); if (!newBoard.trim()) return; createBoard(newBoard); setNewBoard(""); }} className="flex flex-col justify-center gap-2 rounded-lg bg-cream p-4"><Label>New board</Label><input value={newBoard} onChange={(e) => setNewBoard(e.target.value)} placeholder="Winter capsule" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit" className="self-start">Create</Button></form>
             </div>
             <div className="mb-4 flex items-baseline justify-between"><h3 className="text-[20px] font-semibold tracking-[-.025em]">Saved · {savedP.length} piece{savedP.length === 1 ? "" : "s"}</h3></div>
             <div className="mb-9 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">{savedP.map((p) => <ProductCard key={p.slug} p={p} />)}{savedP.length === 0 && <div className="col-span-full rounded-lg bg-white p-8 text-center text-[13.5px] text-ink/55">Nothing saved yet. Tap ♡ on anything.</div>}</div>
@@ -60,16 +60,16 @@ function AccountInner() {
             <h3 className="mb-4 text-[20px] font-semibold tracking-[-.025em]">Order history</h3>
             <div className="mb-9 flex flex-col gap-3">
               {allOrders.map((o) => { const real = orders.find((x) => x.id === o.key); const idx = Math.max(0, STEPS.indexOf(o.status as (typeof STEPS)[number])); return (
-                <div key={o.key} className="card rounded-2xl">
+                <div key={o.key} className="card rounded-lg">
                   <button onClick={() => setOpenOrder(openOrder === o.key ? null : o.key)} className="flex w-full items-center gap-4 md:gap-[18px] px-5 py-4 md:px-6 md:py-5 text-left">
-                    <Placeholder src={real ? products.find((p) => p.slug === real.items[0]?.product)?.image : undefined} className="h-[52px] w-[52px] flex-none rounded-[9px]" />
+                    <Placeholder src={real ? products.find((p) => p.slug === real.items[0]?.product)?.image : undefined} className="h-[52px] w-[52px] flex-none rounded-sm" />
                     <div className="min-w-0 flex-1"><div className="mb-1 text-[14px] font-semibold">{o.title}</div><div className="mono text-[11.5px] text-ink/42">{o.meta}</div></div>
                     <span className="hidden sm:inline rounded-pill px-4 py-2 text-[11px] font-semibold uppercase tracking-[.08em]" style={{ background: o.tint, color: o.ink }}>{o.status}</span>
                     <span className="text-[14px] font-medium">{o.total}</span>
                   </button>
                   {openOrder === o.key && (
                     <div className="border-t border-ink/6 px-5 py-4 md:px-6">
-                      <div className="mb-4 flex items-center gap-2">{STEPS.map((s, i) => <div key={s} className="flex flex-1 items-center gap-2"><div className={clsx("h-[6px] flex-1 rounded-pill", i <= idx ? "bg-navy" : "bg-ink/10")} /></div>)}</div>
+                      <div className="mb-4 flex items-center gap-2">{STEPS.map((s, i) => <div key={s} className="flex flex-1 items-center gap-2"><div className={clsx("h-[6px] flex-1 rounded-pill", i <= idx ? "bg-sage" : "bg-ink/10")} /></div>)}</div>
                       <div className="mb-4 flex justify-between text-[10.5px] font-semibold uppercase tracking-[.1em]">{STEPS.map((s, i) => <span key={s} className={i <= idx ? "text-ink" : "text-ink/35"}>{s}</span>)}</div>
                       {real ? <div className="flex flex-col gap-2">{real.items.map((it, i) => <Link key={i} href={`/product/${it.product}`} className="flex items-center justify-between rounded-md bg-offwhite px-4 py-[10px] text-[13px]"><span><span className="font-medium">{it.name}</span> <span className="text-ink/50">· {it.variant} · ×{it.qty}</span></span><span className="font-medium">{money(it.unit * it.qty, true)}</span></Link>)}<div className="mono mt-1 text-[11px] text-ink/45">Shipping {money(real.shipping, true)}{real.credit ? ` · points −${money(real.credit, true)}` : ""}{real.promo ? ` · code ${real.promo}` : ""} · Kindred holds payment until each parcel scans.</div></div>
                         : <div className="text-[12.5px] text-ink/50">Demo order. Real orders you place show their pieces here.</div>}
@@ -86,30 +86,30 @@ function AccountInner() {
           </div>
         </div>
         <div className={clsx("flex flex-col gap-4", tab !== "Profile" && "hidden md:flex")}>
-          <div className="rounded-lg bg-sky p-6 md:p-7">
+          <div className="rounded-lg bg-cream p-6 md:p-7">
             <Label className="mb-2 !text-ink/48">Kindred points</Label>
             <div className="mb-1 text-[34px] font-bold leading-none tracking-[-.04em]">{points.toLocaleString()}</div>
             <div className="mb-4 text-[12.5px] text-ink/60">{points >= 2000 ? "Regular · free EU shipping on every order" : `${(2000 - points).toLocaleString()} points to Regular tier`} · 1 point per $1, spendable at any brand</div>
-            <div className="h-[6px] rounded-pill bg-white/70"><div className="h-full rounded-pill bg-navy" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
+            <div className="h-[6px] rounded-pill bg-white"><div className="h-full rounded-pill bg-sage" style={{ width: `${Math.min(100, (points / 2000) * 100)}%` }} /></div>
             <div className="mt-4 flex gap-2"><Link href="/messages" className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Messages · {threads.length}</Link><button onClick={() => navigator.clipboard?.writeText("kindred.shop/r/jules")} className="rounded-pill bg-white px-4 py-2 text-[12px] font-semibold">Copy referral link</button></div>
           </div>
           <div className="rounded-lg bg-navy p-6 md:p-7 text-paper">
             <Label light className="mb-4">Style profile</Label>
             <p className="mb-[18px] text-[13px] leading-[1.6] text-paper/72">These tags decide what shows up in For You. Remove any that stopped feeling like you.</p>
             <div className="flex flex-wrap gap-2">
-              {styleTags.map((t) => <button key={t} onClick={() => setStyleTags(styleTags.filter((x) => x !== t))} className="flex items-center gap-2 rounded-pill border border-offwhite/20 bg-offwhite/14 px-[15px] py-[9px] text-[12px] font-medium">{t}<span className="opacity-50">✕</span></button>)}
-              <button onClick={() => setAddTag(!addTag)} className="rounded-pill bg-peri px-[15px] py-[9px] text-[12px] font-semibold text-ink">{addTag ? "Done" : "+ Add"}</button>
+              {styleTags.map((t) => <button key={t} onClick={() => setStyleTags(styleTags.filter((x) => x !== t))} className="flex items-center gap-2 rounded-pill bg-paper/14 px-[15px] py-[9px] text-[12px] font-medium">{t}<span className="opacity-50">✕</span></button>)}
+              <button onClick={() => setAddTag(!addTag)} className="rounded-pill bg-paper px-[15px] py-[9px] text-[12px] font-semibold text-ink">{addTag ? "Done" : "+ Add"}</button>
             </div>
-            {addTag && <div className="mt-3 flex flex-wrap gap-2 border-t border-offwhite/15 pt-3">{STYLE_OPTIONS.filter((s) => !styleTags.includes(s)).map((s) => <button key={s} onClick={() => setStyleTags([...styleTags, s])} className="rounded-pill bg-offwhite/8 px-3 py-[7px] text-[11.5px] text-paper/80">+ {s}</button>)}</div>}
+            {addTag && <div className="mt-3 flex flex-wrap gap-2 border-t border-paper/15 pt-3">{STYLE_OPTIONS.filter((s) => !styleTags.includes(s)).map((s) => <button key={s} onClick={() => setStyleTags([...styleTags, s])} className="rounded-pill bg-offwhite/8 px-3 py-[7px] text-[11.5px] text-paper/80">+ {s}</button>)}</div>}
           </div>
           <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-[18px]">Size profile</Label>
             <div className="flex flex-col gap-[14px]">
               {([["Tops", "tops", SIZE_LADDER.slice(1, 7)], ["Trousers · waist", "waist", ["28", "30", "32", "33", "34", "36"]], ["Shoes · EU", "shoe", ["40", "41", "42", "43", "44", "45"]]] as const).map(([label, key, opts]) => (
-                <div key={key}><div className="mb-2 text-[12px] text-ink/50">{label}</div><div className="flex flex-wrap gap-[7px]">{opts.map((v) => <button key={v} onClick={() => setSizes({ ...sizes, [key]: v })} className={clsx("rounded-pill px-[13px] py-[8px] text-[12.5px] font-medium", sizes[key] === v ? "bg-sky" : "bg-offwhite")}>{v}</button>)}</div></div>
+                <div key={key}><div className="mb-2 text-[12px] text-ink/50">{label}</div><div className="flex flex-wrap gap-[7px]">{opts.map((v) => <button key={v} onClick={() => setSizes({ ...sizes, [key]: v })} className={clsx("rounded-pill px-[13px] py-[8px] text-[12.5px] font-medium", sizes[key] === v ? "bg-ink text-paper" : "bg-cream")}>{v}</button>)}</div></div>
               ))}
             </div>
-            <div className="mt-[18px] rounded-[10px] bg-offwhite px-[18px] py-[14px] text-[12px] leading-[1.5] text-ink/55">We hide anything sold out in your sizes.</div>
+            <div className="mt-[18px] rounded-sm bg-cream px-[18px] py-[14px] text-[12px] leading-[1.5] text-ink/55">We hide anything sold out in your sizes.</div>
           </div>
           <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-[18px]">Following · {following.length}</Label>

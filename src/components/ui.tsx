@@ -57,7 +57,7 @@ export function IconCircle({ children, size = 42, variant = "white", className, 
         variant === "soft" && "bg-cream",
         variant === "sky" && "bg-sky",
         variant === "peri" && "bg-peri",
-        variant === "black" && "bg-ink text-white",
+        variant === "black" && "bg-ink text-paper",
         variant === "glass" && "glass-chip",
         className,
       )}

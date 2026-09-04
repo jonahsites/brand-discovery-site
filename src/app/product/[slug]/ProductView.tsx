@@ -26,7 +26,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const [added, setAdded] = useState(false);
   const [rev, setRev] = useState({ stars: 5, fit: 2 as 1 | 2 | 3, body: "", open: false });
   const own = p ? [...reviews.filter((r) => r.product === p.slug), ...(p.createdAt ? [] : REVIEWS.map((r, i) => ({ ...r, id: "seed" + i, product: p.slug, stars: r.stars === "★ 5.0" ? 5 : 4, fit: 2 as const, size: r.meta.split(" ")[2] ?? "L", at: "" })))] : [];
-  if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
+  if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-navy">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
   const gallery = [p.image, ...(p.images ?? [])].filter((x): x is string => !!x);
   while (gallery.length > 0 && gallery.length < 4) gallery.push(gallery[gallery.length % (p.images?.length ? gallery.length : 1)]);
@@ -51,14 +51,14 @@ export default function ProductView({ slug }: { slug: string }) {
             {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121A24" fg="#fff">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#7C8C6F" fg="#fff">Final {p.stock} pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
-            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-[10px] md:rounded-md border-2", thumb === i ? "border-ink" : "border-transparent")}><Placeholder src={gallery[i]} alt={`${p.name} ${t}`} label={t} className="h-[74px] md:h-[130px] rounded-[8px] md:rounded-[10px]" /></button>)}
+            {["Front", "Back", "Detail", "On body"].map((t, i) => <button key={t} onClick={() => setThumb(i)} className={clsx("flex-1 rounded-sm md:rounded-md p-[3px] transition", thumb === i ? "bg-ink" : "bg-transparent hover:bg-sand")}><Placeholder src={gallery[i]} alt={`${p.name} ${t}`} label={t} className="h-[74px] md:h-[130px] rounded-[10px] md:rounded-[15px]" /></button>)}
           </div>
         </div>
         <div className="md:pt-[6px]">
-          <Link href={`/brand/${b.slug}`} className="mb-4 md:mb-5 inline-flex items-center gap-[10px] rounded-pill border border-ink/7 bg-white py-[7px] pl-[7px] pr-4">
+          <Link href={`/brand/${b.slug}`} className="mb-4 md:mb-5 inline-flex items-center gap-[10px] rounded-pill bg-white soft py-[7px] pl-[7px] pr-4">
             <Avatar init={b.init} tint={b.tint} ink={b.ink} size={32} /><span className="text-[13px] font-semibold">{b.name}</span>{b.verified && <Verified />}<span className="mono text-[11.5px] text-ink/40">{b.city}</span>
           </Link>
-          <h1 className="mb-3 md:mb-[14px] text-[28px] md:text-[38px] font-bold leading-[1.05] tracking-[-.038em]">{p.name}</h1>
+          <h1 className="mb-3 md:mb-[14px] text-[28px] md:text-[38px] font-extrabold leading-[1.05] tracking-[-.038em]">{p.name}</h1>
           <div className="mb-6 md:mb-[30px] flex flex-wrap items-baseline gap-3">
             <span className="text-[24px] md:text-[26px] font-medium">{money(price)}</span>
             {compareAt && <><span className="text-[17px] text-ink/35 line-through">{money(compareAt)}</span><Tag>{Math.round((1 - price / compareAt) * 100)}% off{promo ? ` · ${promo.label}` : ""}</Tag></>}
@@ -73,7 +73,7 @@ export default function ProductView({ slug }: { slug: string }) {
             {colors.map(([n, hex], i) => <button key={n} aria-label={n} onClick={() => setColor(i)} className="h-[34px] w-[34px] rounded-pill" style={{ background: hex, boxShadow: color === i ? "0 0 0 2px #F6F4EF, 0 0 0 3.5px #121A24" : "inset 0 0 0 1px rgba(18,26,36,.1)" }} />)}
           </div>
           <div className="mb-4 flex items-center gap-3">
-            <QtyStepper value={qty} onChange={setQty} className="!bg-white border border-ink/8 !p-[6px]" />
+            <QtyStepper value={qty} onChange={setQty} className="!p-[6px]" />
             <Button size="lg" className={clsx("flex-1", soldOut && "!bg-ink/8 !text-ink/32 cursor-not-allowed")} onClick={add}>{soldOut ? "Sold out" : added ? "Added to bag ✓" : "Add to bag"}</Button>
             <IconCircle size={52} variant={saved ? "black" : "white"} onClick={() => { toggleSaved(p.slug); toast(saved ? "Removed from saved" : "Saved to your profile", "/account"); }} className="hidden sm:grid text-[17px]">{saved ? "♥" : "♡"}</IconCircle>
             <IconCircle size={52} variant="white" onClick={() => setBoardOpen(!boardOpen)} className="hidden sm:grid text-[15px]" aria-label="Add to board">◇</IconCircle>
@@ -82,7 +82,7 @@ export default function ProductView({ slug }: { slug: string }) {
           {boardOpen && (
             <div className="card mb-3 rounded-md p-3">
               <Label className="mb-2">Add to a board</Label>
-              <div className="mb-2 flex flex-wrap gap-2">{boards.map((bd) => { const on = bd.products.includes(p.slug); return <button key={bd.id} onClick={() => { toggleInBoard(bd.id, p.slug); toast(on ? `Removed from ${bd.name}` : `Added to ${bd.name}`, "/account"); }} className={clsx("rounded-pill border px-3 py-[6px] text-[12px] font-medium", on ? "bg-ink text-white border-black" : "bg-white border-ink/10")}>{on ? "✓ " : ""}{bd.name}</button>; })}</div>
+              <div className="mb-2 flex flex-wrap gap-2">{boards.map((bd) => { const on = bd.products.includes(p.slug); return <button key={bd.id} onClick={() => { toggleInBoard(bd.id, p.slug); toast(on ? `Removed from ${bd.name}` : `Added to ${bd.name}`, "/account"); }} className={clsx("rounded-pill px-3 py-[6px] text-[12px] font-medium", on ? "bg-ink text-paper" : "bg-white soft")}>{on ? "✓ " : ""}{bd.name}</button>; })}</div>
               <form onSubmit={(e) => { e.preventDefault(); if (!boardName.trim()) return; createBoard(boardName, p.slug); toast(`Board “${boardName.trim()}” created`, "/account"); setBoardName(""); setBoardOpen(false); }} className="flex gap-2"><input value={boardName} onChange={(e) => setBoardName(e.target.value)} placeholder="New board name" className={clsx(inputCls, "!py-2 !text-[13px]")} /><Button size="sm" type="submit">Create</Button></form>
             </div>
           )}
@@ -95,10 +95,10 @@ export default function ProductView({ slug }: { slug: string }) {
       {completeLook.length > 0 && <><SectionHead title="Complete the look" sub={`Worn together in ${inLooks[0].title}`} action="See the lookbook" href={`/lookbook/${inLooks[0].slug}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{completeLook.map((x) => <ProductCard key={x.slug} p={x} showBrand={x.brand !== b.slug} />)}</div></>}
       {guide && (
         <div className="fixed inset-0 z-50"><div onClick={() => setGuide(false)} className="absolute inset-0 bg-ink/20 backdrop-blur-[2px]" />
-          <div className="glass absolute left-1/2 top-1/2 w-[min(560px,calc(100%-24px))] -translate-x-1/2 -translate-y-1/2 rounded-lg p-6">
-            <div className="mb-1 flex items-center justify-between"><div className="text-[20px] font-bold tracking-[-.03em]">Size guide · {b.name}</div><button onClick={() => setGuide(false)} className="grid h-9 w-9 place-items-center rounded-pill bg-white/85 text-[14px]">✕</button></div>
+          <div className="card absolute left-1/2 top-1/2 w-[min(560px,calc(100%-24px))] -translate-x-1/2 -translate-y-1/2 rounded-lg p-6">
+            <div className="mb-1 flex items-center justify-between"><div className="text-[20px] font-bold tracking-[-.03em]">Size guide · {b.name}</div><button onClick={() => setGuide(false)} className="grid h-9 w-9 place-items-center rounded-pill bg-cream text-[14px]">✕</button></div>
             <div className="mb-4 text-[12.5px] text-ink/55">Body measurements in cm. {b.name} cuts {b.sizeRange[0]}–{b.sizeRange[1]}; your profile says {session.name.split(" ")[0]} wears <span className="font-semibold text-ink">{size}</span>.</div>
-            <div className="overflow-x-auto rounded-md bg-white/80"><table className="w-full text-[12.5px]"><thead><tr className="label !text-[9.5px]"><th className="px-3 py-2 text-left">Size</th><th className="px-3 py-2 text-left">Chest</th><th className="px-3 py-2 text-left">Waist</th><th className="px-3 py-2 text-left">Length</th></tr></thead><tbody>{sizes.map((s, i) => <tr key={s} className={clsx(s === size && "bg-sky/60")}><td className="px-3 py-2 font-semibold">{s}</td><td className="px-3 py-2">{92 + i * 6}–{97 + i * 6}</td><td className="px-3 py-2">{76 + i * 6}–{81 + i * 6}</td><td className="px-3 py-2">{66 + i * 2}</td></tr>)}</tbody></table></div>
+            <div className="overflow-x-auto rounded-md bg-cream"><table className="w-full text-[12.5px]"><thead><tr className="label !text-[9.5px]"><th className="px-3 py-2 text-left">Size</th><th className="px-3 py-2 text-left">Chest</th><th className="px-3 py-2 text-left">Waist</th><th className="px-3 py-2 text-left">Length</th></tr></thead><tbody>{sizes.map((s, i) => <tr key={s} className={clsx(s === size && "bg-sand/70")}><td className="px-3 py-2 font-semibold">{s}</td><td className="px-3 py-2">{92 + i * 6}–{97 + i * 6}</td><td className="px-3 py-2">{76 + i * 6}–{81 + i * 6}</td><td className="px-3 py-2">{66 + i * 2}</td></tr>)}</tbody></table></div>
             <div className="mt-3 text-[12px] text-ink/50">Reviews say this piece runs {fitAvg < 1.7 ? "small" : fitAvg > 2.3 ? "large" : "true to size"}. Free returns for 30 days if it doesn&apos;t.</div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function ProductView({ slug }: { slug: string }) {
             <div className="card rounded-2xl p-5 md:p-6">
               <div className="mb-3 flex flex-wrap gap-4">
                 <div><Label className="mb-2">Stars</Label><div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <button key={n} onClick={() => setRev((r) => ({ ...r, stars: n }))} className={clsx("text-[20px]", n <= rev.stars ? "text-ink" : "text-ink/20")}>★</button>)}</div></div>
-                <div><Label className="mb-2">Fit</Label><div className="flex gap-2">{(["Runs small", "True", "Runs large"] as const).map((f, i) => <button key={f} onClick={() => setRev((r) => ({ ...r, fit: (i + 1) as 1 | 2 | 3 }))} className={clsx("rounded-pill px-3 py-[6px] text-[12px] font-medium", rev.fit === i + 1 ? "bg-ink text-white" : "bg-offwhite")}>{f}</button>)}</div></div>
+                <div><Label className="mb-2">Fit</Label><div className="flex gap-2">{(["Runs small", "True", "Runs large"] as const).map((f, i) => <button key={f} onClick={() => setRev((r) => ({ ...r, fit: (i + 1) as 1 | 2 | 3 }))} className={clsx("rounded-pill px-3 py-[6px] text-[12px] font-medium", rev.fit === i + 1 ? "bg-ink text-paper" : "bg-cream")}>{f}</button>)}</div></div>
               </div>
               <textarea value={rev.body} onChange={(e) => setRev((r) => ({ ...r, body: e.target.value }))} placeholder="How does it wear? Sizing, fabric, shipping…" className={clsx(inputCls, "mb-3 min-h-[90px] resize-y")} />
               <Button onClick={submitReview} disabled={rev.body.trim().length < 10} className={clsx(rev.body.trim().length < 10 && "opacity-40")}>Post review · size {size}</Button>
@@ -142,7 +142,7 @@ export default function ProductView({ slug }: { slug: string }) {
         </div>
       </div>
 
-      <div className="glass fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden">
+      <div className="card fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden">
         <div className="px-2 text-[15px] font-semibold">{money(price)}</div>
         <Button className="flex-1" onClick={add}>{soldOut ? "Sold out" : added ? "Added ✓" : "Add to bag"}</Button>
       </div>

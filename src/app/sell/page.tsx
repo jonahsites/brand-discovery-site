@@ -11,7 +11,7 @@ import { Button, Label, inputCls } from "@/components/ui";
 const STEPS = ["Basics", "Aesthetic", "Catalogue", "Production", "Shipping", "Story", "Review"];
 
 function Pill({ on, children, onClick, small }: { on: boolean; children: React.ReactNode; onClick: () => void; small?: boolean }) {
-  return <button type="button" onClick={onClick} className={clsx("press rounded-pill border font-medium", small ? "px-[14px] py-[9px] text-[12.5px]" : "px-[18px] py-[12px] text-[13.5px]", on ? "bg-ink text-white border-black" : "bg-white/80 border-ink/10")}>{children}</button>;
+  return <button type="button" onClick={onClick} className={clsx("press rounded-pill font-medium", small ? "px-[14px] py-[9px] text-[12.5px]" : "px-[18px] py-[12px] text-[13.5px]", on ? "bg-ink text-paper" : "bg-cream")}>{children}</button>;
 }
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return <div><Label className="mb-2">{label}</Label>{children}{hint && <div className="mt-2 text-[12px] text-ink/45">{hint}</div>}</div>;
@@ -59,28 +59,24 @@ export default function Sell() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-offwhite">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-[120px] -top-[80px] h-[520px] w-[520px] rounded-pill bg-peri opacity-60" />
-        <div className="absolute -bottom-[140px] -right-[120px] h-[600px] w-[600px] rounded-pill bg-sky opacity-50" />
-      </div>
+    <div className="relative min-h-screen bg-paper">
       <div className="relative mx-auto max-w-[960px] px-4 py-6 pb-16 md:py-12">
         <div className="mb-5 flex items-center justify-between">
-          <Link href="/" className="text-[26px] leading-none" style={{ fontFamily: "var(--font-display)" }}>Kindred</Link>
+          <Link href="/" className="flex items-center gap-[9px]"><span className="grid h-[28px] w-[28px] place-items-center rounded-[10px] bg-ink text-[14px] font-extrabold text-paper">k</span><span className="text-[19px] font-extrabold tracking-[-.04em]">Kindred</span></Link>
           <div className="mono text-[11px] text-ink/45">Brand account · {completeness}% complete</div>
         </div>
         {step === -1 ? (
-          <div className="glass rounded-lg p-6 md:p-12" style={{ backdropFilter: "blur(34px)" }}>
+          <div className="card rounded-lg p-6 md:p-12">
             <div className="label mb-4">Sell on Kindred</div>
-            <h1 className="mb-4 max-w-[640px] text-[32px] md:text-[48px] font-bold leading-[1.02] tracking-[-.045em]">Shoppers here come to find brands like yours. Not to compare you to Zara.</h1>
+            <h1 className="mb-4 max-w-[640px] text-[32px] md:text-[48px] font-extrabold leading-[1.02] tracking-[-.045em]">Shoppers here come to find brands like yours. Not to compare you to Zara.</h1>
             <p className="mb-8 max-w-[560px] text-[15px] md:text-[16px] leading-[1.6] text-ink/62">Kindred is a marketplace for independent clothing labels. You answer one honest onboarding about what you make and who it&apos;s for; we turn that into filters, search results, and a page shoppers actually read. You keep your own shipping and your own customers.</p>
             <div className="mb-8 grid gap-3 sm:grid-cols-3">
-              {[["No listing fee", "for your first 90 days, then 8% per order. No monthly plan."], ["Paid every Friday", "held only until each parcel scans. You ship from your workshop."], ["Found by feeling", "shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-white/80 p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-ink/60">{b}</div></div>)}
+              {[["No listing fee", "for your first 90 days, then 8% per order. No monthly plan."], ["Paid every Friday", "held only until each parcel scans. You ship from your workshop."], ["Found by feeling", "shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-cream p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-ink/60">{b}</div></div>)}
             </div>
             <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-ink/50">{brands.length} brands live · {brands.filter((b) => b.followers < 1000).length} of them under 1k followers</span></div>
           </div>
         ) : (
-        <div className="glass rounded-lg p-5 md:p-10" style={{ backdropFilter: "blur(34px)" }}>
+        <div className="card rounded-lg p-5 md:p-10">
           <div className="mb-7 flex gap-[6px]">
             {STEPS.map((s, i) => <button key={s} onClick={() => i <= step && setStep(i)} className="flex-1 text-left"><div className={clsx("mb-2 h-1 rounded-pill", i <= step ? "bg-ink" : "bg-ink/12")} /><div className={clsx("hidden md:block text-[10.5px] font-semibold uppercase tracking-[.12em]", i === step ? "text-ink" : i < step ? "text-ink/55" : "text-ink/30")}>{s}</div></button>)}
           </div>
@@ -134,7 +130,7 @@ export default function Sell() {
           {step === 6 && <Section title="Ready to go live." body="Here is what shoppers can filter and search you by. You can edit any of it from the dashboard.">
             <div className="grid gap-3 md:grid-cols-2 text-[13px]">
               {[["Name", f.name], ["Where", `${f.city}, ${f.country}`], ["Aesthetic", f.styles.join(", ")], ["Moods", f.moods.join(", ")], ["Categories", f.categories.join(", ")], ["Price", `$${f.priceMin}–$${f.priceMax}`], ["Sizes", `${f.sizeMin}–${f.sizeMax}`], ["Materials", f.materials.join(", ")], ["Values", f.values.join(", ")], ["Made in", f.madeIn], ["Ships", `${f.shipsFrom} → ${f.shipsTo.join(", ")}`], ["For", f.gender.join(", ")]].map(([k, v]) => (
-                <div key={k} className="rounded-[10px] bg-white/80 px-4 py-3"><div className="label mb-1 !text-[9.5px]">{k}</div><div className="font-medium">{v || <span className="text-ink/35">—</span>}</div></div>
+                <div key={k} className="rounded-sm bg-cream px-4 py-3"><div className="label mb-1 !text-[9.5px]">{k}</div><div className="font-medium">{v || <span className="text-ink/35">—</span>}</div></div>
               ))}
             </div>
           </Section>}
@@ -155,7 +151,7 @@ export default function Sell() {
 function Section({ title, body, children }: { title: string; body: string; children: React.ReactNode }) {
   return (
     <div>
-      <h1 className="mb-2 text-[26px] md:text-[34px] font-bold leading-[1.08] tracking-[-.04em]">{title}</h1>
+      <h1 className="mb-2 text-[26px] md:text-[34px] font-extrabold leading-[1.08] tracking-[-.04em]">{title}</h1>
       <p className="mb-7 max-w-[560px] text-[14px] md:text-[15px] leading-[1.6] text-ink/60">{body}</p>
       <div className="flex flex-col gap-6">{children}</div>
     </div>

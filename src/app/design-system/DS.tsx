@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button, Chip, IconCircle, Label, QtyStepper, Placeholder } from "@/components/ui";
+import { Button, Chip, IconCircle, QtyStepper, Placeholder } from "@/components/ui";
 
 const SW = [["Paper", "#F6F4EF"], ["Cream", "#EDE8DE"], ["Sand", "#DCD5C7"], ["Ink", "#121A24"], ["Sage", "#7C8C6F"], ["Card", "#FFFFFF"]];
 const Card = ({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) => (

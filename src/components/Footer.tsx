@@ -11,10 +11,10 @@ export default function Footer() {
     ["Support", [["Shipping & returns", "/product/panel-work-jacket"], ["Size guide", "/account"], ["Contact", "mailto:hello@kindred.shop"], ["Privacy", "/"]]],
   ] as const;
   return (
-    <footer className="mt-16 border-t border-ink/6 bg-white">
+    <footer className="mt-16 rounded-t-[30px] bg-cream">
       <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-10">
         <div>
-          <div className="mb-3 text-[30px] leading-none" style={{ fontFamily: "var(--font-display)" }}>Kindred.</div>
+          <div className="mb-3 flex items-center gap-[9px]"><span className="grid h-[26px] w-[26px] place-items-center rounded-[9px] bg-ink text-[13px] font-extrabold text-paper">k</span><span className="text-[20px] font-extrabold tracking-[-.04em]">Kindred</span></div>
           <p className="max-w-[300px] text-[13px] leading-[1.6] text-ink/55">Find your next favorite clothing brand. Independent labels, their own words, one bag, one checkout.</p>
         </div>
         {cols.map(([title, links]) => (

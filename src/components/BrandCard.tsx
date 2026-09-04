@@ -13,11 +13,11 @@ export function FollowButton({ slug, size = "md", className }: { slug: string; s
     <button
       onClick={(e) => { e.preventDefault(); toggleFollow(slug); toast(on ? `Unfollowed ${name}` : `Following ${name}`, on ? undefined : "/?feed=Following"); }}
       className={clsx(
-        "press rounded-pill font-medium border whitespace-nowrap",
+        "press rounded-pill font-semibold whitespace-nowrap",
         size === "sm" && "px-[13px] py-[6px] text-[11.5px]",
         size === "md" && "px-4 py-2 text-[12.5px]",
         size === "lg" && "px-5 py-[10px] text-[13px]",
-        on ? "bg-offwhite text-ink border-ink/12" : "bg-ink text-white border-black",
+        on ? "bg-white text-ink soft" : "bg-ink text-paper",
         className,
       )}
     >
@@ -28,7 +28,7 @@ export function FollowButton({ slug, size = "md", className }: { slug: string; s
 
 export function BrandTile({ b }: { b: Brand }) {
   return (
-    <Link href={`/brand/${b.slug}`} className="card block rounded-xl p-5 text-center lift">
+    <Link href={`/brand/${b.slug}`} className="card block rounded-lg p-5 text-center lift">
       <Avatar init={b.init} tint={b.tint} ink={b.ink} size={56} className="mx-auto mb-3" />
       <div className="mb-1 text-[14px] font-semibold">{b.name}</div>
       <div className="mono mb-[14px] text-[11.5px] text-ink/42">{brandMeta(b)}</div>
@@ -39,7 +39,7 @@ export function BrandTile({ b }: { b: Brand }) {
 
 export function BrandRow({ b, action = true, className }: { b: Brand; action?: boolean; className?: string }) {
   return (
-    <Link href={`/brand/${b.slug}`} className={clsx("flex items-center gap-[13px] rounded-[12px] bg-white/75 p-4", className)}>
+    <Link href={`/brand/${b.slug}`} className={clsx("flex items-center gap-[13px] rounded-md bg-white p-4 soft", className)}>
       <Avatar init={b.init} tint={b.tint} ink={b.ink} size={44} />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-semibold">{b.name}</div>

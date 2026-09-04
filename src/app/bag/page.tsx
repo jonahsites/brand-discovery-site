@@ -15,7 +15,7 @@ export default function BagPage() {
     <Page className="pt-6 md:pt-[34px]">
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
         <div>
-          <h1 className="mb-[6px] text-[28px] md:text-[34px] font-bold leading-[1.05] tracking-[-.038em]">Your bag</h1>
+          <h1 className="mb-[6px] text-[28px] md:text-[34px] font-extrabold leading-[1.05] tracking-[-.038em]">Your bag</h1>
           <div className="mb-6 text-[13px] text-ink/50">{bagCount} pieces from {bagGroups.length} brands</div>
           {bagGroups.length === 0 && <div className="card rounded-lg p-10 text-center text-[14px] text-ink/55">Nothing here yet. <Link href="/explore" className="font-semibold text-navy">Explore brands →</Link></div>}
           {bagGroups.map((g) => (
@@ -27,10 +27,10 @@ export default function BagPage() {
               </div>
               {g.items.map((it) => (
                 <div key={it.key} className="flex flex-wrap items-center gap-3 md:gap-4 py-4">
-                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-[9px]" />
+                  <Placeholder className="h-[70px] w-[62px] md:h-[100px] md:w-[88px] flex-none rounded-sm" />
                   <div className="min-w-0 flex-1"><Link href={`/product/${it.p.slug}`} className="mb-[5px] block text-[14px] md:text-[15px] font-medium">{it.p.name}</Link><div className="text-[12.5px] text-ink/50">{it.variant}{it.unit < it.p.price && <span className="ml-2 rounded-pill bg-peri px-2 py-[1px] text-[10.5px] font-semibold text-ink">promo</span>}</div><div className="mt-[7px] text-[13px] font-medium md:hidden">{money(it.total, true)}</div></div>
                   <QtyStepper value={it.qty} onChange={(v) => setQty(it.key, v)} />
-                  <span className="hidden md:inline rounded-pill border border-ink/8 bg-white px-4 py-[9px] text-[13.5px] font-medium">{money(it.total, true)}</span>
+                  <span className="hidden md:inline rounded-pill bg-cream px-4 py-[9px] text-[13.5px] font-semibold">{money(it.total, true)}</span>
                   <button onClick={() => removeItem(it.key)} aria-label="Remove" className="text-[15px] text-ink/32">✕</button>
                 </div>
               ))}
@@ -53,13 +53,13 @@ export default function BagPage() {
               : <form onSubmit={(e) => { e.preventDefault(); if (applyPromoCode(code)) { setErr(""); setCode(""); } else setErr("That code isn't active."); }} className="flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Promo code" className="min-w-0 flex-1 rounded-pill bg-offwhite px-4 py-[13px] text-[13px] outline-none placeholder:text-ink/45" /><Button variant="secondary" type="submit">Apply</Button></form>}
             {err && <div className="mt-2 text-[12px] text-slate">{err}</div>}
           </div>
-          <div className="rounded-lg bg-peri p-6">
+          <div className="rounded-lg bg-cream p-6">
             {hint ? <><div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{hint.pct}% off {bagGroups.find((g) => g.brand.slug === hint.brand)?.brand.name}</div><div className="text-[12.5px] leading-[1.5] text-ink/60">Code <button onClick={() => { applyPromoCode(hint.code); }} className="mono font-semibold text-ink underline">{hint.code}</button> is running until {hint.ends ? new Date(hint.ends).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "further notice"}.</div></>
               : <><div className="mb-[7px] text-[14.5px] font-semibold leading-[1.35]">{money(Math.max(0, 500 - subtotal))} from free EU shipping</div><div className="text-[12.5px] leading-[1.5] text-ink/60">Add anything from Studio Arva and we cover the label.</div></>}
           </div>
         </div>
       </div>
-      <div className="glass fixed inset-x-4 bottom-[74px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
+      <div className="card fixed inset-x-4 bottom-[74px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
       <div className="h-24 lg:hidden" />
     </Page>
   );

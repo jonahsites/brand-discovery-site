@@ -21,7 +21,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
-  if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-bold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-navy">Browse brands →</Link></p>}</Page>;
+  if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-navy">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
   const books = allLookbooks.filter((l) => l.brand === b.slug);
   const drop = drops.find((d) => d.brand === b.slug && new Date(d.at).getTime() > (now || 0));
@@ -31,13 +31,13 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   return (
     <Page className="pt-0 md:pt-6">
       <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-[30px]">
-        <div className="absolute right-5 top-5 flex gap-2">{isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[12px] font-semibold text-white">Edit in dashboard</Link>}<button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="glass-chip grid h-[38px] w-[38px] place-items-center rounded-pill text-[14px]" aria-label="Share">↗</button></div>
+        <div className="absolute right-5 top-5 flex gap-2">{isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[12px] font-semibold text-paper">Edit in dashboard</Link>}<button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="glass-chip grid h-[38px] w-[38px] place-items-center rounded-pill text-[14px]" aria-label="Share">↗</button></div>
       </Placeholder>
 
       <div className="relative -mt-[38px] md:-mt-[52px] flex flex-col md:flex-row md:items-end gap-4 md:gap-6 md:px-2">
         <div className="grid h-[78px] w-[78px] md:h-[132px] md:w-[132px] flex-none place-items-center overflow-hidden rounded-[14px] md:rounded-[20px] border-4 md:border-[5px] border-offwhite text-[21px] md:text-[34px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
         <div className="flex-1 md:pb-2">
-          <div className="mb-[7px] flex items-center gap-[9px]"><h1 className="text-[24px] md:text-[34px] font-bold leading-none tracking-[-.038em]">{b.name}</h1>{b.verified && <Verified size={20} />}<span className="rounded-pill bg-offwhite px-[10px] py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-ink/55">{brandTier(followers)}</span></div>
+          <div className="mb-[7px] flex items-center gap-[9px]"><h1 className="text-[24px] md:text-[34px] font-extrabold leading-none tracking-[-.038em]">{b.name}</h1>{b.verified && <Verified size={20} />}<span className="rounded-pill bg-offwhite px-[10px] py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-ink/55">{brandTier(followers)}</span></div>
           <div className="text-[13px] md:text-[14px] text-ink/58">{b.city}, {b.country} · {b.tagline}</div>
         </div>
         <div className="flex flex-none items-center gap-3 md:gap-[22px] md:pb-3">
@@ -93,7 +93,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
           {books.map((l, i) => { const dark = i % 2 === 1; return (
             <Link key={l.slug} href={`/lookbook/${l.slug}`} className={clsx("flex h-[320px] md:h-[400px] flex-col justify-between rounded-lg p-7 md:p-[34px]", dark ? "bg-ink text-paper" : "bg-sky")}>
               <div><Label light={dark} className="mb-3">{l.season}</Label><h3 className="mb-[10px] text-[28px] md:text-[34px] font-bold leading-[1.05] tracking-[-.038em]">{l.title}</h3><p className={clsx("max-w-[300px] text-[14px] leading-[1.55]", dark ? "text-paper/72" : "text-ink/65")}>{l.blurb}</p></div>
-              <div className="flex items-center justify-between"><span className={clsx("mono text-[12px]", dark ? "text-paper/60" : "text-ink/50")}>{lookCount(l).looks} looks · {lookCount(l).shoppable} shoppable</span><span className={clsx("grid h-12 w-12 place-items-center rounded-pill text-[17px]", dark ? "bg-peri text-ink" : "bg-ink text-white")}>↗</span></div>
+              <div className="flex items-center justify-between"><span className={clsx("mono text-[12px]", dark ? "text-paper/60" : "text-ink/50")}>{lookCount(l).looks} looks · {lookCount(l).shoppable} shoppable</span><span className={clsx("grid h-12 w-12 place-items-center rounded-pill text-[17px]", dark ? "bg-peri text-ink" : "bg-ink text-paper")}>↗</span></div>
             </Link>); })}
           {books.length === 0 && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-ink/55">No lookbooks yet.{isOwner && <> <Link href="/dashboard?tab=Lookbooks" className="font-semibold text-navy">Build one →</Link></>}</div>}
         </div>
