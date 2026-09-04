@@ -35,7 +35,7 @@ export default function Home() {
           <div className="label mb-3 mt-[6px]">Discover</div>
           <div className="mb-[26px] flex flex-col gap-[2px]">
             {["For you", "Following", "Drops"].map((l) => <button key={l} onClick={() => setFeed(l)} className={clsx("rounded-sm px-[14px] py-[10px] text-left text-[13.5px]", feed === l ? "bg-white font-semibold" : "font-medium text-black/62")}>{l === "Drops" ? "New drops" : l}</button>)}
-            <Link href="/explore" className="rounded-sm px-[14px] py-[10px] text-left text-[13.5px] font-medium text-black/62">Trending brands</Link>
+            <Link href="/brands" className="rounded-sm px-[14px] py-[10px] text-left text-[13.5px] font-medium text-black/62">Trending brands</Link>
           </div>
           <div className="label mb-3">Categories</div>
           <div className="flex flex-col gap-[2px]">{CATEGORIES.map((c) => <Link key={c.name} href={`/explore?cat=${encodeURIComponent(c.name)}`} className="flex justify-between rounded-sm px-[14px] py-[9px] text-[13px] text-black/62"><span>{c.name}</span><span className="mono text-[11px] text-black/32">{products.filter((p) => p.category === c.name).length || c.n}</span></Link>)}</div>
@@ -52,7 +52,7 @@ export default function Home() {
           </div>
 
           <div className="lg:hidden mb-6 grid grid-cols-2 gap-3">
-            <Link href="/explore" className="relative h-[158px] rounded-xl bg-sky p-[18px]"><div className="text-[16px] font-semibold leading-[1.2] tracking-[-.02em]">Explore all brands</div><span className="absolute bottom-[14px] right-[14px] grid h-[38px] w-[38px] place-items-center rounded-pill bg-white/80 text-[15px]">↗</span></Link>
+            <Link href="/brands" className="relative h-[158px] rounded-xl bg-sky p-[18px]"><div className="text-[16px] font-semibold leading-[1.2] tracking-[-.02em]">Explore all brands</div><span className="absolute bottom-[14px] right-[14px] grid h-[38px] w-[38px] place-items-center rounded-pill bg-white/80 text-[15px]">↗</span></Link>
             <button onClick={() => setFeed("Drops")} className="card relative h-[158px] rounded-xl p-[18px] text-left"><div className="text-[16px] font-semibold leading-[1.2] tracking-[-.02em]">This week&apos;s drops</div><span className="absolute bottom-[14px] right-[14px] grid h-[38px] w-[38px] place-items-center rounded-pill bg-offwhite text-[15px]">↗</span></button>
           </div>
 
@@ -126,7 +126,7 @@ export default function Home() {
             </>
           )}
 
-          <SectionHead title="New brands you might like" action="See all" href="/explore" />
+          <SectionHead title="New brands you might like" action="See all" href="/brands" />
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{newBrands.map((b) => <BrandTile key={b.slug} b={b} />)}</div>
         </div>
       </div>

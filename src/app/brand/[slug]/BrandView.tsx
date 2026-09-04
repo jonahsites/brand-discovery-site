@@ -52,7 +52,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
 
       {/* Facts strip: onboarding data as filterable chips */}
       <div className="mt-6 flex flex-wrap gap-2">
-        {[...b.styles, ...b.values.slice(0, 3), `Made in ${b.madeIn}`, `$${b.priceBand[0]}–$${b.priceBand[1]}`, `${b.sizeRange[0]}–${b.sizeRange[1]}`].map((t) => <Link key={t} href={`/explore?q=${encodeURIComponent(t)}`} className="rounded-pill border border-black/7 bg-white px-[14px] py-2 text-[12px] font-medium">{t}</Link>)}
+        {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill border border-black/7 bg-white px-[14px] py-2 text-[12px] font-medium">{t}</Link>)}
       </div>
 
       {(drop || promo) && (

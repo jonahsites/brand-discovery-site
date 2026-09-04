@@ -12,7 +12,7 @@ export default function TopNav() {
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-3 md:gap-5 px-4 md:px-10">
         <Link href="/" className="text-[17px] md:text-[19px] font-extrabold tracking-[-.035em] leading-none">Kindred</Link>
         <nav className="hidden lg:flex items-center gap-1 ml-2">
-          {[["/", "Discover"], ["/explore", "Explore"], ["/lookbook/off-the-shipyard", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]].map(([href, label]) => (
+          {[["/", "Discover"], ["/brands", "Brands"], ["/explore", "Explore"], ["/lookbooks", "Lookbooks"], session.role === "brand" ? ["/dashboard", "Dashboard"] : ["/sell", "Sell on Kindred"]].map(([href, label]) => (
             <Link key={href} href={href} className={`rounded-pill px-3 py-2 text-[13px] font-medium ${path === href ? "bg-white/70 text-ink" : "text-black/60 hover:text-ink"}`}>{label}</Link>
           ))}
         </nav>

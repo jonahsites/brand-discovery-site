@@ -7,7 +7,7 @@ export default function Footer() {
   if (path.startsWith("/dashboard") || path.startsWith("/onboarding") || path.startsWith("/sell")) return null;
   const cols = [
     ["Platform", [["About Kindred", "/design-system"], ["Sell on Kindred", "/sell"], ["Brand dashboard", "/dashboard"], ["Design system", "/design-system"]]],
-    ["Shop", [["Explore", "/explore"], ["Lookbooks", "/lookbook/off-the-shipyard"], ["Your bag", "/bag"], ["Style profile", "/onboarding"]]],
+    ["Shop", [["Brands", "/brands"], ["Explore", "/explore"], ["Lookbooks", "/lookbooks"], ["Your bag", "/bag"], ["Style profile", "/onboarding"]]],
     ["Support", [["Shipping & returns", "/product/panel-work-jacket"], ["Size guide", "/account"], ["Contact", "mailto:hello@kindred.shop"], ["Privacy", "/"]]],
   ] as const;
   return (
