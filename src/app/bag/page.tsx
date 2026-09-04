@@ -59,7 +59,7 @@ export default function BagPage() {
           </div>
         </div>
       </div>
-      <div className="glass fixed inset-x-4 bottom-[100px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
+      <div className="glass fixed inset-x-4 bottom-[74px] z-30 rounded-lg p-[14px] lg:hidden"><div className="flex justify-between px-[6px] pb-3 text-[13px] font-medium"><span className="text-ink/55">Total</span><span className="font-semibold">{money(total, true)}</span></div><Link href="/checkout"><Button full size="lg">Checkout</Button></Link></div>
       <div className="h-24 lg:hidden" />
     </Page>
   );

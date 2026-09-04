@@ -44,7 +44,7 @@ export default function LookbookView({ slug }: { slug: string }) {
           );
         })}
       </div>
-      <div className="glass fixed inset-x-4 bottom-[100px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden"><div className="px-[10px] text-[12.5px] font-medium text-ink/60">{shoppable} shoppable</div><Button className="flex-1" onClick={shopAll}>Shop the looks</Button></div>
+      <div className="glass fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden"><div className="px-[10px] text-[12.5px] font-medium text-ink/60">{shoppable} shoppable</div><Button className="flex-1" onClick={shopAll}>Shop the looks</Button></div>
       <div className="mt-10 flex items-center gap-3 rounded-lg bg-white p-4 border border-ink/5"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><div className="flex-1 text-[13.5px]"><span className="font-semibold">{b.name}</span> <span className="text-ink/50">· {b.city}, {b.country} · {looks} looks</span></div><Link href={`/brand/${b.slug}`} className="text-[12.5px] font-semibold text-navy">Visit brand →</Link></div>
     </Page>
   );

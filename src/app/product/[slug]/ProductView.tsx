@@ -142,7 +142,7 @@ export default function ProductView({ slug }: { slug: string }) {
         </div>
       </div>
 
-      <div className="glass fixed inset-x-4 bottom-[100px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden">
+      <div className="glass fixed inset-x-4 bottom-[74px] z-30 flex items-center gap-3 rounded-pill p-3 md:hidden">
         <div className="px-2 text-[15px] font-semibold">{money(price)}</div>
         <Button className="flex-1" onClick={add}>{soldOut ? "Sold out" : added ? "Added ✓" : "Add to bag"}</Button>
       </div>
