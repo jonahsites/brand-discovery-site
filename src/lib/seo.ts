@@ -8,7 +8,7 @@ import { BRANDS, PRODUCTS, LOOKBOOKS, type Brand, type Product, type Lookbook } 
 
 export const SITE = {
   name: "Kindred",
-  tagline: "Find your next favourite clothing brand.",
+  tagline: "Small clothing brands, not small ambition.",
   description:
     "Kindred is the marketplace for independent clothing brands. Search by how you feel, filter by materials, values and where a piece is made, and buy from many small labels in one bag and one checkout.",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://brand-discovery-site.vercel.app").replace(/\/$/, ""),

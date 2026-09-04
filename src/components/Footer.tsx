@@ -17,7 +17,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-10">
         <div>
           <div className="mb-3 flex items-center gap-[9px]"><span className="grid h-[26px] w-[26px] place-items-center rounded-[9px] bg-ink text-[13px] font-extrabold text-paper">k</span><span className="text-[20px] font-extrabold tracking-[-.04em]">Kindred</span></div>
-          <p className="mb-6 max-w-[300px] text-[13px] leading-[1.6] text-ink/55">Find your next favorite clothing brand. Independent labels, their own words, one bag, one checkout.</p>
+          <p className="mb-6 max-w-[300px] text-[13px] leading-[1.6] text-ink/55">A marketplace for clothing you buy once and wear for years. Independent labels, their own words, one bag.</p>
           <NewsletterForm />
         </div>
         {cols.map(([title, links]) => (

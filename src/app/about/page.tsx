@@ -12,7 +12,7 @@ export const metadata = seo({
 export default function AboutPage() {
   return (
     <LegalPage kicker="About" title="A marketplace built for the makers." updated="September 2026">
-      <p>Kindred is a marketplace for small independent clothing brands. One bag, one checkout, dozens of workshops. We built it because we kept hearing the same story: shoppers can&apos;t find the labels they&apos;d actually love, and small brands can&apos;t reach them without either giving up their margin to ad platforms or their soul to a big retailer.</p>
+      <p>Kindred is a marketplace for independent clothing labels — the six-people-in-a-room kind, the one-owner-cutting-in-a-basement kind. We built it because the people we&rsquo;d actually want to buy from can&rsquo;t compete on Google Ads and won&rsquo;t wholesale to Nordstrom, so nobody finds them. That&rsquo;s the whole problem. This is the whole product.</p>
       <LegalH2>What Kindred is not</LegalH2>
       <p>Not a fast-fashion aggregator. Not a re-seller — we never hold your inventory. Not a social network with a shop bolted on. The feed is optional; the marketplace is the point.</p>
       <LegalH2>How we make money</LegalH2>
