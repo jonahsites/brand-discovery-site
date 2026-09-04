@@ -30,7 +30,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   return (
     <Page className="pt-0 md:pt-6">
-      <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-lg">
+      <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · lifestyle 16:5" wide className="relative -mx-4 md:mx-0 h-[206px] md:h-[300px] rounded-none md:rounded-[30px]">
         <div className="absolute right-5 top-5 flex gap-2">{isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[12px] font-semibold text-white">Edit in dashboard</Link>}<button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="glass-chip grid h-[38px] w-[38px] place-items-center rounded-pill text-[14px]" aria-label="Share">↗</button></div>
       </Placeholder>
 
@@ -49,13 +49,13 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         </div>
       </div>
 
-      <div className="card mt-5 flex gap-5 rounded-md px-[18px] py-[14px] md:hidden">
+      <div className="card mt-5 flex gap-5 rounded-[20px] px-[18px] py-[14px] md:hidden">
         {[[own.length, "Items"], [followers.toLocaleString(), "Followers"], ["4.7", "Rating"]].map(([v, l]) => <div key={l}><div className="text-[16px] font-semibold">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
       </div>
 
       {/* Facts strip: onboarding data as filterable chips */}
       <div className="mt-6 flex flex-wrap gap-2">
-        {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill border border-ink/7 bg-white px-[14px] py-2 text-[12px] font-medium">{t}</Link>)}
+        {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill bg-white px-[14px] py-2 text-[11px] font-semibold text-ink/72 soft">{t}</Link>)}
       </div>
 
       {(drop || promo) && (
@@ -65,8 +65,8 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         </div>
       )}
 
-      <div className="mb-6 mt-6 md:mt-8 flex gap-1 border-b border-ink/9">
-        {TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("mr-5 md:mr-[26px] border-b-2 px-1 pb-3 md:pb-4 text-[13px] md:text-[14.5px] font-semibold", tab === t ? "border-ink text-ink" : "border-transparent text-ink/45")}>{t}</button>)}
+      <div className="mb-6 mt-6 md:mt-8 inline-flex rounded-pill bg-cream p-[5px]">
+        {TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("press rounded-pill px-4 md:px-5 py-[9px] text-[11px] md:text-[12px] font-semibold", tab === t ? "bg-white text-ink shadow-[0_10px_24px_-18px_rgba(18,26,36,.8)]" : "text-ink/50")}>{t}</button>)}
       </div>
 
       {tab === "Shop" && (own.length ? <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">{own.map((p) => <ProductCard key={p.slug} p={p} showBrand={false} tall />)}</div>

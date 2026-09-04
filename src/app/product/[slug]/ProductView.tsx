@@ -46,8 +46,8 @@ export default function ProductView({ slug }: { slug: string }) {
       <div className="mono mb-4 md:mb-[22px] text-[12px] text-ink/40"><Link href="/explore">Explore</Link> / <Link href={`/explore?cat=${encodeURIComponent(p.category)}`}>{p.category}</Link> / <Link href={`/brand/${b.slug}`}>{b.name}</Link></div>
       <div className="mb-10 md:mb-14 grid gap-6 md:gap-10 lg:grid-cols-[minmax(0,660px)_1fr] items-start">
         <div>
-          <div className="card relative h-[340px] md:h-[660px] rounded-2xl md:rounded-lg p-3 md:p-[34px]">
-            <Placeholder src={gallery[thumb]} alt={p.name} label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[34px] rounded-md", soldOut && "opacity-60")} />
+          <div className="card relative h-[340px] md:h-[660px] rounded-[24px] p-3 md:p-[26px]">
+            <Placeholder src={gallery[thumb]} alt={p.name} label={`${["Front", "Back", "Detail", "On body"][thumb]} · 4:5`} className={clsx("absolute inset-3 md:inset-[26px] rounded-[18px]", soldOut && "opacity-60")} />
             {soldOut ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#121A24" fg="#fff">Sold out</Tag></div> : p.stock !== undefined && p.stock <= 6 ? <div className="absolute left-[22px] top-[22px]"><Tag bg="#7C8C6F" fg="#fff">Final {p.stock} pieces</Tag></div> : null}
           </div>
           <div className="mt-3 md:mt-[14px] flex gap-[9px] md:gap-3">
@@ -66,7 +66,7 @@ export default function ProductView({ slug }: { slug: string }) {
           {p.description && <p className="mb-6 max-w-[520px] text-[14px] leading-[1.6] text-ink/65">{p.description}</p>}
           <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-medium text-navy">Size guide</button></div>
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
-            {sizes.map((s) => <button key={s} onClick={() => { setSize(s); setAdded(false); }} className={clsx("press flex-1 md:flex-none md:min-w-[62px] rounded-pill border py-[13px] md:py-[14px] text-[13px] md:text-[14px] font-medium", size === s ? "bg-sky border-sky" : "bg-white border-ink/11")}>{s}</button>)}
+            {sizes.map((s) => <button key={s} onClick={() => { setSize(s); setAdded(false); }} className={clsx("press flex-1 md:flex-none md:min-w-[58px] rounded-pill py-[11px] md:py-[12px] text-[12px] font-semibold", size === s ? "bg-ink text-paper" : "bg-white text-ink/72 soft")}>{s}</button>)}
           </div>
           <Label className="mb-3">Colour · {colors[color][0]}</Label>
           <div className="mb-6 md:mb-[30px] flex gap-3">
