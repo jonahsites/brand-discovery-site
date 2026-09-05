@@ -2,7 +2,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { POSTS, brandTier, lookCount, planOf } from "@/lib/data";
 import { useApp } from "@/lib/store";
@@ -15,11 +15,13 @@ import { styleOverlap } from "@/lib/looks";
 
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
-export default function BrandView({ slug, initialTab }: { slug: string; initialTab: string }) {
+export default function BrandView({ slug }: { slug: string }) {
   const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views, styleTags } = useApp();
   const router = useRouter();
   const counted = useRef<string | null>(null);
   useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
+  const search = useSearchParams();
+  const initialTab = search?.get("tab") ?? "Shop";
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
