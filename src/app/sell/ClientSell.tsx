@@ -39,12 +39,12 @@ export default function Sell() {
   const taken = brands.some((b) => b.slug === slug);
 
   const valid = [
-    !!(f.name.trim().length > 1 && f.city.trim() && f.country.trim() && !taken),
+    !!(f.name.trim().length > 1 && f.city.trim() && f.country.trim() && !taken && f.tagline.trim().length >= 6),
     f.styles.length >= 2 && f.moods.length >= 3,
     f.categories.length >= 1 && Number(f.priceMin) > 0 && Number(f.priceMax) >= Number(f.priceMin),
     !!(f.materials.length >= 1 && f.values.length >= 1 && f.madeIn.trim()),
     !!(f.shipsFrom.trim() && f.shipsTo.length >= 1),
-    f.story.trim().length >= 40 && f.tagline.trim().length >= 6,
+    f.story.trim().length >= 40,
     true,   // review
     !!f.plan, // plan (default basic is set)
   ];
@@ -129,7 +129,7 @@ export default function Sell() {
           </Section>}
 
           {step === 5 && <Section title="Tell the story once." body="This is the About tab. Two or three honest paragraphs beat a mission statement.">
-            <Field label="Your story · at least 40 characters"><textarea className={clsx(input, "min-h-[180px] resize-y leading-[1.6]")} value={f.story} onChange={(e) => set("story", e.target.value)} placeholder="Started in 2021 when we bought a roll of deadstock cotton duck from a shuttered sailmaker two streets over…" /></Field>
+            <Field label={`Your story · ${f.story.trim().length}/40 characters${f.story.trim().length >= 40 ? " ✓" : ""}`}><textarea className={clsx(input, "min-h-[180px] resize-y leading-[1.6]")} value={f.story} onChange={(e) => set("story", e.target.value)} placeholder="Started in 2021 when we bought a roll of deadstock cotton duck from a shuttered sailmaker two streets over…" /></Field>
           </Section>}
 
           {step === 6 && <Section title="Ready to go live." body="Here is what shoppers can filter and search you by. You can edit any of it from the dashboard.">
