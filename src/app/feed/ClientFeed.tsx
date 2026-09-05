@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/BrandCard";
 import { IconArrow, IconHeart, IconBag, IconClose } from "@/components/Icon";
 import { money } from "@/lib/data";
 import { styleOverlap } from "@/lib/looks";
+import { rankBrands, toSignal } from "@/lib/rank";
 
 /**
  * A TikTok-style vertical discovery feed. One brand + one hero piece per screen; scroll snap
@@ -19,16 +20,17 @@ import { styleOverlap } from "@/lib/looks";
  * their taste.
  */
 export default function ClientFeed() {
-  const { brands, products, styleTags, follows, saved, toggleSaved, addToBag, openBag, priceOf, hydrated, toast } = useApp();
+  const { brands, products, styleTags, follows, saved, toggleSaved, addToBag, openBag, priceOf, hydrated, toast, sizes, recent, waitlist, alerts, orders, views } = useApp();
   const [i, setI] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const cards = useMemo(() => {
     // One card per brand — the hero product is the brand's first product with an image.
-    const rows = brands
+    const sig = toSignal({ styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views });
+    const ranked = rankBrands(brands, sig, products);
+    return ranked
       .map((b) => ({ b, hero: products.find((p) => p.brand === b.slug && !!p.image), match: styleOverlap(b.styles, styleTags) }))
       .filter((r) => r.hero);
-    return rows.sort((a, x) => x.match - a.match);
-  }, [brands, products, styleTags]);
+  }, [brands, products, styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views]);
 
   useEffect(() => {
     const el = scroller.current;

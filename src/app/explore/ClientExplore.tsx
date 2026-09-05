@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { CHIPS, MATERIAL_OPTIONS, VALUE_OPTIONS, SIZE_LADDER, brandTier } from "@/lib/data";
@@ -7,6 +8,7 @@ import { PRICE_BANDS, filterProducts, leadTimeOf, searchCatalog, studioOf, type 
 import { useApp } from "@/lib/store";
 import { Fob } from "@/components/Fob";
 import { styleOverlap } from "@/lib/looks";
+import { rankProducts, toSignal } from "@/lib/rank";
 import ProductCard from "@/components/ProductCard";
 
 const SORTS = ["For you", "Newest", "Price · low to high", "Price · high to low", "Most followed"];
@@ -17,7 +19,7 @@ export default function Explore() { return <Suspense><ExploreInner /></Suspense>
 
 function ExploreInner() {
   const sp = useSearchParams(); const router = useRouter();
-  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch, styleTags } = useApp();
+  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch, styleTags, follows, saved, recent, waitlist, alerts, orders, views } = useApp();
   const q = sp.get("q") ?? "";
   const gender = sp.get("gender") ?? undefined;
   const [chip, setChip] = useState(sp.get("cat") ?? "All");
@@ -35,7 +37,7 @@ function ExploreInner() {
     if (sort === SORTS[3]) list = [...list].sort((a, b) => priceOf(b).price - priceOf(a).price);
     if (sort === SORTS[4]) list = [...list].sort((a, b) => (bmap.get(b.brand)?.followers ?? 0) - (bmap.get(a.brand)?.followers ?? 0));
     if (sort === SORTS[1] && !q) list = [...list].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-    if (sort === SORTS[0] && !q) list = [...list].sort((a, b) => styleOverlap(bmap.get(b.brand)?.styles ?? [], styleTags) - styleOverlap(bmap.get(a.brand)?.styles ?? [], styleTags) || (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    if (sort === SORTS[0] && !q) { const sig = toSignal({ styleTags, sizes: mySizes, follows, saved, recent, waitlist, alerts, orders, views }); list = rankProducts(list, brands, sig); }
     return list;
   }, [base.list, brands, promos, f, chip, gender, sort, priceOf, sizeOnly, mySizes.tops, q, styleTags]);
 
@@ -52,6 +54,7 @@ function ExploreInner() {
     { title: "Materials", key: "materials", rows: MATERIAL_OPTIONS.map((n) => [n, cnt((p) => bOf(p.brand).materials.includes(n) || (p.materials ?? []).includes(n))] as [string, number]).filter((r) => r[1] > 0) },
     { title: "Values", key: "values", rows: VALUE_OPTIONS.map((n) => [n, cnt((p) => bOf(p.brand).values.includes(n))] as [string, number]).filter((r) => r[1] > 0) },
   ];
+  const emptyMarketplace = products.length === 0;
   const title = q ? `“${q}”` : gender ? `${gender}` : chip === "All" ? "Everything new" : chip;
 
   return (
@@ -96,7 +99,18 @@ function ExploreInner() {
         )}
         <div className={clsx("grid min-w-0 flex-1 w-full grid-cols-2 gap-[14px] md:gap-5", open ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-3 lg:grid-cols-4")}>
           {grid.map((p) => <ProductCard key={p.slug} p={p} hoverAdd />)}
-          {grid.length === 0 && <div className="card col-span-full rounded-[24px] p-10 text-center text-[13px] text-ink/55">Nothing matches yet. <button onClick={() => { setF(EMPTY); setChip("All"); setSizeOnly(false); }} className="font-semibold text-ink">Clear everything</button>.</div>}
+          {grid.length === 0 && (
+            emptyMarketplace ? (
+              <div className="card col-span-full rounded-lg p-10 md:p-14 text-center">
+                <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Kindred, day one</div>
+                <h2 className="mb-3 text-[28px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>No pieces here yet.</h2>
+                <p className="mb-6 mx-auto max-w-[440px] text-[13.5px] text-ink/60">Kindred launched today. There will be pieces here the moment a brand opens up shop.</p>
+                <Link href="/sell" className="press inline-flex rounded-sm bg-ink px-5 py-[11px] text-[12px] font-semibold text-paper">Open a brand account</Link>
+              </div>
+            ) : (
+              <div className="card col-span-full rounded-[24px] p-10 text-center text-[13px] text-ink/55">Nothing matches yet. <button onClick={() => { setF(EMPTY); setChip("All"); setSizeOnly(false); }} className="font-semibold text-ink">Clear everything</button>.</div>
+            )
+          )}
         </div>
       </div>
     </main>

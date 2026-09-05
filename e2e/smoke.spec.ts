@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 // Every test starts from a clean device: the app persists to localStorage under kindred.v2.
 test.beforeEach(async ({ page }) => {
   // Wipe persisted state once per test (each test gets a fresh context, so sessionStorage is the per-test flag).
-  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" }, onboarded: true, session: { role: "shopper", name: "Jules Renard" }, promos: [{ id: "test-warmup", brand: "core-theory", code: "WARMUP", pct: 15, label: "Autumn knit week", products: "all", active: true }], boards: [{ id: "test-board", name: "Winter", products: [] }] })); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
+  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" }, onboarded: true, customBrands: [{ slug: "form-and-void", name: "Form & Void", init: "FV", city: "Rotterdam", country: "NL", tagline: "Test brand for e2e", items: 1, followers: 100, verified: true, tint: "#E5DFD3", ink: "#121A24", styles: ["Workwear"], moods: [], categories: ["Knitwear"], materials: [], values: [], madeIn: "Rotterdam", batch: "small", gender: ["Unisex"], priceBand: [50, 300], sizeRange: ["S", "XL"], shipsTo: ["EU"], shipsFrom: "Rotterdam", createdAt: "2026-09-01T00:00:00.000Z" }], customProducts: [{ slug: "felted-cardigan", brand: "form-and-void", name: "Felted Cardigan", price: 100, category: "Knitwear", sizes: ["S","M","L"], colors: ["Bone"], stock: 10, createdAt: "2026-09-01T00:00:00.000Z" }], session: { role: "shopper", name: "Jules Renard" }, promos: [{ id: "test-warmup", brand: "core-theory", code: "WARMUP", pct: 15, label: "Autumn knit week", products: "all", active: true }], boards: [{ id: "test-board", name: "Winter", products: [] }] })); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
 });
 
 const isMobile = (page: Page) => page.viewportSize()!.width < 768;
@@ -16,9 +16,9 @@ test("discover renders the hero, feed pills and product grid", async ({ page }) 
 });
 
 test("explore filters by a feel query and opens a product", async ({ page }) => {
-  await page.goto("/explore?q=linen%20shirt");
+  await page.goto("/explore?q=cardigan");
   await expect(page.getByRole("heading").first()).toBeVisible();
-  const first = page.getByRole("link", { name: /shirt/i }).first();
+  const first = page.locator('a[href^="/product/"]:visible').first();
   await expect(first).toBeVisible();
   await first.click();
   await expect(page).toHaveURL(/\/product\//);

@@ -13,6 +13,7 @@ import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Placeholder, Page } from "@/components/ui";
 import { Fob, FobRow } from "@/components/Fob";
 import { styleOverlap } from "@/lib/looks";
+import { rankBrands, rankProducts, toSignal } from "@/lib/rank";
 
 const FEEDS = ["Dashboard", "Following", "Matched", "Saved"] as const;
 type Feed = (typeof FEEDS)[number];
@@ -26,12 +27,13 @@ function HomeInner() {
   const now = useNow();
   const app = useApp();
   const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes, recent } = app;
-  const lookBrands = brands.map((b) => ({ b, n: styleOverlap(b.styles, styleTags) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 6);
+  const signal = useMemo(() => toSignal({ styleTags, sizes: app.sizes, follows, saved: app.saved, recent: app.recent, waitlist: app.waitlist, alerts: app.alerts, orders: app.orders, views: app.views }), [styleTags, app.sizes, follows, app.saved, app.recent, app.waitlist, app.alerts, app.orders, app.views]);
+  const matched = useMemo(() => rankProducts(products, brands, signal), [products, brands, signal]);
+  const lookBrands = useMemo(() => rankBrands(brands, signal, products).slice(0, 6).map((b) => ({ b, n: styleOverlap(b.styles, styleTags) })), [brands, products, signal, styleTags]);
   const week = Math.floor(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / (7 * 864e5));
   const seedBrands = brands.filter((b) => !b.createdAt);
   const featBrand = brands.find((b) => b.slug === featured) ?? seedBrands[week % Math.max(1, seedBrands.length)] ?? brands[0];
   const pick = useMemo(() => dailyPick(products), [products]);
-  const matched = useMemo(() => { const hits = searchCatalog(styleTags.join(" "), brands, products, promos).products.map((h) => h.item); return [...hits, ...products.filter((p) => !hits.includes(p))]; }, [styleTags, brands, products, promos]);
   const followingP = products.filter((p) => follows.includes(p.brand));
   const savedP = products.filter((p) => saved.includes(p.slug));
   const upcoming = [...drops].filter((d) => new Date(d.at).getTime() > (now || 864e5) - 864e5).sort((a, b) => a.at.localeCompare(b.at));
@@ -42,7 +44,7 @@ function HomeInner() {
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   const hero = {
-    Dashboard: { kicker: promo ? `${promo.label} · ${promoBrand?.name}` : "This week on Kindred", t1: promo ? "Get up to" : "Not big.", t2: promo ? `${promo.pct}% off` : "Good.", cta: promo ? "Get discount" : "Start exploring", foot: promo?.ends ? `Valid until ${new Date(promo.ends).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}` : `${brands.length} independent brands live`, href: promo ? `/brand/${promo.brand}` : "/explore", img: products.find((p) => p.brand === featBrand.slug && p.image)?.image },
+    Dashboard: { kicker: promo ? `${promo.label} · ${promoBrand?.name}` : "This week on Kindred", t1: promo ? "Get up to" : "Not big.", t2: promo ? `${promo.pct}% off` : "Good.", cta: promo ? "Get discount" : "Start exploring", foot: promo?.ends ? `Valid until ${new Date(promo.ends).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}` : `${brands.length} independent brands live`, href: promo ? `/brand/${promo.brand}` : "/explore", img: featBrand ? products.find((p) => p.brand === featBrand.slug && p.image)?.image : undefined },
     Following: { kicker: `Following · ${follows.length} brands`, t1: "New from", t2: "your makers", cta: "See what dropped", foot: `${followingP.length} pieces from brands you follow`, href: "/explore", img: followingP[0]?.image },
     Matched: { kicker: "Matched for you", t1: "Cut and fit", t2: "you buy in", cta: "Refine my match", foot: `Based on ${styleTags.slice(0, 3).join(", ")}`, href: "/onboarding", img: matched[0]?.image },
     Saved: { kicker: `Saved · ${savedP.length} pieces`, t1: "Back in stock", t2: "in your size", cta: "View saved", foot: `Size ${sizes.tops} · ${savedP.filter((p) => p.stock !== 0).length} available now`, href: "/account", img: savedP[0]?.image },
@@ -94,7 +96,7 @@ function HomeInner() {
               </div>
               <div className="absolute right-0 bottom-0 w-[52%] h-[132px] rounded-tl-[24px] md:static md:h-auto md:flex-1 md:rounded-none bg-sand overflow-hidden">
                 {hero.img && <img loading="lazy" decoding="async" src={hero.img} alt="" className="h-full w-full object-cover" />}
-                <div className="label absolute left-5 bottom-4 hidden md:block !text-ink/40">Campaign · {featBrand.name}</div>
+                <div className="label absolute left-5 bottom-4 hidden md:block !text-ink/40">Campaign · {featBrand?.name ?? "Coming soon"}</div>
               </div>
             </div>
 

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { ACCORDIONS, COLORS, REVIEWS, SIZES, money } from "@/lib/data";
+import { ACCORDIONS, COLORS, SIZES, money } from "@/lib/data";
 import { searchCatalog, sizesBetween } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
@@ -26,7 +26,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const [thumb, setThumb] = useState(0);
   const [added, setAdded] = useState(false);
   const [rev, setRev] = useState({ stars: 5, fit: 2 as 1 | 2 | 3, body: "", open: false });
-  const own = p ? [...reviews.filter((r) => r.product === p.slug), ...(p.createdAt ? [] : REVIEWS.map((r, i) => ({ ...r, id: "seed" + i, product: p.slug, stars: r.stars === "★ 5.0" ? 5 : 4, fit: 2 as const, size: r.meta.split(" ")[2] ?? "L", at: "" })))] : [];
+  const own = p ? [...reviews.filter((r) => r.product === p.slug)] : [];
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-ink">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
   const gallery = [...new Set([p.image, ...(p.images ?? [])].filter((x): x is string => !!x))];
