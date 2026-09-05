@@ -30,6 +30,10 @@ export default function Sell() {
     shipsFrom: "", shipsTo: [] as string[], story: "", tint: 0, plan: "basic" as import("@/lib/data").PlanKey,
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
+  const [promo, setPromo] = useState("");
+  const [promoErr, setPromoErr] = useState("");
+  const [skipped, setSkipped] = useState(false);
+  const applyPromo = () => { if (promo.trim().toUpperCase() === "SKIP") { setSkipped(true); setPromoErr(""); } else { setPromoErr("That code isn't recognised."); } };
   const tog = (k: "styles" | "moods" | "gender" | "categories" | "materials" | "values" | "shipsTo", v: string) => setF((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
   const slug = useMemo(() => slugify(f.name), [f.name]);
   const taken = brands.some((b) => b.slug === slug);
@@ -154,11 +158,23 @@ export default function Sell() {
               <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Why one fee</div>
               Running Instagram ads that put your name in front of ~10,000 people costs about $80–$200 a week and stops the day you stop paying. A single placement on Kindred is a one-time fee to sit inside a marketplace built entirely around shoppers looking for labels like yours — no algorithm to game, no bid to top up. In practical terms, one month of ads pays for Signature; a busy month of ads pays for Premium, and neither charges you again.
             </div>
+            <div className="mt-4 rounded-md bg-cream p-4">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Promo code</div>
+              {skipped ? (
+                <div className="flex items-center justify-between text-[12.5px]"><span className="text-ink/70"><span className="mono font-semibold text-ink">SKIP</span> applied · placement waived</span><button type="button" onClick={() => { setSkipped(false); setPromo(""); }} className="text-[11.5px] font-semibold text-ink/50">Remove</button></div>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); applyPromo(); }} className="flex gap-2">
+                  <input value={promo} onChange={(e) => setPromo(e.target.value.toUpperCase())} placeholder="Enter code" className="mono min-w-0 flex-1 rounded-sm bg-white px-3 py-[9px] text-[13px] outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)]" />
+                  <button type="submit" className="press rounded-sm bg-ink px-4 py-[9px] text-[11.5px] font-semibold text-paper">Apply</button>
+                </form>
+              )}
+              {promoErr && <div className="mt-2 text-[11.5px] text-rust">{promoErr}</div>}
+            </div>
             <div className="mt-3 text-[11.5px] text-ink/45">Demo checkout — nothing is actually charged today. Stripe Connect drops in with the backend.</div>
           </Section>}
 
           <div className="mt-8 flex flex-col md:flex-row md:items-center gap-3">
-            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>{`Pay $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
+            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>{skipped ? "Launch brand page · free" : `Pay $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
             {step >= 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-ink/50">Back</button>}
             <span className="text-[12.5px] text-ink/45 md:ml-auto">{step === 7 ? "One-time fee — no monthly, no per-order." : (!valid[step] && step < 6 ? "Fill in the required bits to continue" : "")}</span>
           </div>
