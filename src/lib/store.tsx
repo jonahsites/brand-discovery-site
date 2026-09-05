@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
 import { computeCart, pointsEarned, type BagGroup } from "./cart";
 import { getSupabase, supabaseEnabled } from "./supabase";
+import * as db from "./db";
 import { track } from "./analytics";
 import { slugify } from "./catalog";
 import { LOOKBOOKS } from "./data";
@@ -162,6 +163,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);
 
+  // Marketplace pull: everything the whole site sees. Runs once on mount + whenever a subscribed
+  // table changes. Anon browsing works with empty arrays, then flips to remote data when it lands.
+  useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) return;
+    let alive = true;
+    const pullShared = async () => {
+      const [brands, prod, promos, drops, posts, reviews, lookbooks, orders, threads, gifts, featured] = await Promise.all([
+        db.fetchBrands(), db.fetchProducts(), db.fetchPromos(), db.fetchDrops(),
+        db.fetchPosts(), db.fetchReviews(), db.fetchLookbooks(), db.fetchOrders(),
+        db.fetchThreads(), db.fetchGiftCards(), db.fetchFeatured(),
+      ]);
+      if (!alive) return;
+      setState((p) => ({
+        ...p,
+        customBrands: brands.length ? brands : p.customBrands,
+        customProducts: prod.products.length ? prod.products : p.customProducts,
+        removedProducts: prod.removed.length ? prod.removed : p.removedProducts,
+        promos: promos.length ? promos : p.promos,
+        drops: drops.length ? drops : p.drops,
+        posts: posts.length ? posts : p.posts,
+        reviews: reviews.length ? reviews : p.reviews,
+        lookbooks: lookbooks.length ? lookbooks : p.lookbooks,
+        orders: orders.length ? orders : p.orders,
+        threads: threads.length ? threads : p.threads,
+        giftCards: gifts.length ? gifts : p.giftCards,
+        featured: featured ?? p.featured,
+      }));
+    };
+    const pullOwnerScoped = async (userId: string) => {
+      const [wl, al, no] = await Promise.all([db.fetchWaitlist(userId), db.fetchAlerts(userId), db.fetchNotifies(userId)]);
+      if (!alive) return;
+      setState((p) => ({ ...p, waitlist: wl.length ? wl : p.waitlist, alerts: al.length ? al : p.alerts, notify: no.length ? no : p.notify }));
+    };
+    pullShared().catch(() => {});
+    sb.auth.getUser().then(({ data }) => { if (data.user && alive) pullOwnerScoped(data.user.id).catch(() => {}); });
+    // Realtime: any change to a shared table triggers a refetch. Coarse but correct.
+    const debounced = (() => { let t: ReturnType<typeof setTimeout> | null = null; return () => { if (t) clearTimeout(t); t = setTimeout(() => pullShared().catch(() => {}), 200); }; })();
+    const unsubs = ["brands", "products", "removed_products", "promos", "drops", "posts", "reviews", "lookbooks", "lookbook_frames", "orders", "order_items", "threads", "messages", "gift_cards", "site_config"].map((t) => db.subscribe(t, debounced));
+    return () => { alive = false; unsubs.forEach((u) => u()); };
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = state.bagOpen || state.searchOpen ? "hidden" : "";
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setState((p) => ({ ...p, bagOpen: false, searchOpen: false })); };
@@ -225,13 +268,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     openBag: (v = true) => up((p) => ({ bagOpen: v, searchOpen: v ? false : p.searchOpen })),
     openSearch: (v = true) => up((p) => ({ searchOpen: v, bagOpen: v ? false : p.bagOpen })),
     setSession: (session) => up(() => ({ session })),
-    upsertBrand: (b) => up((p) => ({ customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)] })),
-    upsertProduct: (pr) => up((p) => ({ customProducts: [pr, ...p.customProducts.filter((x) => x.slug !== pr.slug)], removedProducts: p.removedProducts.filter((s) => s !== pr.slug) })),
-    deleteProduct: (slug) => up((p) => ({ customProducts: p.customProducts.filter((x) => x.slug !== slug), removedProducts: [...new Set([...p.removedProducts, slug])], bag: p.bag.filter((b) => b.product !== slug) })),
-    upsertPromo: (pr) => up((p) => ({ promos: [pr, ...p.promos.filter((x) => x.id !== pr.id)] })),
-    deletePromo: (id) => up((p) => ({ promos: p.promos.filter((x) => x.id !== id) })),
-    upsertDrop: (d) => up((p) => ({ drops: [d, ...p.drops.filter((x) => x.id !== d.id)].sort((a, b) => a.at.localeCompare(b.at)) })),
-    deleteDrop: (id) => up((p) => ({ drops: p.drops.filter((x) => x.id !== id) })),
+    upsertBrand: (b) => { up((p) => ({ customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)] })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) { await db.upsertBrandRow(b, data.user.id); await sb.from("profiles").update({ brand_slug: b.slug }).eq("id", data.user.id); } })().catch(() => {}); },
+    upsertProduct: (pr) => { up((p) => ({ customProducts: [pr, ...p.customProducts.filter((x) => x.slug !== pr.slug)], removedProducts: p.removedProducts.filter((s) => s !== pr.slug) })); db.upsertProductRow(pr).catch(() => {}); },
+    deleteProduct: (slug) => { up((p) => ({ customProducts: p.customProducts.filter((x) => x.slug !== slug), removedProducts: [...new Set([...p.removedProducts, slug])], bag: p.bag.filter((b) => b.product !== slug) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.deleteProductRow(slug, data.user.id); })().catch(() => {}); },
+    upsertPromo: (pr) => { up((p) => ({ promos: [pr, ...p.promos.filter((x) => x.id !== pr.id)] })); db.upsertPromoRow(pr).catch(() => {}); },
+    deletePromo: (id) => { up((p) => ({ promos: p.promos.filter((x) => x.id !== id) })); db.deletePromoRow(id).catch(() => {}); },
+    upsertDrop: (d) => { up((p) => ({ drops: [d, ...p.drops.filter((x) => x.id !== d.id)].sort((a, b) => a.at.localeCompare(b.at)) })); db.upsertDropRow(d).catch(() => {}); },
+    deleteDrop: (id) => { up((p) => ({ drops: p.drops.filter((x) => x.id !== id) })); db.deleteDropRow(id).catch(() => {}); },
     placeOrder: () => { track("place_order", { brands: [...new Set(derived.bagGroups.map((g) => g.brand.slug))].length, total: derived.total });
       if (derived.bagGroups.length === 0) return undefined;
       const order: Order = {
@@ -240,14 +283,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit, gift: derived.giftCredit || undefined,
       };
       up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, giftCode: undefined, redeem: 0, giftCards: derived.giftCredit && p.giftCode ? p.giftCards.map((g) => (g.code === p.giftCode ? { ...g, balance: Math.max(0, Math.round((g.balance - derived.giftCredit) * 100) / 100) } : g)) : p.giftCards, customProducts: p.customProducts.map((cp) => { const bought = order.items.filter((i) => i.product === cp.slug).reduce((s, i) => s + i.qty, 0); return bought && cp.stock !== undefined ? { ...cp, stock: Math.max(0, cp.stock - bought) } : cp; }) }));
+      const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) { await db.insertOrder(order, data.user.id); if (state.giftCode && derived.giftCredit) await db.debitGiftCard(state.giftCode, derived.giftCredit); for (const it of order.items) { const cp = state.customProducts.find((x) => x.slug === it.product); if (cp && cp.stock !== undefined) await db.upsertProductRow({ ...cp, stock: Math.max(0, cp.stock - it.qty) }); } } })().catch(() => {});
       return order;
     },
-    setOrderStatus: (id, status) => up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })),
-    addReview: (r) => up((p) => ({ reviews: [{ ...r, id: uid(), at: new Date().toISOString() }, ...p.reviews] })),
+    setOrderStatus: (id, status) => { up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })); db.updateOrderStatus(id, status).catch(() => {}); },
+    addReview: (r) => { const rec = { ...r, id: uid(), at: new Date().toISOString() }; up((p) => ({ reviews: [rec, ...p.reviews] })); db.insertReview(rec).catch(() => {}); },
     setStyleTags: (styleTags) => up(() => ({ styleTags })),
     setSizes: (sizes) => up(() => ({ sizes })),
-    toggleNotify: (id) => up((p) => ({ notify: toggleIn(p.notify, id) })),
-    toggleAlert: (slug) => up((p) => ({ alerts: toggleIn(p.alerts, slug) })),
+    toggleNotify: (id) => { const on = !state.notify.includes(id); up((p) => ({ notify: toggleIn(p.notify, id) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.toggleNotifyRow(data.user.id, id, on); })().catch(() => {}); },
+    toggleAlert: (slug) => { const on = !state.alerts.includes(slug); up((p) => ({ alerts: toggleIn(p.alerts, slug) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.toggleAlertRow(data.user.id, slug, on); })().catch(() => {}); },
     applyPromoCode: (code) => { const ok = state.promos.some((pr) => pr.active && pr.code.toLowerCase() === code.trim().toLowerCase()); if (ok) up(() => ({ promoCode: code.trim().toUpperCase() })); return ok; },
     clearPromoCode: () => up(() => ({ promoCode: undefined })),
     referralCode,
@@ -309,26 +353,27 @@ signUp: async ({ name, email, password, provider }) => {
       up(() => ({ onboarded: true }));
     },
     applyReferral: (code) => { const c = code.trim().toLowerCase().replace(/^.*\/r\//, ""); if (!/^[a-z0-9-]{3,40}$/.test(c) || c === referralCode || state.referredBy) return false; up(() => ({ referredBy: c })); return true; },
-    buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; up((p) => ({ giftCards: [{ code, amount, balance: amount, to, from, note, at: new Date().toISOString() }, ...p.giftCards] })); return code; },
-    applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const g = state.giftCards.find((x) => x.code === c); if (!g || g.balance <= 0) return false; up(() => ({ giftCode: c })); return true; },
+    buyGiftCard: ({ amount, to, from, note }) => { const seg = () => Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4).toUpperCase().padEnd(4, "7"); const code = `KIND-${seg()}-${seg()}`; const card = { code, amount, balance: amount, to, from, note, at: new Date().toISOString() }; up((p) => ({ giftCards: [card, ...p.giftCards] })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.insertGiftCard(card, data.user.id); })().catch(() => {}); return code; },
+    applyGiftCode: (code) => { const c = code.trim().toUpperCase(); const local = state.giftCards.find((x) => x.code === c); if (local && local.balance > 0) { up(() => ({ giftCode: c })); return true; } const sb = getSupabase(); if (sb) { db.lookupGiftCard(c).then((g) => { if (g && g.balance > 0) up((p) => ({ giftCode: c, giftCards: [g, ...p.giftCards.filter((x) => x.code !== c)] })); }).catch(() => {}); } return !!local; },
     clearGiftCode: () => up(() => ({ giftCode: undefined })),
-    addPost: (post) => up((p) => ({ posts: [{ ...post, id: uid(), at: new Date().toISOString(), likes: 0 }, ...p.posts] })),
-    deletePost: (id) => up((p) => ({ posts: p.posts.filter((x) => x.id !== id) })),
-    likePost: (id) => up((p) => ({ posts: p.posts.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x)) })),
+    addPost: (post) => { const rec = { ...post, id: uid(), at: new Date().toISOString(), likes: 0 }; up((p) => ({ posts: [rec, ...p.posts] })); db.insertPost(rec).catch(() => {}); },
+    deletePost: (id) => { up((p) => ({ posts: p.posts.filter((x) => x.id !== id) })); db.deletePostRow(id).catch(() => {}); },
+    likePost: (id) => { up((p) => ({ posts: p.posts.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x)) })); db.likePostRow(id).catch(() => {}); },
     sendMessage: (brand, text, from) => {
       const shopper = state.session.role === "brand" ? "Jules Renard" : state.session.name;
       const existing = state.threads.find((t) => t.brand === brand && t.shopper === shopper);
       const id = existing?.id ?? uid();
       const msg = { id: uid(), from, text, at: new Date().toISOString() };
       up((p) => ({ threads: existing ? p.threads.map((t) => (t.id === id ? { ...t, messages: [...t.messages, msg] } : t)) : [{ id, brand, shopper, messages: [msg] }, ...p.threads] }));
+      const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (!data.user) return; const shopperId = from === "shopper" ? data.user.id : data.user.id; const tid = await db.upsertThread(brand, shopperId, shopper); if (tid) { await db.insertMessage(tid, from, text); if (!existing) up((p) => ({ threads: p.threads.map((t) => (t.id === id ? { ...t, id: tid } : t)) })); } })().catch(() => {});
       return id;
     },
     setSizeOnly: (sizeOnly) => up(() => ({ sizeOnly })),
-    upsertLookbook: (l) => up((p) => ({ lookbooks: [l, ...p.lookbooks.filter((x) => x.slug !== l.slug)] })),
-    deleteLookbook: (slug) => up((p) => ({ lookbooks: p.lookbooks.filter((x) => x.slug !== slug) })),
+    upsertLookbook: (l) => { up((p) => ({ lookbooks: [l, ...p.lookbooks.filter((x) => x.slug !== l.slug)] })); db.upsertLookbookRow(l).catch(() => {}); },
+    deleteLookbook: (slug) => { up((p) => ({ lookbooks: p.lookbooks.filter((x) => x.slug !== slug) })); db.deleteLookbookRow(slug).catch(() => {}); },
     renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
-    toggleWaitlist: (slug) => up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })),
-    setFeatured: (featured) => up(() => ({ featured })),
+    toggleWaitlist: (slug) => { const on = !state.waitlist.includes(slug); up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.toggleWaitlistRow(data.user.id, slug, on); })().catch(() => {}); },
+    setFeatured: (featured) => { up(() => ({ featured })); db.setFeaturedRow(featured).catch(() => {}); },
     markViewed,
     setRedeem: (redeem) => up(() => ({ redeem: Math.max(0, Math.min(redeem, points)) })),
     toast: (text, href) => { const id = uid(); up((p) => ({ toasts: [...p.toasts, { id, text, href }] })); setTimeout(() => setState((p) => ({ ...p, toasts: p.toasts.filter((t) => t.id !== id) })), 2600); },
@@ -336,7 +381,7 @@ signUp: async ({ name, email, password, provider }) => {
     createBoard: (name, product) => { const id = uid(); up((p) => ({ boards: [...p.boards, { id, name: name.trim() || "Untitled", products: product ? [product] : [] }] })); return id; },
     toggleInBoard: (id, product) => up((p) => ({ boards: p.boards.map((b) => (b.id === id ? { ...b, products: toggleIn(b.products, product) } : b)) })),
     deleteBoard: (id) => up((p) => ({ boards: p.boards.filter((b) => b.id !== id) })),
-    recordView,
+    recordView: (slug) => { recordView(slug); db.recordViewRow("product", slug).catch(() => {}); },
     resetDemo: () => { try { localStorage.removeItem(LS); } catch {} setState({ ...DEFAULTS, bagOpen: false, searchOpen: false, toasts: [] }); },
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
