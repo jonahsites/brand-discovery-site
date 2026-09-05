@@ -92,7 +92,16 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {posts.filter((x) => x.brand === b.slug).map((x) => (
             <div key={x.id} className="card overflow-hidden rounded-lg">
-              <Placeholder src={x.image} label="Post" className="h-[300px]">{x.products.length > 0 && <span className="glass-chip absolute bottom-[14px] left-[14px] rounded-pill px-[14px] py-[7px] text-[11.5px] font-medium">{x.products.length} tagged</span>}</Placeholder>
+              <Placeholder src={x.image} label="Post" className="h-[300px]">
+                {x.products.length > 0 && <span className="glass-chip absolute bottom-[14px] left-[14px] rounded-pill px-[14px] py-[7px] text-[11.5px] font-medium">{x.products.length} tagged</span>}
+                {(x.source === "instagram" || x.source === "tiktok") && (
+                  x.externalUrl ? (
+                    <a href={x.externalUrl} target="_blank" rel="noreferrer noopener" className="glass-chip absolute right-[14px] top-[14px] rounded-pill px-[10px] py-[5px] text-[10.5px] font-semibold uppercase tracking-[.08em]">{x.source === "instagram" ? "IG ↗" : "TT ↗"}</a>
+                  ) : (
+                    <span className="glass-chip absolute right-[14px] top-[14px] rounded-pill px-[10px] py-[5px] text-[10.5px] font-semibold uppercase tracking-[.08em]">{x.source === "instagram" ? "IG" : "TT"}</span>
+                  )
+                )}
+              </Placeholder>
               <div className="flex items-center justify-between gap-3 px-[18px] py-4"><span className="text-[13px] text-ink/65">{x.caption}</span><button onClick={() => likePost(x.id)} className="flex-none text-[12.5px] font-medium text-ink/45">♡ {x.likes}</button></div>
             </div>
           ))}

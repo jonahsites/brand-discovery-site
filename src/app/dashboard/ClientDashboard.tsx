@@ -1,16 +1,18 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { CATEGORY_OPTIONS, COLORS, DASH, PLANS, SIZE_LADDER, money, lookCount, planOf, type Brand, type Drop, type Product, type Promo, type LookFrame, type PlanKey } from "@/lib/data";
 import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
+import { integrationStatus, type Provider } from "@/lib/integrations";
+import { getSupabase } from "@/lib/supabase";
 import Countdown, { useNow } from "@/components/Countdown";
 import { Avatar, Button, Label, Placeholder, inputCls } from "@/components/ui";
 import { looksOfBrand, styleOverlap } from "@/lib/looks";
 
-const NAV = ["Overview", "Audience", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Settings"];
+const NAV = ["Overview", "Audience", "Products", "Promos", "Drops", "Lookbooks", "Orders", "Messages", "Connections", "Settings"];
 
 export default function Dashboard() { return <Suspense><DashInner /></Suspense>; }
 
@@ -51,7 +53,7 @@ function DashInner() {
         </div>
         <div className="p-4 md:p-[34px] pb-16">
           {welcome && nav === "Overview" && <div className="mb-6 rounded-lg bg-cream p-6"><div className="label mb-2 !text-ink/48">You&apos;re live</div><h2 className="mb-2 text-[24px] font-extrabold tracking-[-.035em]">Welcome to Kindred, {brand.name}.</h2><p className="mb-4 max-w-[520px] text-[14px] leading-[1.55] text-ink/65">Your page is up at /brand/{brand.slug}. Add your first product so it shows in Explore and search, then schedule a drop to land at the top of followers&apos; feeds.</p><div className="flex gap-2"><Button onClick={() => setNav("Products")}>Add a product</Button><Link href={`/brand/${brand.slug}`}><Button variant="ghost">See your page</Button></Link></div></div>}
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4"><div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.038em]">{nav}</h1><div className="text-[12.5px] text-ink/50">{nav === "Overview" ? "Last 30 days · compared to the 30 before" : nav === "Products" ? `${mine.length} listed` : nav === "Promos" ? "Codes shoppers can apply at checkout" : nav === "Drops" ? "Scheduled releases with countdowns" : nav === "Orders" ? `${myOrders.length} live orders` : nav === "Audience" ? "Who follows you and which pieces hold attention" : nav === "Lookbooks" ? "Editorial pages with shoppable hotspots" : nav === "Messages" ? "Shoppers asking before they buy" : "Your onboarding facts drive filters and search"}</div></div>{nav === "Overview" && <div className="flex gap-[10px]"><Button variant={app.featured === brand.slug ? "navy" : "secondary"} onClick={() => app.setFeatured(app.featured === brand.slug ? undefined : brand.slug)}>{app.featured === brand.slug ? "✓ Featured on home" : "Feature on home · $40/wk"}</Button><Button onClick={() => setNav("Products")}>+ New product</Button></div>}</div>
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4"><div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.038em]">{nav}</h1><div className="text-[12.5px] text-ink/50">{nav === "Overview" ? "Last 30 days · compared to the 30 before" : nav === "Products" ? `${mine.length} listed` : nav === "Promos" ? "Codes shoppers can apply at checkout" : nav === "Drops" ? "Scheduled releases with countdowns" : nav === "Orders" ? `${myOrders.length} live orders` : nav === "Audience" ? "Who follows you and which pieces hold attention" : nav === "Lookbooks" ? "Editorial pages with shoppable hotspots" : nav === "Messages" ? "Shoppers asking before they buy" : nav === "Connections" ? "Connect Instagram and TikTok — every post shows up on your Posts tab" : "Your onboarding facts drive filters and search"}</div></div>{nav === "Overview" && <div className="flex gap-[10px]"><Button variant={app.featured === brand.slug ? "navy" : "secondary"} onClick={() => app.setFeatured(app.featured === brand.slug ? undefined : brand.slug)}>{app.featured === brand.slug ? "✓ Featured on home" : "Feature on home · $40/wk"}</Button><Button onClick={() => setNav("Products")}>+ New product</Button></div>}</div>
 
           {nav === "Overview" && <Overview stats={stats} mine={mine} myOrders={myOrders} seeded={seeded} brand={brand.slug} />}
           {nav === "Audience" && <Audience brand={brand} mine={mine} seeded={seeded} />}
@@ -61,6 +63,7 @@ function DashInner() {
           {nav === "Lookbooks" && <LookbookBuilder brand={brand.slug} mine={mine} />}
           {nav === "Orders" && <Orders brand={brand.slug} myOrders={myOrders} seeded={seeded} />}
           {nav === "Messages" && <div className="card rounded-lg p-6 text-[13.5px] text-ink/60">{threads.filter((t) => t.brand === brand.slug).length} conversation{threads.filter((t) => t.brand === brand.slug).length === 1 ? "" : "s"}. <Link href="/messages" className="font-semibold text-ink">Open inbox →</Link></div>}
+          {nav === "Connections" && <Connections brand={brand.slug} />}
           {nav === "Settings" && <Settings brand={brand.slug} />}
         </div>
       </div>
@@ -459,5 +462,113 @@ function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seed
         </div>
       </div>
     </>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Connections                                                               */
+/*  One card per provider (Instagram, TikTok). Reads NEXT_PUBLIC_             */
+/*  INTEGRATIONS_STATUS to decide whether the card is live or "Coming soon";  */
+/*  the server routes still re-check the real secrets on every hit.           */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+type ConnectionCardData = {
+  provider: Provider;
+  connected: boolean;
+  username: string | null;
+  lastSyncedAt: string | null;
+};
+
+const PROVIDERS: { key: Provider; name: string; blurb: string; hint: string; icon: string }[] = [
+  { key: "instagram", name: "Instagram", blurb: "Every post from your Instagram Business account appears on your Kindred Posts tab.", hint: "Requires an Instagram Business or Creator account linked to a Facebook Page.", icon: "IG" },
+  { key: "tiktok", name: "TikTok", blurb: "Every TikTok video shows up on your Kindred Posts tab with the cover as the thumbnail.", hint: "Any public TikTok account works. Private posts stay hidden.", icon: "TT" },
+];
+
+function Connections({ brand }: { brand: string }) {
+  const status = integrationStatus();
+  const [rows, setRows] = useState<ConnectionCardData[]>([]);
+  const [busy, setBusy] = useState<Provider | null>(null);
+  const [msg, setMsg] = useState<string>("");
+
+  const refresh = async () => {
+    const sb = getSupabase();
+    if (!sb) return;
+    const { data } = await sb.from("social_connections").select("provider,username,last_synced_at").eq("brand_slug", brand);
+    const byProv = new Map<Provider, { username: string | null; last_synced_at: string | null }>();
+    for (const r of (data ?? []) as { provider: Provider; username: string | null; last_synced_at: string | null }[]) {
+      byProv.set(r.provider, { username: r.username, last_synced_at: r.last_synced_at });
+    }
+    setRows(PROVIDERS.map((p) => {
+      const r = byProv.get(p.key);
+      return { provider: p.key, connected: !!r, username: r?.username ?? null, lastSyncedAt: r?.last_synced_at ?? null };
+    }));
+  };
+
+  useEffect(() => { refresh(); }, [brand]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const connect = (p: Provider) => {
+    window.location.href = `/api/oauth/${p}/start?brand=${encodeURIComponent(brand)}`;
+  };
+  const syncNow = async (p: Provider) => {
+    setBusy(p); setMsg("");
+    try {
+      const r = await fetch(`/api/sync/${p}?brand=${encodeURIComponent(brand)}`, { method: "POST" });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j?.ok) setMsg(`Synced ${j.added ?? 0} post${j.added === 1 ? "" : "s"} from ${p}.`);
+      else setMsg(`Sync failed: ${j?.error ?? r.status}`);
+      await refresh();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const disconnect = async (p: Provider) => {
+    if (!confirm(`Disconnect ${p}? Posts already imported will stay on your page.`)) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    await sb.from("social_connections").delete().eq("brand_slug", brand).eq("provider", p);
+    await refresh();
+  };
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 max-w-[900px]">
+      {PROVIDERS.map((meta) => {
+        const row = rows.find((r) => r.provider === meta.key);
+        const live = status[meta.key];
+        return (
+          <div key={meta.key} className={clsx("card rounded-lg p-5 md:p-6", !live && "opacity-70")}>
+            <div className="mb-3 flex items-center gap-3">
+              <div className="grid h-10 w-10 flex-none place-items-center rounded-md bg-cream text-[11px] font-extrabold tracking-[.04em]">{meta.icon}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[15px] font-semibold tracking-[-.015em]">{meta.name}</div>
+                <div className="text-[12px] text-ink/55">{meta.blurb}</div>
+              </div>
+            </div>
+            <div className="mb-4 text-[11.5px] text-ink/45">{meta.hint}</div>
+            {!live ? (
+              <div>
+                <Button size="sm" onClick={() => undefined} className="opacity-40 pointer-events-none">Coming soon</Button>
+                <div className="mt-2 text-[11px] text-ink/50">We&apos;re getting the final {meta.name} API approval. You&apos;ll get an email when it goes live.</div>
+              </div>
+            ) : row?.connected ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-[12.5px]">
+                  <span className="rounded-pill bg-sage px-[10px] py-[3px] text-[10px] font-semibold uppercase tracking-[.08em] text-paper">Connected</span>
+                  {row.username && <span className="text-ink/70">@{row.username}</span>}
+                </div>
+                <div className="mono text-[11px] text-ink/45">Last synced: {row.lastSyncedAt ? new Date(row.lastSyncedAt).toLocaleString() : "never"}</div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => syncNow(meta.key)} disabled={busy === meta.key}>{busy === meta.key ? "Syncing…" : "Sync now"}</Button>
+                  <Button size="sm" variant="ghost" onClick={() => disconnect(meta.key)}>Disconnect</Button>
+                </div>
+              </div>
+            ) : (
+              <Button size="sm" onClick={() => connect(meta.key)}>Connect {meta.name}</Button>
+            )}
+          </div>
+        );
+      })}
+      {msg && <div className="md:col-span-2 rounded-md bg-cream px-4 py-3 text-[12.5px] text-ink/70">{msg}</div>}
+      <div className="md:col-span-2 mt-2 text-[11.5px] text-ink/45">Kindred stores your access token server-side only. We never post on your behalf; we only read your own posts.</div>
+    </div>
   );
 }

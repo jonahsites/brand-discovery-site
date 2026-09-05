@@ -2,6 +2,7 @@ import { BRANDS } from "@/lib/data";
 import { brandSeo, brandJsonLd, breadcrumbJsonLd, ldScript, absUrl } from "@/lib/seo";
 import BrandView from "./BrandView";
 
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 export function generateStaticParams() { return BRANDS.map((b) => ({ slug: b.slug })); }
 
