@@ -144,7 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const user = data.session?.user;
       if (user) {
         const meta = (user.user_metadata ?? {}) as { name?: string };
-        setState((p) => ({ ...p, account: { name: meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0], email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false } }));
+        setState((p) => { const name = meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0]; return { ...p, account: { name, email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false }, session: { ...p.session, name } }; });
         pull(user.id).catch(() => {});
       } else {
         setState((p) => (p.account?.signedIn ? { ...p, account: { ...p.account!, signedIn: false } } : p));
@@ -156,7 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const user = session?.user;
       if (!user) { setState((p) => (p.account?.signedIn ? { ...p, account: { ...p.account!, signedIn: false } } : p)); return; }
       const meta = (user.user_metadata ?? {}) as { name?: string };
-      setState((p) => ({ ...p, account: { name: meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0], email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false } }));
+      setState((p) => { const name = meta.name ?? p.account?.name ?? (user.email ?? "").split("@")[0]; return { ...p, account: { name, email: user.email ?? "", provider: (p.account?.provider ?? "email"), signedIn: true, createdAt: p.account?.createdAt ?? new Date().toISOString(), pendingConfirmation: false }, session: { ...p.session, name } }; });
       pull(user.id).catch(() => {});
     });
     return () => { alive = false; sub.subscription.unsubscribe(); };

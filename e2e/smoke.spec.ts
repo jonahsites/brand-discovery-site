@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 // Every test starts from a clean device: the app persists to localStorage under kindred.v2.
 test.beforeEach(async ({ page }) => {
   // Wipe persisted state once per test (each test gets a fresh context, so sessionStorage is the per-test flag).
-  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" }, onboarded: true })); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
+  await page.addInitScript(() => { try { if (!sessionStorage.getItem("e2e-reset")) { localStorage.setItem("kindred.v2", JSON.stringify({ account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" }, onboarded: true, session: { role: "shopper", name: "Jules Renard" }, promos: [{ id: "test-warmup", brand: "core-theory", code: "WARMUP", pct: 15, label: "Autumn knit week", products: "all", active: true }], boards: [{ id: "test-board", name: "Winter", products: [] }] })); sessionStorage.setItem("e2e-reset", "1"); } } catch {} });
 });
 
 const isMobile = (page: Page) => page.viewportSize()!.width < 768;
@@ -29,13 +29,18 @@ test("shopper can add to bag, apply a promo, and place an order", async ({ page 
   await page.goto("/product/felted-cardigan");
   await page.getByRole("button", { name: /add to bag/i }).first().click();
   await page.goto("/bag");
-  await expect(page.getByRole("heading", { name: "Your bag" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your bag", exact: true })).toBeVisible();
   await expect(page.getByText("Felted Cardigan").first()).toBeVisible();
   // WARMUP is Core Theory's seeded promo; the cardigan is Core Theory.
   await page.getByPlaceholder(/promo or gift card code/i).fill("WARMUP");
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page.getByText(/WARMUP applied/)).toBeVisible();
   await page.goto("/checkout");
+  await page.getByPlaceholder("Email").fill("jules@renard.co");
+  await page.getByPlaceholder("Street address").fill("41 Rue des Panoyaux");
+  await page.getByPlaceholder("City").fill("Paris");
+  await page.getByPlaceholder("Postcode").fill("75020");
+  await page.getByPlaceholder("Country").fill("France");
   await page.getByRole("button", { name: /^Pay \$/ }).click();
   await expect(page.getByText(/Order #UN-\d+ placed/i)).toBeVisible();
   await page.goto("/account?tab=Orders");
@@ -45,13 +50,22 @@ test("shopper can add to bag, apply a promo, and place an order", async ({ page 
 test("gift card is issued, applied, and debited by checkout", async ({ page }) => {
   await page.goto("/gift");
   await page.getByPlaceholder("Their name").fill("Mara");
+  await page.getByPlaceholder("Your name").fill("Jules Renard");
   await page.getByRole("button", { name: /^Pay \$100/ }).click();
   const code = await page.locator("text=/^KIND-[A-Z0-9]{4}-[A-Z0-9]{4}$/").first().textContent();
   expect(code).toMatch(/^KIND-/);
   await page.getByRole("button", { name: "Use it myself" }).click();
+  // Add a product so checkout has something to charge the gift card against.
+  await page.goto("/product/felted-cardigan");
+  await page.getByRole("button", { name: /add to bag/i }).first().click();
   await page.goto("/bag");
   await expect(page.getByText(/Gift card ····/).first()).toBeVisible();
   await page.goto("/checkout");
+  await page.getByPlaceholder("Email").fill("jules@renard.co");
+  await page.getByPlaceholder("Street address").fill("41 Rue des Panoyaux");
+  await page.getByPlaceholder("City").fill("Paris");
+  await page.getByPlaceholder("Postcode").fill("75020");
+  await page.getByPlaceholder("Country").fill("France");
   await page.getByRole("button", { name: /^Pay \$/ }).click();
   await expect(page.getByText(/placed/i).first()).toBeVisible();
   await page.goto("/gift");

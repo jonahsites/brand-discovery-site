@@ -44,7 +44,7 @@ export default function Gift() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div><Label className="mb-2">To</Label><input className={inputCls} value={to} onChange={(e) => setTo(e.target.value)} placeholder="Their name" /></div>
-              <div><Label className="mb-2">From</Label><input className={inputCls} value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+              <div><Label className="mb-2">From</Label><input className={inputCls} value={from} onChange={(e) => setFrom(e.target.value)} placeholder="Your name" /></div>
               <div className="sm:col-span-2"><Label className="mb-2">Note · optional</Label><textarea className={clsx(inputCls, "min-h-[80px] resize-y")} value={note} onChange={(e) => setNote(e.target.value)} placeholder="For the jacket you keep screenshotting." /></div>
             </div>
             <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">

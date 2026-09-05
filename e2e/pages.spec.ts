@@ -8,6 +8,7 @@ test.beforeEach(async ({ page }) => {
         localStorage.setItem("kindred.v2", JSON.stringify({
           account: { name: "Jules Renard", email: "jules@renard.co", provider: "email", signedIn: true, createdAt: "2026-09-01T00:00:00.000Z" },
           onboarded: true,
+          session: { role: "shopper", name: "Jules Renard" },
           styleTags: ["Workwear", "Vintage revival", "Archive"],
           follows: ["form-and-void"],
         }));
@@ -45,6 +46,7 @@ test("lookbooks index shows every seeded lookbook and links open the frames", as
 test("gift page issues a code and lists it in Your gift cards", async ({ page }) => {
   await page.goto("/gift");
   await page.getByPlaceholder("Their name").fill("Ada");
+  await page.getByPlaceholder("Your name").fill("Jules Renard");
   await page.getByRole("button", { name: /^Pay \$100/ }).click();
   await expect(page.locator("text=/^KIND-[A-Z0-9]{4}-[A-Z0-9]{4}$/").first()).toBeVisible();
   await expect(page.getByText(/Your gift cards · \d+/)).toBeVisible();

@@ -24,7 +24,7 @@ function AccountInner() {
   const [nameDraft, setNameDraft] = useState(session.name);
   const savedP = products.filter((p) => saved.includes(p.slug));
   const following = brands.filter((b) => follows.includes(b.slug));
-  const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const initials = (session.name || account?.name || "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const allOrders = [...orders.map((o) => ({ key: o.id, title: `${[...new Set(o.items.map((i) => brands.find((b) => b.slug === i.brand)?.name))].join(" + ")} · ${o.items.reduce((s, i) => s + i.qty, 0)} piece${o.items.reduce((s, i) => s + i.qty, 0) === 1 ? "" : "s"}`, meta: `#${o.id} · placed ${new Date(o.placedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`, status: o.status, tint: o.status === "Delivered" ? "#F6F4EF" : "#DCD5C7", ink: o.status === "Delivered" ? "rgba(18,26,36,.6)" : "#121A24", total: money(o.total, true) })), ...ORDERS.map((o) => ({ key: o.meta, ...o }))];
   return (
     <Page className="pt-6 md:pt-9">

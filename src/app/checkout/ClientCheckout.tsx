@@ -14,7 +14,7 @@ const Step = ({ n, t }: { n: number; t: string }) => <div className="flex items-
 
 export default function Checkout() {
   const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, promoCode, points, redeem, setRedeem } = useApp();
-  const [addr, setAddr] = useState<Addr>({ name: session.name, email: "jules@renard.co", line: "41 Rue des Panoyaux", city: "Paris", zip: "75020", country: "France" });
+  const [addr, setAddr] = useState<Addr>({ name: session.name || (typeof window !== "undefined" ? (JSON.parse(localStorage.getItem("kindred.v2") || "{}").account?.name ?? "") : ""), email: "", line: "", city: "", zip: "", country: "" });
   const [card, setCard] = useState({ number: "4242 4242 4242 4242", exp: "09 / 29", cvc: "123" });
   const [done, setDone] = useState<Order | null>(null);
   const [busy, setBusy] = useState(false);
