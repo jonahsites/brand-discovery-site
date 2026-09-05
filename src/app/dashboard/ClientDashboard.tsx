@@ -504,10 +504,10 @@ function Connections({ brand }: { brand: string }) {
     }));
   };
 
-  useEffect(() => { refresh(); }, [brand]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const t = setTimeout(() => { refresh(); }, 0); return () => clearTimeout(t); }, [brand]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const connect = (p: Provider) => {
-    window.location.href = `/api/oauth/${p}/start?brand=${encodeURIComponent(brand)}`;
+    window.location.assign(`/api/oauth/${p}/start?brand=${encodeURIComponent(brand)}`);
   };
   const syncNow = async (p: Provider) => {
     setBusy(p); setMsg("");
