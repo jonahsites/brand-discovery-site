@@ -12,6 +12,7 @@ import Toaster from "@/components/Toaster";
 import BackToTop from "@/components/BackToTop";
 import Personalize from "@/components/Personalize";
 import Analytics from "@/components/Analytics";
+import RouteProgress from "@/components/RouteProgress";
 import { Suspense } from "react";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -65,7 +66,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-sm focus:bg-ink focus:px-4 focus:py-2 focus:text-[12px] focus:font-semibold focus:text-paper">Skip to content</a>
         <AppProvider>
           <Personalize />
-          <Suspense fallback={null}><Analytics /></Suspense>
+          <Suspense fallback={null}><Analytics /><RouteProgress /></Suspense>
           <TopNav />
           <div id="main" className="flex-1 pb-20 md:pb-0">{children}<Footer /></div>
           <MobileTabBar />

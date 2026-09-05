@@ -89,7 +89,7 @@ export default function Sell() {
               <Field label="Country code"><input className={input} value={f.country} onChange={(e) => set("country", e.target.value)} placeholder="NL" maxLength={2} /></Field>
               <Field label="Founded"><input className={input} value={f.founded} onChange={(e) => set("founded", e.target.value)} inputMode="numeric" /></Field>
               <Field label="Website (optional)"><input className={input} value={f.website} onChange={(e) => set("website", e.target.value)} placeholder="formandvoid.nl" /></Field>
-              <Field label="Avatar colour"><div className="flex gap-2">{TINTS.map(([t], i) => <button key={t} onClick={() => set("tint", i)} className="h-9 w-9 rounded-pill" style={{ background: t, boxShadow: f.tint === i ? "0 0 0 2px #F6F4EF,0 0 0 3.5px #121A24" : "inset 0 0 0 1px rgba(18,26,36,.1)" }} />)}</div></Field>
+              <Field label="Avatar color"><div className="flex gap-2">{TINTS.map(([t], i) => <button key={t} onClick={() => set("tint", i)} className="h-9 w-9 rounded-pill" style={{ background: t, boxShadow: f.tint === i ? "0 0 0 2px #F6F4EF,0 0 0 3.5px #121A24" : "inset 0 0 0 1px rgba(18,26,36,.1)" }} />)}</div></Field>
             </div>
           </Section>}
 

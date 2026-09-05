@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
  * matches the app's identity when it's shared on Slack, iMessage, Twitter, LinkedIn.
  */
 export const runtime = "edge";
-export const alt = "Kindred — Find your next favourite clothing brand";
+export const alt = "Kindred — Find your next favorite clothing brand";
 export const size = { width: 1200, height: 630 } as const;
 export const contentType = "image/png";
 
@@ -28,7 +28,7 @@ export default function OG() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ fontSize: 96, lineHeight: 0.95, letterSpacing: -3 }}>
-            Find your next<br />favourite clothing brand.
+            Find your next<br />favorite clothing brand.
           </div>
           <div style={{ fontSize: 26, color: "rgba(18,26,36,0.55)", maxWidth: 900, lineHeight: 1.35 }}>
             A marketplace for independent labels. Type how you feel. Buy from many small brands in one bag.

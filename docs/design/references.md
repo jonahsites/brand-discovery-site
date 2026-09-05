@@ -86,7 +86,7 @@ This is directly the image you sent (the four-button key fob). Function-first, d
 **Devices to add:**
 - Handwritten one-line caption on the hero (an SVG signature or Caveat font).
 - Rounded 30px+ cards but very short — reduce the perceived height with generous top padding on text.
-- Colour-of-the-week band across the top: three swatches from the featured brand.
+- Color-of-the-week band across the top: three swatches from the featured brand.
 
 **Avoid:** Overpolished CGI, Instagram-lifestyle stock photos, overuse of the terracotta accent.
 

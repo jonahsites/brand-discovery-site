@@ -21,7 +21,7 @@ export function Fob({
 }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   active?: boolean;
   size?: "sm" | "md" | "lg";
-  /** Colour of the LED bar that lights up on active. Defaults to sage. */
+  /** Color of the LED bar that lights up on active. Defaults to sage. */
   led?: "sage" | "moss" | "ink";
   children: ReactNode;
 }) {
@@ -29,7 +29,7 @@ export function Fob({
     size === "sm" ? "px-[13px] py-[9px] text-[11px] rounded-[13px]" :
     size === "lg" ? "px-6 py-[16px] text-[13px] rounded-[20px]" :
     "px-5 py-[13px] text-[12px] rounded-[17px]";
-  const ledColour = led === "moss" ? "var(--moss)" : led === "ink" ? "var(--ink)" : "var(--sage)";
+  const ledColor = led === "moss" ? "var(--moss)" : led === "ink" ? "var(--ink)" : "var(--sage)";
   return (
     <button
       type="button"
@@ -41,7 +41,7 @@ export function Fob({
         pad,
         className,
       )}
-      style={{ ["--fob-led" as string]: ledColour, ...(rest.style ?? {}) }}
+      style={{ ["--fob-led" as string]: ledColor, ...(rest.style ?? {}) }}
     >
       <span className="fob-led" aria-hidden="true" />
       <span className="relative">{children}</span>

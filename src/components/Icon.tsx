@@ -1,6 +1,6 @@
 /**
  * Single-stroke line icons at 20/22/24px. All render `currentColor`, so they inherit the
- * button/link colour and stay honest to the ink palette. Naming maps to what the app uses.
+ * button/link color and stay honest to the ink palette. Naming maps to what the app uses.
  * Sizes: 18 in the nav pills, 20 in the tab bar / bag drawer, 24 for hero controls.
  */
 import type { SVGProps } from "react";

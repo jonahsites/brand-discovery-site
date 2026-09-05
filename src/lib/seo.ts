@@ -203,7 +203,7 @@ export const ROUTE_META: Record<string, SeoInput> = {
   "/feed": { title: "Discover new brands", description: "One brand at a time. Swipe through independent labels on Kindred.", path: "/feed" },
   "/gift": {
     title: "Kindred gift cards",
-    description: "Give someone their next favourite brand. A Kindred gift card spends at any workshop here, in one bag and one checkout. The balance never expires.",
+    description: "Give someone their next favorite brand. A Kindred gift card spends at any workshop here, in one bag and one checkout. The balance never expires.",
     path: "/gift",
   },
   "/sell": {

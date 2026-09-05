@@ -23,7 +23,7 @@ Everything below the horizontal rule is done. Above the rule is what still needs
 - [x] Discover feed (For you / Following / Matched / Saved) with promo hero, category tiles, drops row, today's pick, workshop posts, brands-you'll-like, recently-viewed.
 - [x] Explore with a real filter panel (price, lead time, studio, brand size, size, materials, values), sort options including For-you (style-overlap), text and feel search via `/api/search`.
 - [x] Brand page (Shop / Lookbooks / About / Posts) as a storefront card, not a social profile.
-- [x] Product page with size/colour selection, reviews, price alerts, waitlist, complete-the-look, more-from-brand, similar-from-others.
+- [x] Product page with size/color selection, reviews, price alerts, waitlist, complete-the-look, more-from-brand, similar-from-others.
 - [x] Bag with per-brand shipping estimates, promo codes, gift cards, points redemption.
 - [x] Checkout with the same computation as the bag (both call `cart.ts::computeCart`) and a real order in `/account?tab=Orders`.
 - [x] Brand onboarding: 7-step wizard that creates a brand and drops the user on the seller dashboard.

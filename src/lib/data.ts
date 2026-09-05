@@ -17,7 +17,7 @@ export type Brand = {
   logo?: string; cover?: string; verification?: "pending";
   /* --- Personalisation the brand controls from Dashboard → Settings --- */
   accent?: string;          // hex, e.g. #4D6B52 — used as their page accent
-  bg?: string;              // hex — the brand-page ground colour
+  bg?: string;              // hex — the brand-page ground color
   headlineFont?: "serif" | "sans"; // display face for their h1/h2s
   intro?: string;           // longer paragraph shown on their brand page top
   quote?: string;           // pull quote (from press or a customer)
@@ -44,7 +44,7 @@ export const BRANDS: Brand[] = [
     founded: 2023, website: "coretheory.jp", story: "Nine knits made on a hand-flat machine in a Kyoto attic. Merino from a single farm in Tasmania.",
     styles: ["Knitwear", "Minimalist", "Techwear"], moods: ["cozy", "warm", "winter", "cabin", "soft", "layered", "slow", "snow"], categories: ["Knitwear", "Accessories"], materials: ["Merino", "Wool", "Felted wool", "Alpaca"], values: ["Small batch", "Traceable wool", "Made locally"], madeIn: "Kyoto, JP", batch: "one-off", gender: ["Unisex"], priceBand: [90, 260], sizeRange: ["S", "XL"], shipsTo: ["Japan", "US & Canada", "EU", "Worldwide"], shipsFrom: "Kyoto" },
   { slug: "neutral-ground", cover: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=1200&q=70&auto=format&fit=crop", name: "Neutral Ground", init: "NG", city: "Copenhagen", country: "DK", tagline: "Quiet shirting", items: 18, followers: 2400, verified: true, tint: "#7C8C6F", ink: "#fff",
-    founded: 2020, website: "neutralground.dk", story: "Poplin, oxford and twill in colours you already own. Cut boxy, finished by hand in a Copenhagen studio.",
+    founded: 2020, website: "neutralground.dk", story: "Poplin, oxford and twill in colors you already own. Cut boxy, finished by hand in a Copenhagen studio.",
     styles: ["Minimalist", "Tailoring", "Scandi"], moods: ["office", "clean", "smart casual", "date night", "quiet", "polished", "spring"], categories: ["Shirting", "Trousers"], materials: ["Poplin", "Organic cotton", "Tencel", "Linen"], values: ["Organic", "Fair wages", "Carbon neutral shipping"], madeIn: "Copenhagen, DK", batch: "medium", gender: ["Women", "Men", "Unisex"], priceBand: [80, 180], sizeRange: ["XS", "XL"], shipsTo: ["EU", "UK", "US & Canada"], shipsFrom: "Copenhagen" },
   { slug: "nomad", cover: "https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=1200&q=70&auto=format&fit=crop", name: "Nomad", init: "NO", city: "Melbourne", country: "AU", tagline: "Ripstop for the road", items: 26, followers: 1120, verified: false, tint: "#D6D9CE", ink: "#121A24",
     founded: 2018, website: "nomad.au", story: "Ripstop, cordura and canvas built for weeks away from a washing machine. Tested on the Overland Track.",
@@ -189,7 +189,7 @@ export const POSTS = [
   { ph: "Post 03", tag: "1 tagged", caption: "Wies on the seawall", likes: "1,204" },
   { ph: "Post 04", tag: "Video", caption: "One bolt, start to finish", likes: "3,088" },
   { ph: "Post 05", tag: "2 tagged", caption: "Repairs, week 40", likes: "296" },
-  { ph: "Post 06", tag: "4 tagged", caption: "New bone colourway", likes: "674" },
+  { ph: "Post 06", tag: "4 tagged", caption: "New bone colorway", likes: "674" },
 ];
 
 export const DASH = {

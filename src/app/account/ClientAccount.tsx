@@ -114,7 +114,7 @@ function AccountInner() {
           <div className="card rounded-lg p-6 md:p-7">
             <Label className="mb-[18px]">Size profile</Label>
             <div className="flex flex-col gap-[14px]">
-              {([["Tops", "tops", SIZE_LADDER.slice(1, 7)], ["Trousers · waist", "waist", ["28", "30", "32", "33", "34", "36"]], ["Shoes · EU", "shoe", ["40", "41", "42", "43", "44", "45"]]] as const).map(([label, key, opts]) => (
+              {([["Tops", "tops", SIZE_LADDER.slice(1, 7)], ["Pants · waist (in)", "waist", ["28", "30", "32", "34", "36", "38"]], ["Shoes · US", "shoe", ["7", "8", "9", "10", "11", "12"]]] as const).map(([label, key, opts]) => (
                 <div key={key}><div className="mb-2 text-[12px] text-ink/50">{label}</div><div className="flex flex-wrap gap-[7px]">{opts.map((v) => <button key={v} onClick={() => setSizes({ ...sizes, [key]: v })} className={clsx("rounded-pill px-[13px] py-[8px] text-[12.5px] font-medium", sizes[key] === v ? "bg-ink text-paper" : "bg-cream")}>{v}</button>)}</div></div>
               ))}
             </div>

@@ -9,6 +9,8 @@ import { Fob, FobRow } from "@/components/Fob";
 
 const STEPS = ["Style", "Sizes", "Brands"];
 const TOPS = ["XS", "S", "M", "L", "XL", "XXL"];
+const WAIST = ["28", "30", "32", "34", "36", "38"];
+const SHOE_US = ["7", "8", "9", "10", "11", "12"];
 
 function Pills({ opts, v, set, label }: { opts: string[]; v: string; set: (s: string) => void; label: string }) {
   return (
@@ -20,16 +22,27 @@ export default function Onboarding() {
   const router = useRouter();
   const { follows, toggleFollow, styleTags, setStyleTags, sizes, setSizes, completeOnboarding } = useApp();
   const [step, setStep] = useState(0);
-  const [styles, setStyles] = useState(() => styleTags.filter((t) => STYLE_CHOICES.includes(t)));
-  const [top, setTop] = useState(sizes.tops);
-  const [waist, setWaist] = useState(sizes.waist);
-  const [shoe, setShoe] = useState(sizes.shoe);
+  // Keep every previously-saved tag, whether from the known list or the user's own "Other".
+  const [styles, setStyles] = useState(() => styleTags.filter((t) => t.length > 0));
+  const [other, setOther] = useState("");
+  const [top, setTop] = useState(sizes.tops || "M");
+  const [waist, setWaist] = useState(sizes.waist || "32");
+  const [shoe, setShoe] = useState(sizes.shoe || "10");
   const [title, body, hintDefault] = STEP_COPY[step];
   const hint = step === 0 ? (styles.length < 3 ? `${styles.length} of 3 chosen · pick ${3 - styles.length} more` : `${styles.length} chosen`) : step === 2 ? (follows.length < 5 ? `${follows.length} of 5 chosen` : `${follows.length} brands followed`) : hintDefault;
-  const apply = () => { setStyleTags([...styles, ...styleTags.filter((t) => !STYLE_CHOICES.includes(t))]); setSizes({ tops: top, waist, shoe }); };
+  const addOther = () => {
+    const clean = other.trim();
+    if (!clean || styles.includes(clean)) { setOther(""); return; }
+    setStyles((prev) => [...prev, clean]);
+    setOther("");
+  };
+  const apply = () => { setStyleTags(styles); setSizes({ tops: top, waist, shoe }); };
   const finish = async () => { apply(); await completeOnboarding(); router.push("/"); };
   const next = () => { if (step === 0 && styles.length < 3) return; if (step === 2) void finish(); else setStep(step + 1); };
   const skip = async () => { if (styles.length) apply(); await completeOnboarding(); router.push("/"); };
+
+  const customPicks = styles.filter((s) => !STYLE_CHOICES.includes(s));
+
   return (
     <div className="relative min-h-screen bg-paper">
       <header className="flex items-center justify-between px-5 py-5 text-[12px] font-semibold md:px-10 md:py-7">
@@ -45,8 +58,23 @@ export default function Onboarding() {
           <h1 className="mb-2 text-[26px] leading-[1.05] tracking-[-.015em]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>{title}</h1>
           <p className="mb-6 text-[13px] leading-[1.55] text-ink/60">{body}</p>
           <div className="mb-6 flex-1">
-            {step === 0 && <FobRow>{STYLE_CHOICES.map((c) => { const on = styles.includes(c); return <Fob key={c} active={on} onClick={() => setStyles((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])}>{c}</Fob>; })}</FobRow>}
-            {step === 1 && <div className="flex flex-col gap-5"><Pills label="Tops" opts={TOPS} v={top} set={setTop} /><Pills label="Trousers · waist" opts={["30", "32", "34", "36"]} v={waist} set={setWaist} /><Pills label="Shoes · EU" opts={["41", "42", "43", "44"]} v={shoe} set={setShoe} /></div>}
+            {step === 0 && (
+              <div className="flex flex-col gap-4">
+                <FobRow>
+                  {STYLE_CHOICES.map((c) => { const on = styles.includes(c); return <Fob key={c} active={on} onClick={() => setStyles((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])}>{c}</Fob>; })}
+                  {customPicks.map((c) => <Fob key={c} active onClick={() => setStyles((prev) => prev.filter((x) => x !== c))}>{c} ×</Fob>)}
+                </FobRow>
+                <div className="rounded-sm bg-cream p-3">
+                  <Label className="mb-2">Other</Label>
+                  <form onSubmit={(e) => { e.preventDefault(); addOther(); }} className="flex gap-2">
+                    <input value={other} onChange={(e) => setOther(e.target.value)} placeholder="Type your own — e.g. Gorpcore, Y2K, Farmcore" className="min-w-0 flex-1 rounded-sm bg-white px-3 py-[9px] text-[13px] outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)] placeholder:text-ink/35" maxLength={30} />
+                    <button type="submit" disabled={!other.trim()} className="press rounded-sm bg-ink px-4 py-[9px] text-[11.5px] font-semibold text-paper disabled:opacity-40">Add</button>
+                  </form>
+                  <div className="mt-2 text-[10.5px] text-ink/45">Adds a personal tag; still counts toward your three.</div>
+                </div>
+              </div>
+            )}
+            {step === 1 && <div className="flex flex-col gap-5"><Pills label="Tops" opts={TOPS} v={top} set={setTop} /><Pills label="Pants · waist (in)" opts={WAIST} v={waist} set={setWaist} /><Pills label="Shoes · US" opts={SHOE_US} v={shoe} set={setShoe} /></div>}
             {step === 2 && <div className="flex flex-col gap-2">{BRANDS.map((b) => { const on = follows.includes(b.slug); return (
               <button key={b.slug} onClick={() => toggleFollow(b.slug)} className={clsx("press flex items-center gap-3 rounded-sm p-3 text-left", on ? "bg-ink text-paper" : "bg-cream")} type="button">
                 <Avatar init={b.init} tint={b.tint} ink={b.ink} size={38} />

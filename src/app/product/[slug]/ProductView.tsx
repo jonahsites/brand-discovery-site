@@ -70,7 +70,7 @@ export default function ProductView({ slug }: { slug: string }) {
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
             {sizes.map((s) => <Fob key={s} active={size === s} onClick={() => { setSize(s); setAdded(false); }} className="min-w-[58px]">{s}</Fob>)}
           </div>
-          <Label className="mb-3">Colour · {colors[color][0]}</Label>
+          <Label className="mb-3">Color · {colors[color][0]}</Label>
           <div className="mb-6 md:mb-[30px] flex gap-3">
             {colors.map(([n, hex], i) => <button key={n} aria-label={n} onClick={() => setColor(i)} className="h-[34px] w-[34px] rounded-pill" style={{ background: hex, boxShadow: color === i ? "0 0 0 2px #F6F4EF, 0 0 0 3.5px #121A24" : "inset 0 0 0 1px rgba(18,26,36,.1)" }} />)}
           </div>

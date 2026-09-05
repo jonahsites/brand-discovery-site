@@ -74,7 +74,7 @@ const DEFAULT_BAG: BagItem[] = [
   { key: "sail-overshirt|M · Salt", product: "sail-overshirt", variant: "M · Salt", qty: 1 },
 ];
 const DEFAULT_DROPS: Drop[] = [
-  { id: "drop-fv-bone", brand: "form-and-void", title: "Bone colourway", at: nextFriday().toISOString(), pieces: 40, blurb: "Forty pieces cut from the last of the sailmaker's roll. Followers get the link an hour early.", products: ["panel-work-jacket", "corozo-overshirt"] },
+  { id: "drop-fv-bone", brand: "form-and-void", title: "Bone colorway", at: nextFriday().toISOString(), pieces: 40, blurb: "Forty pieces cut from the last of the sailmaker's roll. Followers get the link an hour early.", products: ["panel-work-jacket", "corozo-overshirt"] },
   { id: "drop-os-salt", brand: "onda-studio", title: "Salt run 04", at: new Date(Date.now() + 9 * 864e5).toISOString(), pieces: 40, blurb: "Salt-washed overshirts, cut once, never restocked.", products: ["sail-overshirt", "salt-wash-tee"] },
 ];
 const DEFAULT_PROMOS: Promo[] = [
@@ -88,10 +88,10 @@ const DEFAULTS: Persisted = {
   ship: {}, session: { role: "shopper", name: "Jules Renard" },
   customBrands: [], customProducts: [], removedProducts: [], promos: DEFAULT_PROMOS, drops: DEFAULT_DROPS, orders: [], reviews: [],
   styleTags: ["Japanese streetwear", "Workwear", "Minimalist", "Deadstock", "Unisex", "Knitwear", "Under $200"],
-  sizes: { tops: "L", waist: "32", shoe: "43" }, notify: [], alerts: [],
+  sizes: { tops: "L", waist: "32", shoe: "10" }, notify: [], alerts: [],
   posts: [
     { id: "post-os-1", brand: "onda-studio", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=900&q=75&auto=format&fit=crop", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
-    { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colourway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
+    { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colorway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
   ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [], onboarded: false,
   boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},

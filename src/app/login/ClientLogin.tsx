@@ -32,7 +32,7 @@ function LoginInner() {
   return (
     <AuthShell>
       <h1 className="mb-1 text-[26px] font-normal leading-[1.1] tracking-[-.01em]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>Log in to Kindred</h1>
-      <div className="mb-5 text-[12px] text-ink/50">Your next favourite brand starts here</div>
+      <div className="mb-5 text-[12px] text-ink/50">Your next favorite brand starts here</div>
       <SocialRow onPick={() => setErr(supabaseEnabled ? "Turn the provider on in Supabase → Authentication → Providers first." : "Social sign-in needs Supabase; see docs/supabase-setup.md.")} />
       <Or />
       <form onSubmit={submit} className="flex flex-col gap-3">

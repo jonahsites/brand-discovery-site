@@ -34,7 +34,7 @@ export default function Gift() {
       <div className="grid gap-8 lg:grid-cols-[1fr_400px] items-start">
         <div>
           <div className="label mb-3">Gift cards</div>
-          <h1 className="mb-2 max-w-[640px] text-[30px] md:text-[40px]">Give someone their next favourite brand.</h1>
+          <h1 className="mb-2 max-w-[640px] text-[30px] md:text-[40px]">Give someone their next favorite brand.</h1>
           <p className="mb-7 max-w-[520px] text-[14px] leading-[1.6] text-ink/60">A Kindred gift card spends at any of the {brands.length} workshops here, in one bag and one checkout. The balance never expires.</p>
           <div className="card rounded-lg p-5 md:p-7">
             <Label className="mb-3">Amount</Label>

@@ -194,3 +194,10 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+/* Subtle page fade so a route change reads as a real load, not a snap swap. */
+@keyframes kindred-page-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#main > * { animation: kindred-page-in 0.28s ease-out; }
