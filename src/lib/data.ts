@@ -69,7 +69,7 @@ export type Product = {
 };
 export type LookFrame = { image?: string; h: number; bg?: string; product?: string; x?: number; y?: number; label?: string };
 export type Lookbook = { slug: string; brand: string; title: string; season: string; blurb: string; bg: string; frames: LookFrame[]; createdAt?: string };
-export type Post = { id: string; brand: string; caption: string; image?: string; products: string[]; at: string; likes: number };
+export type Post = { id: string; brand: string; caption: string; image?: string; products: string[]; at: string; likes: number; source?: "kindred" | "instagram" | "tiktok"; externalUrl?: string; videoUrl?: string };
 export type Message = { id: string; from: "shopper" | "brand"; text: string; at: string };
 export type Thread = { id: string; brand: string; shopper: string; messages: Message[] };
 

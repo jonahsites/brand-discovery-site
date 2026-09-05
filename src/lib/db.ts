@@ -96,6 +96,9 @@ const postFromRow = (r: Row): Post => ({
   id: r.id as string, brand: r.brand_slug as string, caption: (r.caption as string) ?? "",
   image: r.image as string | undefined, products: (r.products as string[]) ?? [],
   at: r.created_at as string, likes: (r.likes as number) ?? 0,
+  source: ((r.source as string) ?? "kindred") as Post["source"],
+  externalUrl: r.external_url as string | undefined,
+  videoUrl: r.video_url as string | undefined,
 });
 const reviewFromRow = (r: Row): Review => ({
   id: r.id as string, product: r.product_slug as string, name: r.author_name as string,
