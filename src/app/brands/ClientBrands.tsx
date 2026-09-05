@@ -3,11 +3,10 @@ import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { STYLE_OPTIONS, VALUE_OPTIONS, brandTier, fmtFollowers } from "@/lib/data";
+import { STYLE_OPTIONS, VALUE_OPTIONS, brandTier } from "@/lib/data";
 import { useApp } from "@/lib/store";
-import { FollowButton } from "@/components/BrandCard";
-import { Avatar, Chip, Label, Page, Placeholder } from "@/components/ui";
-import { styleOverlap } from "@/lib/looks";
+import BrandTile from "@/components/BrandTile";
+import { Chip, Label, Page } from "@/components/ui";
 
 const TIERS = ["Indie", "Rising", "Established"];
 const SORTS = ["Trending", "Newest", "Most followed", "A–Z"];
@@ -16,7 +15,7 @@ export default function Brands() { return <Suspense><BrandsInner /></Suspense>; 
 
 function BrandsInner() {
   const sp = useSearchParams();
-  const { brands, products, follows, promos, drops, styleTags } = useApp();
+  const { brands, products, promos, drops } = useApp();
   const [tier, setTier] = useState<string[]>([]);
   const [style, setStyle] = useState(sp.get("style") ?? "All");
   const [values, setValues] = useState<string[]>([]);
@@ -52,19 +51,10 @@ function BrandsInner() {
             <div><Label className="mb-3">Values</Label><div className="flex flex-wrap gap-[6px]">{VALUE_OPTIONS.map((v) => <button key={v} onClick={() => tog(values, v, setValues)} className={clsx("rounded-pill px-3 py-[7px] text-[12px] font-medium", values.includes(v) ? "bg-ink text-paper" : "bg-white soft")}>{v}</button>)}</div></div>
             <Link href="/sell" className="rounded-lg bg-cream p-5"><div className="mb-1 text-[14px] font-semibold tracking-[-.02em]">Your brand isn&apos;t here?</div><div className="text-[12px] leading-[1.5] text-ink/60">Apply in five minutes. Your onboarding answers become these filters.</div></Link>
           </aside>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {list.map((b) => { const own = products.filter((p) => p.brand === b.slug); const promo = promos.find((p) => p.active && p.brand === b.slug); const drop = drops.find((d) => d.brand === b.slug); return (
-              <div key={b.slug} className="card overflow-hidden rounded-lg lift">
-                <Link href={`/brand/${b.slug}`}><Placeholder src={b.cover} wide className="h-[120px]" label="Cover">{(promo || drop) && <span className="glass-chip absolute left-3 top-3 rounded-pill px-3 py-[5px] text-[10.5px] font-semibold">{promo ? `${promo.pct}% off` : "Drop soon"}</span>}</Placeholder></Link>
-                <div className="p-4 pt-0">
-                  <div className="-mt-7 mb-2"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={52} radius={14} src={b.logo} className="ring-[3px] ring-white" /></div>
-                  <Link href={`/brand/${b.slug}`} className="block truncate text-[19px] font-bold leading-tight tracking-[-.03em]">{b.name}</Link>
-                  <div className="mono mb-2 text-[10.5px] text-ink/45">{b.city}, {b.country} · {own.length} items · {fmtFollowers(b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0))} followers</div>
-                  <p className="mb-3 line-clamp-2 text-[13px] leading-[1.5] text-ink/62">{b.tagline}</p>
-                  <div className="mb-4 flex flex-wrap gap-[5px]">{styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[9px] py-[4px] text-[10.5px] font-semibold text-paper">Your look</span>}{[brandTier(b.followers), ...b.styles.slice(0, 2), b.values[0]].filter(Boolean).map((t) => <span key={t} className="rounded-pill bg-cream px-[9px] py-[4px] text-[10.5px] font-medium">{t}</span>)}</div>
-                  <div className="flex gap-2"><FollowButton slug={b.slug} size="sm" className="flex-1" /><Link href={`/brand/${b.slug}`} className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-white soft text-[13px]">↗</Link></div>
-                </div>
-              </div>); })}
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {list.map((b) => { const hero = products.find((p) => p.brand === b.slug && !!p.image)?.image; return (
+              <BrandTile key={b.slug} b={b} hero={hero} />
+            ); })}
             {list.length === 0 && <div className="card col-span-full rounded-lg p-10 text-center text-[14px] text-ink/55">No brands match those filters yet.</div>}
           </div>
         </div>
