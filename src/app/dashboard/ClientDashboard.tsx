@@ -115,12 +115,39 @@ function Products({ brand, mine }: { brand: string; mine: Product[] }) {
   const [tagText, setTagText] = useState("");
   const [csv, setCsv] = useState(false);
   const [csvText, setCsvText] = useState("");
+  const [shop, setShop] = useState(false);
+  const [shopUrl, setShopUrl] = useState("");
+  const [shopBusy, setShopBusy] = useState(false);
+  const [shopErr, setShopErr] = useState("");
+  const [shopPreview, setShopPreview] = useState<Product[] | null>(null);
+  const [shopPicks, setShopPicks] = useState<Set<string>>(new Set());
   const importCsv = () => {
     csvText.split("\n").map((l) => l.split(",").map((c) => c.trim())).filter((c) => c[0] && Number(c[1]) > 0).forEach((c, i) => {
       const slug = slugify(`${c[0]}-${brand.split("-")[0]}`) + (mine.some((p) => p.slug === slugify(`${c[0]}-${brand.split("-")[0]}`)) ? "-" + uid().slice(0, 4) : "");
       upsertProduct({ slug, brand, name: c[0], price: Number(c[1]), category: c[2] && CATEGORY_OPTIONS.includes(c[2]) ? c[2] : "Shirting", sizes: c[3] ? c[3].split(/[\s/]+/).filter(Boolean) : ["S", "M", "L", "XL"], image: c[4] || undefined, stock: 20, tags: [], createdAt: new Date(Date.now() + i).toISOString() });
     });
     setCsvText(""); setCsv(false);
+  };
+  const previewShopify = async () => {
+    setShopBusy(true); setShopErr(""); setShopPreview(null);
+    try {
+      const res = await fetch("/api/import/shopify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: shopUrl, brand }) });
+      const j = await res.json();
+      if (!j.ok) { setShopErr(j.error ?? "Import failed"); return; }
+      setShopPreview(j.products);
+      setShopPicks(new Set((j.products as Product[]).map((p) => p.slug)));
+    } catch (e) { setShopErr(e instanceof Error ? e.message : "Network error"); }
+    finally { setShopBusy(false); }
+  };
+  const importShopify = () => {
+    if (!shopPreview) return;
+    let i = 0;
+    for (const p of shopPreview) {
+      if (!shopPicks.has(p.slug)) continue;
+      upsertProduct({ ...p, createdAt: new Date(Date.now() + i).toISOString() });
+      i++;
+    }
+    setShopPreview(null); setShopUrl(""); setShop(false); setShopPicks(new Set());
   };
   const start = (p?: Product) => { setEdit(p ? { ...p } : { ...EMPTY, brand }); setTagText(p?.tags?.join(", ") ?? ""); };
   const save = () => {
@@ -132,7 +159,48 @@ function Products({ brand, mine }: { brand: string; mine: Product[] }) {
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_420px] items-start">
       <div className="card rounded-lg p-4 md:p-[26px]">
-        <div className="mb-4 flex items-center justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Catalogue</div><div className="flex gap-2"><Button size="sm" variant="secondary" onClick={() => setCsv(!csv)}>Import CSV</Button><Button size="sm" onClick={() => start()}>+ New product</Button></div></div>
+        <div className="mb-4 flex items-center justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Catalogue</div><div className="flex flex-wrap gap-2"><Button size="sm" variant="secondary" onClick={() => { setShop(!shop); setCsv(false); }}>Import from Shopify</Button><Button size="sm" variant="secondary" onClick={() => { setCsv(!csv); setShop(false); }}>Import CSV</Button><Button size="sm" onClick={() => start()}>+ New product</Button></div></div>
+        {shop && (
+          <div className="mb-4 rounded-md bg-cream p-4">
+            {!shopPreview && (
+              <>
+                <div className="mb-2 text-[12.5px] text-ink/70 font-semibold">Import from Shopify</div>
+                <div className="mb-3 text-[12px] text-ink/55">Paste your store URL and we&apos;ll pull every published product — images, prices, sizes, colors, description. Works with any public Shopify store; no API key needed.</div>
+                <form onSubmit={(e) => { e.preventDefault(); void previewShopify(); }} className="flex flex-col gap-2 sm:flex-row">
+                  <input value={shopUrl} onChange={(e) => setShopUrl(e.target.value)} placeholder="yourshop.myshopify.com or https://yourshop.com" className={clsx(inputCls, "!bg-white")} />
+                  <Button size="sm" type="submit" disabled={!shopUrl.trim() || shopBusy} className={clsx((!shopUrl.trim() || shopBusy) && "opacity-40", "!px-6")}>{shopBusy ? "Loading…" : "Preview"}</Button>
+                </form>
+                {shopErr && <div className="mt-2 text-[12px] text-rust">{shopErr}</div>}
+              </>
+            )}
+            {shopPreview && (
+              <>
+                <div className="mb-2 flex items-baseline justify-between">
+                  <div className="text-[12.5px] font-semibold text-ink/70">Found {shopPreview.length} product{shopPreview.length === 1 ? "" : "s"} — {shopPicks.size} selected</div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShopPicks(new Set(shopPreview.map((p) => p.slug)))} className="text-[11px] font-semibold text-ink/60">All</button>
+                    <button type="button" onClick={() => setShopPicks(new Set())} className="text-[11px] font-semibold text-ink/60">None</button>
+                  </div>
+                </div>
+                <div className="max-h-[320px] overflow-y-auto rounded-sm bg-white">
+                  {shopPreview.map((p) => { const on = shopPicks.has(p.slug); return (
+                    <label key={p.slug} className="flex cursor-pointer items-center gap-3 border-b border-ink/6 px-3 py-2 last:border-b-0">
+                      <input type="checkbox" checked={on} onChange={() => setShopPicks((s) => { const n = new Set(s); if (on) n.delete(p.slug); else n.add(p.slug); return n; })} className="h-4 w-4" />
+                      <Placeholder src={p.image} className="h-10 w-9 flex-none rounded-sm" />
+                      <div className="min-w-0 flex-1"><div className="truncate text-[12.5px] font-medium">{p.name}</div><div className="mono text-[10.5px] text-ink/45">{p.category} · {(p.sizes ?? []).slice(0, 4).join(" ")}</div></div>
+                      <span className="text-[12.5px] font-medium">${p.price}</span>
+                    </label>
+                  ); })}
+                  {shopPreview.length === 0 && <div className="p-4 text-[12px] text-ink/50">The store returned no products.</div>}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={importShopify} disabled={shopPicks.size === 0} className={clsx(shopPicks.size === 0 && "opacity-40")}>Import {shopPicks.size} product{shopPicks.size === 1 ? "" : "s"}</Button>
+                  <Button size="sm" variant="secondary" onClick={() => { setShopPreview(null); setShopUrl(""); }}>Try another store</Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {csv && <div className="mb-4 rounded-md bg-cream p-4"><div className="mb-2 text-[12.5px] text-ink/60">Paste rows as <span className="mono">name, price, category, sizes, image</span> (one per line). Works with a Shopify product export trimmed to those columns.</div><textarea value={csvText} onChange={(e) => setCsvText(e.target.value)} placeholder={"Slow Morning Linen Shirt, 138, Shirting, S M L XL, https://…/shirt.jpg"} className={clsx(inputCls, "mb-2 min-h-[90px] font-mono text-[12px]")} /><Button size="sm" onClick={importCsv} disabled={!csvText.trim()}>Import {csvText.split("\n").filter((l) => l.trim()).length} rows</Button></div>}
         <div className="flex flex-col gap-2">
           {mine.map((p) => { const { price, promo } = priceOf(p); return (
