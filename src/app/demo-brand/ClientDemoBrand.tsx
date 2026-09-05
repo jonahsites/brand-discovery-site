@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
+import { getSupabase } from "@/lib/supabase";
 import type { Brand, Product } from "@/lib/data";
 
 /**
@@ -62,13 +63,27 @@ export default function ClientDemoBrand() {
   useEffect(() => {
     if (!hydrated || seededRef.current || !account?.signedIn) return;
     seededRef.current = true;
-    upsertBrand(DEMO_BRAND);
-    for (const p of DEMO_PRODUCTS) upsertProduct(p);
-    setSession({ role: "brand", name: account.name || "You", brand: DEMO_BRAND.slug });
-    toast("Kindred Labs demo brand created");
-    setDone(true);
-    const t = setTimeout(() => router.push(`/brand/${DEMO_BRAND.slug}`), 800);
-    return () => clearTimeout(t);
+    (async () => {
+      // If Supabase already has the demo brand for this user, don't reseed — just flip the
+      // session and forward. The row was backfilled once via commit 4 of the marketplace migration.
+      const sb = getSupabase();
+      let alreadyExists = false;
+      if (sb) {
+        const { data: u } = await sb.auth.getUser();
+        if (u.user) {
+          const { data } = await sb.from("brands").select("slug").eq("slug", DEMO_BRAND.slug).eq("owner_id", u.user.id).maybeSingle();
+          alreadyExists = !!data;
+        }
+      }
+      if (!alreadyExists) {
+        upsertBrand(DEMO_BRAND);
+        for (const p of DEMO_PRODUCTS) upsertProduct(p);
+      }
+      setSession({ role: "brand", name: account.name || "You", brand: DEMO_BRAND.slug });
+      toast(alreadyExists ? "Signed in to Kindred Labs" : "Kindred Labs demo brand created");
+      setDone(true);
+      setTimeout(() => router.push(`/brand/${DEMO_BRAND.slug}`), 800);
+    })().catch(() => {});
   }, [hydrated, account, upsertBrand, upsertProduct, setSession, router, toast]);
 
   const message = needsSignIn

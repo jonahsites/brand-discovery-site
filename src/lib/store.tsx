@@ -176,26 +176,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
         db.fetchThreads(), db.fetchGiftCards(), db.fetchFeatured(),
       ]);
       if (!alive) return;
+      // Merge remote into local: remote rows are canonical and win on id/slug conflict, but
+      // anon-only rows (e.g. e2e-seeded localStorage, offline drafts) survive.
+      const mergeBy = <T,>(remote: T[], local: T[], keyOf: (x: T) => string): T[] => {
+        const keys = new Set(remote.map(keyOf));
+        return [...remote, ...local.filter((x) => !keys.has(keyOf(x)))];
+      };
       setState((p) => ({
         ...p,
-        customBrands: brands.length ? brands : p.customBrands,
-        customProducts: prod.products.length ? prod.products : p.customProducts,
-        removedProducts: prod.removed.length ? prod.removed : p.removedProducts,
-        promos: promos.length ? promos : p.promos,
-        drops: drops.length ? drops : p.drops,
-        posts: posts.length ? posts : p.posts,
-        reviews: reviews.length ? reviews : p.reviews,
-        lookbooks: lookbooks.length ? lookbooks : p.lookbooks,
-        orders: orders.length ? orders : p.orders,
-        threads: threads.length ? threads : p.threads,
-        giftCards: gifts.length ? gifts : p.giftCards,
+        customBrands: mergeBy(brands, p.customBrands, (b) => b.slug),
+        customProducts: mergeBy(prod.products, p.customProducts, (x) => x.slug),
+        removedProducts: [...new Set([...prod.removed, ...p.removedProducts])],
+        promos: mergeBy(promos, p.promos, (x) => x.id),
+        drops: mergeBy(drops, p.drops, (x) => x.id),
+        posts: mergeBy(posts, p.posts, (x) => x.id),
+        reviews: mergeBy(reviews, p.reviews, (x) => x.id),
+        lookbooks: mergeBy(lookbooks, p.lookbooks, (x) => x.slug),
+        orders: mergeBy(orders, p.orders, (x) => x.id),
+        threads: mergeBy(threads, p.threads, (x) => x.id),
+        giftCards: mergeBy(gifts, p.giftCards, (x) => x.code),
         featured: featured ?? p.featured,
       }));
     };
     const pullOwnerScoped = async (userId: string) => {
       const [wl, al, no] = await Promise.all([db.fetchWaitlist(userId), db.fetchAlerts(userId), db.fetchNotifies(userId)]);
       if (!alive) return;
-      setState((p) => ({ ...p, waitlist: wl.length ? wl : p.waitlist, alerts: al.length ? al : p.alerts, notify: no.length ? no : p.notify }));
+      setState((p) => ({ ...p, waitlist: [...new Set([...wl, ...p.waitlist])], alerts: [...new Set([...al, ...p.alerts])], notify: [...new Set([...no, ...p.notify])] }));
     };
     pullShared().catch(() => {});
     sb.auth.getUser().then(({ data }) => { if (data.user && alive) pullOwnerScoped(data.user.id).catch(() => {}); });
