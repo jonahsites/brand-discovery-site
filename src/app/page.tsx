@@ -117,7 +117,7 @@ function HomeInner() {
                 {upcoming.length > 0 && (
                   <div className="mt-5 hidden md:grid gap-[18px] md:grid-cols-2">
                     {upcoming.slice(0, 2).map((d) => { const b = brands.find((x) => x.slug === d.brand); if (!b) return null; const on = notify.includes(d.id); return (
-                      <div key={d.id} className="lift flex items-center gap-4 rounded-[26px] p-5" style={{ background: "var(--indigo)", color: "var(--paper)" }}>
+                      <div key={d.id} className="lift outlined-ink flex items-center gap-4 rounded-md p-5">
                         <Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} />
                         <div className="min-w-0 flex-1"><div className="text-[10px] text-paper/55">{b.name} · drop</div><div className="truncate text-[15px] font-bold tracking-[-.02em]">{d.title}</div><div className="mt-2"><Countdown at={d.at} dark compact /></div></div>
                         <button onClick={() => toggleNotify(d.id)} className={clsx("rounded-pill px-3 py-2 text-[10px] font-semibold", on ? "bg-rust text-paper" : "bg-paper/15 text-paper hover:bg-paper/25")}>{on ? "✓ Set" : "Notify"}</button>
@@ -125,7 +125,7 @@ function HomeInner() {
                   </div>
                 )}
                 {pick && (
-                  <Link href={`/product/${pick.slug}`} className="lift mt-5 hidden md:flex items-center gap-4 rounded-[24px] p-3" style={{ background: "var(--clay)", color: "var(--ink)" }}>
+                  <Link href={`/product/${pick.slug}`} className="lift outlined mt-5 hidden md:flex items-center gap-4 rounded-md p-3">
                     <Placeholder src={pick.image} className="h-[72px] w-[64px] flex-none rounded-[14px]" />
                     <div className="min-w-0 flex-1"><div className="text-[10px] font-semibold uppercase tracking-[.14em] opacity-70">Today&apos;s pick · daily</div><div className="mt-1 text-[16px] font-normal tracking-[-.02em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{pick.name}</div><div className="text-[11px] opacity-60">{brands.find((b) => b.slug === pick.brand)?.name} · {money(priceOf(pick).price)}</div></div>
                     <span className="grid h-8 w-8 place-items-center rounded-pill bg-ink text-paper text-[12px]">↗</span>
