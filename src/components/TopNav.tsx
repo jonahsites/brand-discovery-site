@@ -20,6 +20,7 @@ export default function TopNav() {
           <span className="grid h-[26px] w-[26px] place-items-center rounded-[7px] bg-ink text-[12px] font-bold text-paper">k</span>
           <span className="text-[15px] font-extrabold tracking-[-.03em]">Kindred</span>
         </Link>
+        {session.role !== "brand" && <Link href="/sell" className="press hidden sm:inline-flex lg:hidden items-center gap-1 rounded-md bg-ink px-3 py-[7px] text-[11px] font-semibold text-paper">Sell</Link>}
         <nav className="hidden lg:flex items-center rounded-pill bg-cream p-1 ml-2">
           {links.map(([href, label]) => <Link key={href} href={href} className={clsx("rounded-pill px-4 py-[7px] text-[11px] font-semibold", path === href ? "bg-white text-ink shadow-[0_4px_12px_-8px_rgba(18,26,36,.5)]" : "text-ink/50 hover:text-ink")}>{label}</Link>)}
         </nav>
@@ -28,6 +29,7 @@ export default function TopNav() {
           <span className="hidden md:inline rounded-sm bg-cream px-[6px] py-[2px] text-[10px] font-semibold text-ink/45 tracking-[.06em]">⌘K</span>
         </button>
         <div className="ml-auto flex items-center gap-2 md:gap-3">
+          {session.role !== "brand" && <Link href="/sell" className="press sm:hidden rounded-md bg-ink px-3 py-[7px] text-[11px] font-semibold text-paper">Sell</Link>}
           <button onClick={() => openSearch()} aria-label="Search" className="press grid h-9 w-9 md:hidden place-items-center rounded-md bg-white text-ink/70 soft"><IconSearch size={16} /></button>
           <div className="relative hidden md:block">
             <button onClick={() => setNotif(!notif)} aria-label="Notifications" className="press relative grid h-10 w-10 place-items-center rounded-md bg-white text-ink/70 soft"><IconBell size={16} />{notifications.length > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-[17px] min-w-[17px] place-items-center rounded-pill bg-rust px-1 text-[9px] font-bold text-paper">{notifications.length}</span>}</button>
