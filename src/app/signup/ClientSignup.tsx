@@ -3,7 +3,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/lib/store";
-import { AuthShell, Or, SocialRow, authInput } from "@/components/AuthShell";
+import { AuthShell, authInput } from "@/components/AuthShell";
 import { Label } from "@/components/ui";
 import { supabaseEnabled } from "@/lib/supabase";
 
@@ -20,18 +20,14 @@ function SignupInner() {
   const [busy, setBusy] = useState(false);
   const next = sp.get("next");
 
-  const create = async (provider: "email" | "x" | "apple" | "google") => {
+  const create = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!hydrated || busy) return;
     if (name.trim().length < 2) return setErr("Add your name first; brands see it when you message them.");
-    if (provider === "email") {
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setErr("That email doesn't look right.");
-      if (password.length < 6) return setErr("Use at least 6 characters for the password.");
-    } else if (!supabaseEnabled) {
-      return setErr("Social sign-in needs Supabase; see docs/supabase-setup.md. Use email instead.");
-    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setErr("That email doesn't look right.");
+    if (password.length < 6) return setErr("Use at least 6 characters for the password.");
     setBusy(true); setErr("");
-    const localEmail = provider === "email" ? email.trim().toLowerCase() : `${name.trim().toLowerCase().replace(/\s+/g, ".")}@${provider}.kindred`;
-    const r = await signUp({ name: name.trim(), email: localEmail, password: provider === "email" ? password : undefined, provider });
+    const r = await signUp({ name: name.trim(), email: email.trim().toLowerCase(), password, provider: "email" });
     setBusy(false);
     if (!r.ok) return setErr(r.error);
     if (r.needsConfirmation) { router.replace("/verify-email"); return; }
@@ -42,9 +38,7 @@ function SignupInner() {
     <AuthShell>
       <h1 className="mb-1 text-[26px] font-normal leading-[1.1] tracking-[-.01em]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>Join Kindred</h1>
       <div className="mb-5 text-[12px] text-ink/50">Three questions and the whole place is dressed for you</div>
-      <SocialRow onPick={create} />
-      <Or />
-      <form onSubmit={(e) => { e.preventDefault(); create("email"); }} className="flex flex-col gap-3">
+      <form onSubmit={create} className="flex flex-col gap-3">
         <div><Label className="mb-[6px] !text-[9.5px]">Your name</Label><input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jules Renard" className={authInput} /></div>
         <div><Label className="mb-[6px] !text-[9.5px]">Email address</Label><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={authInput} /></div>
         <div><Label className="mb-[6px] !text-[9.5px]">Password</Label><input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={authInput} /></div>

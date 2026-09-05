@@ -3,7 +3,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/lib/store";
-import { AuthShell, Or, SocialRow, authInput } from "@/components/AuthShell";
+import { AuthShell, authInput } from "@/components/AuthShell";
 import { Label } from "@/components/ui";
 import { supabaseEnabled } from "@/lib/supabase";
 
@@ -33,8 +33,6 @@ function LoginInner() {
     <AuthShell>
       <h1 className="mb-1 text-[26px] font-normal leading-[1.1] tracking-[-.01em]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>Log in to Kindred</h1>
       <div className="mb-5 text-[12px] text-ink/50">Your next favorite brand starts here</div>
-      <SocialRow onPick={() => setErr(supabaseEnabled ? "Turn the provider on in Supabase → Authentication → Providers first." : "Social sign-in needs Supabase; see docs/supabase-setup.md.")} />
-      <Or />
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div><Label className="mb-[6px] !text-[9.5px]">Email address</Label><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={authInput} /></div>
         <div><div className="mb-[6px] flex items-baseline justify-between"><Label className="!text-[9.5px]">Password</Label><Link href="/forgot-password" className="text-[10.5px] font-semibold text-ink/50 hover:text-ink">Forgot?</Link></div><input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={authInput} /></div>
