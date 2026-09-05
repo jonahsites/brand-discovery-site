@@ -9,6 +9,7 @@ import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
 import { Button, Label, Placeholder, Verified, Page } from "@/components/ui";
+import ShareBrand from "@/components/ShareBrand";
 import Countdown, { useNow } from "@/components/Countdown";
 import { styleOverlap } from "@/lib/looks";
 
@@ -38,7 +39,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
             <div className="min-w-0"><div className="label">{b.city}, {b.country}{b.founded ? ` · since ${b.founded}` : ""}</div><div className="mt-[3px] truncate text-[12px] text-ink/50">{brandTier(followers)} · {b.batch} batch · ships from {b.shipsFrom}</div></div>
             <div className="ml-auto flex flex-none gap-2">
               {isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[11px] font-semibold text-paper">Edit in dashboard</Link>}
-              <button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-cream text-[14px]" aria-label="Share">↗</button>
+              <ShareBrand b={b} className="press grid h-[38px] w-[38px] place-items-center rounded-md bg-cream text-ink/70" />
             </div>
           </div>
           <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1>{b.verified && <Verified size={20} />}{(b.plan === "premium" || b.plan === "signature") && <span className="rounded-pill px-3 py-1 text-[10px] font-semibold uppercase tracking-[.14em] text-paper" style={{ background: planOf(b.plan).badgeBg }}>{planOf(b.plan).badge}</span>}</div>
