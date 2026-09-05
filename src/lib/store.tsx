@@ -67,34 +67,27 @@ type Ctx = State & {
   notifications: { id: string; kind: "drop" | "price" | "order" | "message"; title: string; body: string; href: string; at: string }[];
 };
 
-const DEFAULT_BAG: BagItem[] = [
-  { key: "panel-work-jacket|XL · Faded black", product: "panel-work-jacket", variant: "XL · Faded black", qty: 1 },
-  { key: "wide-wool-trouser|L · Bone", product: "wide-wool-trouser", variant: "L · Bone", qty: 1 },
-  { key: "heavyweight-crew|L · Ecru", product: "heavyweight-crew", variant: "L · Ecru", qty: 2 },
-  { key: "sail-overshirt|M · Salt", product: "sail-overshirt", variant: "M · Salt", qty: 1 },
-];
+const DEFAULT_BAG: BagItem[] = [];
 const DEFAULT_DROPS: Drop[] = [
   { id: "drop-fv-bone", brand: "form-and-void", title: "Bone colorway", at: nextFriday().toISOString(), pieces: 40, blurb: "Forty pieces cut from the last of the sailmaker's roll. Followers get the link an hour early.", products: ["panel-work-jacket", "corozo-overshirt"] },
   { id: "drop-os-salt", brand: "onda-studio", title: "Salt run 04", at: new Date(Date.now() + 9 * 864e5).toISOString(), pieces: 40, blurb: "Salt-washed overshirts, cut once, never restocked.", products: ["sail-overshirt", "salt-wash-tee"] },
 ];
-const DEFAULT_PROMOS: Promo[] = [
-  { id: "promo-ct-autumn", brand: "core-theory", code: "WARMUP", pct: 15, label: "Autumn knit week", products: "all", active: true, ends: new Date(Date.now() + 6 * 864e5).toISOString() },
-];
+const DEFAULT_PROMOS: Promo[] = [];
 function nextFriday() { const d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7)); d.setHours(9, 0, 0, 0); return d; }
 
 const DEFAULTS: Persisted = {
-  bag: DEFAULT_BAG, follows: ["form-and-void", "onda-studio"],
-  saved: ["cotton-chore-coat", "sail-overshirt", "felted-cardigan", "ripstop-cargo", "wide-wool-trouser", "boxy-poplin-shirt"],
-  ship: {}, session: { role: "shopper", name: "Jules Renard" },
+  bag: DEFAULT_BAG, follows: [],
+  saved: [],
+  ship: {}, session: { role: "shopper", name: "" },
   customBrands: [], customProducts: [], removedProducts: [], promos: DEFAULT_PROMOS, drops: DEFAULT_DROPS, orders: [], reviews: [],
-  styleTags: ["Japanese streetwear", "Workwear", "Minimalist", "Deadstock", "Unisex", "Knitwear", "Under $200"],
+  styleTags: [],
   sizes: { tops: "L", waist: "32", shoe: "10" }, notify: [], alerts: [],
   posts: [
     { id: "post-os-1", brand: "onda-studio", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=900&q=75&auto=format&fit=crop", caption: "Salt-washed cotton, cut once and never restocked. Shot on the seawall at 6am — the whole run is 40 pieces.", products: ["sail-overshirt", "salt-wash-tee"], at: new Date(Date.now() - 4 * 36e5).toISOString(), likes: 1204 },
     { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colorway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
   ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [], onboarded: false,
-  boards: [{ id: "board-autumn", name: "Autumn layers", products: ["felted-cardigan", "panel-work-jacket", "wide-wool-trouser"] }], views: {},
+  boards: [], views: {},
 };
 
 const AppContext = createContext<Ctx | null>(null);

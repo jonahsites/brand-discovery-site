@@ -30,10 +30,10 @@ function DashInner() {
   const revenue = myOrders.reduce((s, o) => s + o.items.filter((i) => i.brand === brand.slug).reduce((a, i) => a + i.unit * i.qty, 0), 0);
   const seeded = !brand.createdAt;
   const stats = [
-    { label: "Sales · 30d", value: money((seeded ? 12408 : 0) + revenue), delta: seeded ? "↑ 34% vs prev" : `${myOrders.length} live orders`, bg: "#121A24", ink: "#F6F4EF" },
-    { label: "Orders", value: String((seeded ? 86 : 0) + myOrders.length), delta: seeded ? "↑ 12 vs prev" : "since launch", bg: "#2A3A52", ink: "#F6F4EF" },
-    { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) && !seeded ? 1 : 0)).toLocaleString(), delta: seeded ? "↑ 214 new" : "share your page", bg: "#EDE8DE", ink: "#121A24" },
-    { label: "Profile views", value: ((seeded ? 24100 : 0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#4D6B52", ink: "#F6F4EF" },
+    { label: "Sales · 30d", value: money((0) + revenue), delta: `${myOrders.length} live orders`, bg: "#121A24", ink: "#F6F4EF" },
+    { label: "Orders", value: String((0) + myOrders.length), delta: "since launch", bg: "#2A3A52", ink: "#F6F4EF" },
+    { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) && !seeded ? 1 : 0)).toLocaleString(), delta: "share your page", bg: "#EDE8DE", ink: "#121A24" },
+    { label: "Profile views", value: ((0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#4D6B52", ink: "#F6F4EF" },
   ];
   return (
     <div className="flex min-h-screen">
@@ -338,7 +338,7 @@ function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seed
     const o = orders.reduce((n, ord) => n + ord.items.filter((it) => it.product === p.slug).reduce((a, it) => a + it.qty, 0), 0) + (seeded ? Math.round(base * 0.028) : 0);
     return { p, v, s, w, o };
   }).sort((a, b) => b.v - a.v);
-  const profileViews = (seeded ? 24100 : 0) + (views[brand.slug] ?? 0);
+  const profileViews = (0) + (views[brand.slug] ?? 0);
   const productViews = rows.reduce((a, r) => a + r.v, 0);
   const saves = rows.reduce((a, r) => a + r.s, 0);
   const ordered = rows.reduce((a, r) => a + r.o, 0);
