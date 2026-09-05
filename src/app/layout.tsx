@@ -47,6 +47,9 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", site: SITE.twitter, creator: SITE.twitter, title: `${SITE.name} — ${SITE.tagline}`, description: SITE.description, images: [absUrl(SITE.ogImage)] },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
   formatDetection: { email: false, telephone: false },
+  // Google Search Console verification. Paste the token from Search Console → URL prefix →
+  // HTML tag into Vercel env as NEXT_PUBLIC_GOOGLE_VERIFICATION, redeploy, hit Verify.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION } : undefined,
 };
 
 export const viewport: Viewport = {
