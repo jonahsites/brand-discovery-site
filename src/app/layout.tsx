@@ -10,6 +10,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import Footer from "@/components/Footer";
 import Toaster from "@/components/Toaster";
 import BackToTop from "@/components/BackToTop";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 import Personalize from "@/components/Personalize";
 import Analytics from "@/components/Analytics";
 import RouteProgress from "@/components/RouteProgress";
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SearchOverlay />
           <Toaster />
           <BackToTop />
+          <VercelAnalytics />
         </AppProvider>
       </body>
     </html>
