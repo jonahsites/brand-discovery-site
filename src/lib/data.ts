@@ -22,7 +22,18 @@ export type Brand = {
   intro?: string;           // longer paragraph shown on their brand page top
   quote?: string;           // pull quote (from press or a customer)
   quoteBy?: string;         // attribution
+  plan?: PlanKey;           // set at brand-onboarding checkout
 };
+
+export type PlanKey = "basic" | "signature" | "premium";
+export type Plan = { key: PlanKey; name: string; price: number; tagline: string; boost: number; features: string[]; badge?: string; badgeBg?: string };
+/** One-time placement fee tiers. Higher plans get a ranking boost + visible badge. */
+export const PLANS: Plan[] = [
+  { key: "basic", name: "Basic", price: 250, tagline: "You’re on Kindred.", boost: 0, features: ["A public brand page at kindred.shop/brand/you", "Every product in Explore + search + filters", "Message shoppers directly, no add-on", "Your own accent color + fonts + intro"] },
+  { key: "signature", name: "Signature", price: 450, tagline: "Ranked above Basic in every feed.", boost: 6, features: ["Everything in Basic", "“Signature brand” badge on your card", "Higher default rank in For‑you and Brands you’ll like", "Featured slot rotation on Discover", "Priority email support"], badge: "Signature", badgeBg: "#3A5A3F" },
+  { key: "premium", name: "Premium", price: 700, tagline: "First slot in the discovery feed.", boost: 14, features: ["Everything in Signature", "“Premium brand” badge in sage accent", "Guaranteed slot in Brands you’ll like", "First card in the TikTok‑style /feed", "One feature in the monthly newsletter", "Direct line to the founding team"], badge: "Premium", badgeBg: "#C65A2F" },
+];
+export const planOf = (key?: PlanKey): Plan => PLANS.find((p) => p.key === key) ?? PLANS[0];
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
 export type OrderItem = { product: string; name: string; brand: string; variant: string; qty: number; unit: number };

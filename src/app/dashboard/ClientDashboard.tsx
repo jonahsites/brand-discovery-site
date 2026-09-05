@@ -3,7 +3,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { CATEGORY_OPTIONS, COLORS, DASH, SIZE_LADDER, money, lookCount, type Brand, type Drop, type Product, type Promo, type LookFrame } from "@/lib/data";
+import { CATEGORY_OPTIONS, COLORS, DASH, PLANS, SIZE_LADDER, money, lookCount, planOf, type Brand, type Drop, type Product, type Promo, type LookFrame, type PlanKey } from "@/lib/data";
 import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
 import Countdown, { useNow } from "@/components/Countdown";
@@ -320,6 +320,14 @@ function Settings({ brand }: { brand: string }) {
   const [saved, setSaved] = useState(false);
   return (
     <div className="card max-w-[760px] rounded-lg p-5 md:p-[26px]">
+      <div className="mb-5 rounded-md p-5 text-paper" style={{ background: planOf(b.plan).badgeBg ?? "#0F1113" }}>
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-paper/70">Your plan</div>
+        <div className="mb-1 text-[24px] leading-none tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{planOf(b.plan).name}</div>
+        <div className="mb-4 text-[12px] text-paper/70">${planOf(b.plan).price} · one-time · {planOf(b.plan).tagline}</div>
+        <div className="flex flex-wrap gap-2">{PLANS.filter((p) => p.key !== (b.plan ?? "basic")).map((p) => (
+          <button key={p.key} type="button" onClick={() => { if (confirm(`Upgrade to ${p.name} for $${p.price}? Demo: no charge.`)) upsertBrand({ ...b, plan: p.key as PlanKey }); }} className="rounded-sm bg-paper/12 px-3 py-[8px] text-[11.5px] font-semibold text-paper hover:bg-paper/20">Switch to {p.name} · ${p.price}</button>
+        ))}</div>
+      </div>
       <div className="mb-5 flex items-center justify-between rounded-md bg-cream px-4 py-3"><div><div className="text-[13.5px] font-semibold">Verified badge</div><div className="text-[12px] text-ink/55">{b.verified ? "You're verified. Shoppers see the ✓ next to your name." : b.verification === "pending" ? "Application received. We review within 5 working days." : "Prove you make what you sell. We check a workshop photo and one order."}</div></div>{!b.verified && b.verification !== "pending" && <Button size="sm" onClick={() => upsertBrand({ ...b, verification: "pending" })}>Apply</Button>}{b.verification === "pending" && <span className="rounded-pill bg-sand px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]">Pending</span>}</div>
       <div className="flex flex-col gap-4">
         <div><Label className="mb-2">Tagline</Label><input className={inputCls} value={f.tagline} onChange={(e) => setF({ ...f, tagline: e.target.value })} /></div>

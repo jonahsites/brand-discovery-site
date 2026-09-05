@@ -99,7 +99,8 @@ test("brand onboarding creates a live brand page and dashboard", async ({ page }
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("textarea").fill("Started in a garage in Lisbon with two sewing machines and a roll of linen we could not stop touching.");
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Launch brand page" }).click();
+  await page.getByRole("button", { name: /Continue to plan/i }).click();
+  await page.getByRole("button", { name: /^Pay \$250/ }).click();
   await expect(page).toHaveURL(/\/dashboard/);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.goto("/brand/test-atelier");

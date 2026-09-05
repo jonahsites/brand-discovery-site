@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import clsx from "clsx";
-import { type Brand } from "@/lib/data";
+import { planOf, type Brand } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { FollowButton } from "@/components/BrandCard";
 import { styleOverlap } from "@/lib/looks";
@@ -47,7 +47,7 @@ export default function BrandTile({ b, hero }: { b: Brand; hero?: string }) {
             <span className="grid h-[10px] w-[10px] place-items-center rounded-pill" style={{ background: accent }}>
               <span className="h-[6px] w-[6px] animate-pulse rounded-pill" style={{ background: accent, boxShadow: `0 0 6px ${accent}` }} />
             </span>
-            <span className="font-semibold">{b.verified ? "Verified brand" : "Independent brand"}</span>
+            <span className="font-semibold">{b.verified ? "Verified brand" : "Independent brand"}</span>{b.plan === "premium" || b.plan === "signature" ? <span className="rounded-pill px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[.14em] text-paper" style={{ background: planOf(b.plan).badgeBg }}>{planOf(b.plan).badge}</span> : null}
           </div>
           <div className="mono flex items-center gap-1 text-ink/45 tabular-nums">
             {b.city}, {b.country}

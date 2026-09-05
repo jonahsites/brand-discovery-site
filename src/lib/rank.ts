@@ -88,6 +88,11 @@ export function scoreBrand(brand: Brand, signal: Signal, products?: Product[]): 
     s += savedCount * 3 + waitCount * 4 + alertCount * 2;
   }
 
+  // Plan tier boost — Signature and Premium brands paid to rank higher. Kept small so
+  // it can never fully drown an unpaid brand with strong personal signals.
+  if (brand.plan === "premium") s += 14;
+  else if (brand.plan === "signature") s += 6;
+
   // Recency bump: brands created in the last two weeks are boosted so the newest labels
   // don't get buried by anyone with a big head start.
   if (brand.createdAt && Date.now() - Date.parse(brand.createdAt) < 14 * 864e5) s += 5;

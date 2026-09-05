@@ -3,12 +3,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import clsx from "clsx";
-import { CATEGORY_OPTIONS, GENDER_OPTIONS, MATERIAL_OPTIONS, MOOD_OPTIONS, REGION_OPTIONS, SIZE_LADDER, STYLE_OPTIONS, VALUE_OPTIONS, type Batch, type Brand } from "@/lib/data";
+import { CATEGORY_OPTIONS, GENDER_OPTIONS, MATERIAL_OPTIONS, MOOD_OPTIONS, PLANS, REGION_OPTIONS, SIZE_LADDER, STYLE_OPTIONS, VALUE_OPTIONS, type Batch, type Brand, type PlanKey } from "@/lib/data";
 import { TINTS, initials, slugify } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import { Button, Label, inputCls } from "@/components/ui";
 
-const STEPS = ["Basics", "Aesthetic", "Catalogue", "Production", "Shipping", "Story", "Review"];
+const STEPS = ["Basics", "Aesthetic", "Catalogue", "Production", "Shipping", "Story", "Review", "Plan"];
 
 function Pill({ on, children, onClick, small }: { on: boolean; children: React.ReactNode; onClick: () => void; small?: boolean }) {
   return <button type="button" onClick={onClick} className={clsx("press rounded-pill font-medium", small ? "px-[14px] py-[9px] text-[12.5px]" : "px-[18px] py-[12px] text-[13.5px]", on ? "bg-ink text-paper" : "bg-cream")}>{children}</button>;
@@ -27,7 +27,7 @@ export default function Sell() {
     styles: [] as string[], moods: [] as string[], gender: ["Unisex"] as string[],
     categories: [] as string[], priceMin: "60", priceMax: "240", sizeMin: "S", sizeMax: "XL",
     materials: [] as string[], values: [] as string[], madeIn: "", batch: "small" as Batch,
-    shipsFrom: "", shipsTo: [] as string[], story: "", tint: 0,
+    shipsFrom: "", shipsTo: [] as string[], story: "", tint: 0, plan: "basic" as import("@/lib/data").PlanKey,
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
   const tog = (k: "styles" | "moods" | "gender" | "categories" | "materials" | "values" | "shipsTo", v: string) => setF((p) => ({ ...p, [k]: p[k].includes(v) ? p[k].filter((x) => x !== v) : [...p[k], v] }));
@@ -41,9 +41,10 @@ export default function Sell() {
     !!(f.materials.length >= 1 && f.values.length >= 1 && f.madeIn.trim()),
     !!(f.shipsFrom.trim() && f.shipsTo.length >= 1),
     f.story.trim().length >= 40 && f.tagline.trim().length >= 6,
-    true,
+    true,   // review
+    !!f.plan, // plan (default basic is set)
   ];
-  const completeness = Math.round((valid.slice(0, 6).filter(Boolean).length / 6) * 100);
+  const completeness = Math.round((valid.slice(0, 7).filter(Boolean).length / 7) * 100);
 
   const launch = () => {
     const [tint, ink] = TINTS[f.tint % TINTS.length];
@@ -51,7 +52,7 @@ export default function Sell() {
       slug, name: f.name.trim(), init: initials(f.name), city: f.city.trim(), country: f.country.trim().toUpperCase().slice(0, 2), tagline: f.tagline.trim(),
       items: 0, followers: 0, verified: false, tint, ink, founded: Number(f.founded) || undefined, website: f.website.trim() || undefined, story: f.story.trim(),
       styles: f.styles, moods: f.moods, categories: f.categories, materials: f.materials, values: f.values, madeIn: f.madeIn.trim(), batch: f.batch, gender: f.gender,
-      priceBand: [Number(f.priceMin), Number(f.priceMax)], sizeRange: [f.sizeMin, f.sizeMax], shipsTo: f.shipsTo, shipsFrom: f.shipsFrom.trim(), createdAt: new Date().toISOString(),
+      priceBand: [Number(f.priceMin), Number(f.priceMax)], sizeRange: [f.sizeMin, f.sizeMax], shipsTo: f.shipsTo, shipsFrom: f.shipsFrom.trim(), createdAt: new Date().toISOString(), plan: f.plan,
     };
     upsertBrand(b);
     setSession({ role: "brand", name: f.name.trim(), brand: slug });
@@ -135,10 +136,31 @@ export default function Sell() {
             </div>
           </Section>}
 
+          {step === 7 && <Section title="Pick your placement." body="One-time fee to be on Kindred — no monthly subscription, no per-order cut. Same fee whether you sell one piece or ten thousand.">
+            <div className="grid gap-3 md:grid-cols-3">
+              {PLANS.map((pl) => { const on = f.plan === pl.key; return (
+                <button key={pl.key} type="button" onClick={() => set("plan", pl.key)} className={clsx("press flex h-full flex-col rounded-md p-5 text-left transition-colors", on ? "bg-ink text-paper" : "bg-cream")}>
+                  {pl.badge && <span className="mb-2 inline-flex items-center gap-1.5 self-start rounded-pill px-[10px] py-[3px] text-[9.5px] font-semibold uppercase tracking-[.14em]" style={{ background: on ? "var(--paper)" : pl.badgeBg, color: on ? "var(--ink)" : "var(--paper)" }}>{pl.badge}</span>}
+                  <div className="mb-1 text-[15px] font-semibold">{pl.name}</div>
+                  <div className="mb-4 text-[24px] font-normal leading-none tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>${pl.price}<span className="ml-1 text-[11px] font-medium tracking-normal" style={{fontFamily:"inherit"}}>one-time</span></div>
+                  <div className={clsx("mb-3 text-[12px]", on ? "text-paper/70" : "text-ink/55")}>{pl.tagline}</div>
+                  <ul className={clsx("mt-auto flex flex-col gap-[6px] text-[11.5px]", on ? "text-paper/85" : "text-ink/65")}>
+                    {pl.features.map((f) => <li key={f} className="flex items-start gap-2"><span className={clsx("mt-[6px] h-[3px] w-[3px] flex-none rounded-pill", on ? "bg-paper" : "bg-ink")} />{f}</li>)}
+                  </ul>
+                </button>
+              ); })}
+            </div>
+            <div className="mt-4 rounded-md bg-cream p-5 text-[13px] leading-[1.6] text-ink/70">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Why one fee</div>
+              Running Instagram ads that put your name in front of ~10,000 people costs about $80–$200 a week and stops the day you stop paying. A single placement on Kindred is a one-time fee to sit inside a marketplace built entirely around shoppers looking for labels like yours — no algorithm to game, no bid to top up. In practical terms, one month of ads pays for Signature; a busy month of ads pays for Premium, and neither charges you again.
+            </div>
+            <div className="mt-3 text-[11.5px] text-ink/45">Demo checkout — nothing is actually charged today. Stripe Connect drops in with the backend.</div>
+          </Section>}
+
           <div className="mt-8 flex flex-col md:flex-row md:items-center gap-3">
-            {step < 6 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>Continue</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>Launch brand page</Button>}
+            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>{`Pay $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
             {step >= 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-ink/50">Back</button>}
-            <span className="text-[12.5px] text-ink/45 md:ml-auto">{!valid[step] && step < 6 ? "Fill in the required bits to continue" : step === 6 && completeness < 100 ? "Some steps are incomplete" : ""}</span>
+            <span className="text-[12.5px] text-ink/45 md:ml-auto">{step === 7 ? "One-time fee — no monthly, no per-order." : (!valid[step] && step < 6 ? "Fill in the required bits to continue" : "")}</span>
           </div>
         </div>
         )}

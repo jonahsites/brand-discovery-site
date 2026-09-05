@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { POSTS, brandTier, lookCount } from "@/lib/data";
+import { POSTS, brandTier, lookCount, planOf } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
@@ -41,7 +41,7 @@ export default function BrandView({ slug, initialTab }: { slug: string; initialT
               <button onClick={() => { const url = typeof location !== "undefined" ? location.href : ""; if (navigator.share) navigator.share({ title: b.name, url }).catch(() => {}); else { navigator.clipboard?.writeText(url); toast("Brand link copied"); } }} className="press grid h-[38px] w-[38px] place-items-center rounded-pill bg-cream text-[14px]" aria-label="Share">↗</button>
             </div>
           </div>
-          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1>{b.verified && <Verified size={20} />}</div>
+          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1>{b.verified && <Verified size={20} />}{(b.plan === "premium" || b.plan === "signature") && <span className="rounded-pill px-3 py-1 text-[10px] font-semibold uppercase tracking-[.14em] text-paper" style={{ background: planOf(b.plan).badgeBg }}>{planOf(b.plan).badge}</span>}</div>
           <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
           <div className="mb-6 flex flex-wrap gap-2">
             {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>}
