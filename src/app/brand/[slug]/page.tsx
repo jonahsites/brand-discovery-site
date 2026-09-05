@@ -2,9 +2,9 @@ import { BRANDS } from "@/lib/data";
 import { brandSeo, brandJsonLd, breadcrumbJsonLd, ldScript, absUrl } from "@/lib/seo";
 import BrandView from "./BrandView";
 
+// Every brand row lives in Supabase/localStorage — nothing to prerender at build time.
+// Force per-request rendering so Next doesn't try to build a static shell for an empty catalogue.
 export const dynamic = "force-dynamic";
-export const dynamicParams = true;
-export function generateStaticParams() { return BRANDS.map((b) => ({ slug: b.slug })); }
 
 export async function generateMetadata({ params }: PageProps<"/brand/[slug]">) {
   const { slug } = await params;
