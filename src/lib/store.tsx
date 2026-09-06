@@ -26,6 +26,9 @@ type Persisted = {
   lookbooks: Lookbook[]; waitlist: string[]; featured?: string; recent: string[]; redeem: number; giftCards: GiftCard[]; giftCode?: string; referredBy?: string;
   account?: Account; onboarded: boolean;
   boards: { id: string; name: string; products: string[] }[]; views: Record<string, number>;
+  /** Share-amplification rate limit: keys are `${brand_slug}::${YYYY-MM-DD}` so a brand
+   *  earns 25 pts at most once per day for sharing their own page. */
+  sharedAt: Record<string, string>;
 };
 type Toast = { id: string; text: string; href?: string };
 type State = Persisted & { bagOpen: boolean; searchOpen: boolean; toasts: Toast[] };
@@ -73,6 +76,8 @@ type Ctx = State & {
   toast: (text: string, href?: string) => void; dismissToast: (id: string) => void;
   createBoard: (name: string, product?: string) => string; toggleInBoard: (id: string, product: string) => void; deleteBoard: (id: string) => void;
   recordView: (brand: string) => void; resetDemo: () => void;
+  /** Rate-limited share amplification: credits +25 pts once per (brand, day) and toasts. */
+  creditShare: (brandSlug: string) => boolean;
   notifications: { id: string; kind: "drop" | "price" | "order" | "message"; title: string; body: string; href: string; at: string }[];
 };
 
@@ -96,7 +101,7 @@ const DEFAULTS: Persisted = {
     { id: "post-fv-1", brand: "form-and-void", image: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=900&q=75&auto=format&fit=crop", caption: "Cutting the autumn run. Corozo buttons arrived from Ecuador this morning; the bone colorway goes up Friday.", products: ["panel-work-jacket"], at: new Date(Date.now() - 26 * 36e5).toISOString(), likes: 842 },
     { id: "post-ct-1", brand: "core-theory", image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=900&q=75&auto=format&fit=crop", caption: "First cold week in Kyoto. The felted cardigan is back on the hand-flat, nine at a time.", products: ["felted-cardigan", "merino-half-zip"], at: new Date(Date.now() - 3 * 864e5).toISOString(), likes: 296 },
   ], threads: [], sizeOnly: false, lookbooks: [], waitlist: [], recent: [], redeem: 0, giftCards: [], onboarded: false,
-  boards: [], views: {},
+  boards: [], views: {}, sharedAt: {},
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -256,7 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const t of state.threads) { const last = t.messages[t.messages.length - 1]; const b = brands.find((x) => x.slug === t.brand); if (last && b && ((state.session.role === "brand") !== (last.from === "brand"))) out.push({ id: "m-" + t.id, kind: "message", title: state.session.role === "brand" ? `${t.shopper} messaged you` : `${b.name} replied`, body: last.text, href: `/messages?t=${t.id}`, at: last.at }); }
     return out.sort((a, b) => b.at.localeCompare(a.at));
   }, [state.notify, state.drops, state.alerts, state.promos, state.orders, state.threads, state.session.role, brands, products]);
-  const points = useMemo(() => 1240 + (state.referredBy ? 200 : 0) + state.orders.reduce((s, o) => s + pointsEarned(o), 0), [state.orders, state.referredBy]);
+  const points = useMemo(() => 1240 + (state.referredBy ? 200 : 0) + state.orders.reduce((s, o) => s + pointsEarned(o), 0) + Object.keys(state.sharedAt ?? {}).length * 25, [state.orders, state.referredBy, state.sharedAt]);
   const referralCode = useMemo(() => slugify(state.session.name) || "friend", [state.session.name]);
 
   const value: Ctx = {
@@ -486,6 +491,16 @@ signUp: async ({ name, email, password, provider }) => {
     deleteBoard: (id) => up((p) => ({ boards: p.boards.filter((b) => b.id !== id) })),
     recordView: (slug) => { recordView(slug); db.recordViewRow("product", slug).catch(() => {}); },
     resetDemo: () => { try { localStorage.removeItem(LS); } catch {} setState({ ...DEFAULTS, bagOpen: false, searchOpen: false, toasts: [] }); },
+    creditShare: (brandSlug) => {
+      // Only credit the brand's own owner — a shopper sharing a favorite brand shouldn't
+      // earn the brand-side points. Ownership is checked at the call site.
+      const key = `${brandSlug}::${new Date().toISOString().slice(0, 10)}`;
+      if (state.sharedAt?.[key]) return false;
+      up((p) => ({ sharedAt: { ...(p.sharedAt ?? {}), [key]: new Date().toISOString() } }));
+      // Fire the toast inline so the caller doesn't need to duplicate the copy.
+      up((p) => ({ toasts: [{ id: uid(), text: "+25 points for sharing your page ✓" }, ...p.toasts] }));
+      return true;
+    },
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

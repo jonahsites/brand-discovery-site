@@ -12,7 +12,8 @@ import { useApp } from "@/lib/store";
  * desktop). Everywhere else we fall back to opening a pre-typed X compose URL.
  */
 export default function ShareBrand({ b, className, label }: { b: Brand; className?: string; label?: string }) {
-  const { toast } = useApp();
+  const { toast, session, creditShare } = useApp();
+  const isOwner = session.role === "brand" && session.brand === b.slug;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const url = typeof location !== "undefined" ? `${location.origin}/brand/${b.slug}` : `/brand/${b.slug}`;
@@ -31,6 +32,7 @@ export default function ShareBrand({ b, className, label }: { b: Brand; classNam
     catch { toast("Couldn't copy — long-press the link and copy manually."); }
   };
 
+  const amplify = () => { if (isOwner) creditShare(b.slug); };
   const share = async () => {
     try {
       const canShareFiles = typeof navigator !== "undefined" && "canShare" in navigator && typeof navigator.share === "function";
@@ -39,12 +41,13 @@ export default function ShareBrand({ b, className, label }: { b: Brand; classNam
         const blob = await res.blob();
         const file = new File([blob], `${b.slug}-kindred.png`, { type: "image/png" });
         const withFile = (navigator as Navigator & { canShare?: (d: ShareData) => boolean }).canShare?.({ files: [file] });
-        if (withFile) { await navigator.share({ files: [file], title: b.name, text: caption, url }); return; }
+        if (withFile) { await navigator.share({ files: [file], title: b.name, text: caption, url }); amplify(); return; }
       }
-      if (typeof navigator !== "undefined" && "share" in navigator) { await navigator.share({ title: b.name, text: caption, url }); return; }
+      if (typeof navigator !== "undefined" && "share" in navigator) { await navigator.share({ title: b.name, text: caption, url }); amplify(); return; }
     } catch { /* user cancelled or the API refused — fall through */ }
     const composeUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
     window.open(composeUrl, "_blank", "noopener,noreferrer");
+    amplify();
   };
 
   return (

@@ -9,6 +9,7 @@ import { useApp, uid } from "@/lib/store";
 import { integrationStatus, type Provider } from "@/lib/integrations";
 import { getSupabase } from "@/lib/supabase";
 import Countdown, { useNow } from "@/components/Countdown";
+import ShareBrand from "@/components/ShareBrand";
 import { Avatar, Button, Label, Placeholder, inputCls } from "@/components/ui";
 import { looksOfBrand, styleOverlap } from "@/lib/looks";
 
@@ -87,7 +88,8 @@ function DashInner() {
 }
 
 function Overview({ stats, mine, myOrders, seeded, brand }: { stats: { label: string; value: string; delta: string; bg: string; ink: string }[]; mine: Product[]; myOrders: ReturnType<typeof useApp>["orders"]; seeded: boolean; brand: string }) {
-  const { priceOf, addPost, posts, deletePost } = useApp();
+  const { priceOf, addPost, posts, deletePost, brands } = useApp();
+  const brandObj = brands.find((b) => b.slug === brand);
   const rows = mine.slice(0, 5);
   const [post, setPost] = useState({ caption: "", image: "", products: [] as string[] });
   const [posted, setPosted] = useState(false);
@@ -96,6 +98,35 @@ function Overview({ stats, mine, myOrders, seeded, brand }: { stats: { label: st
   return (
     <>
       <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{stats.map((t) => <div key={t.label} className="lift rounded-lg p-5 md:p-6" style={{ background: t.bg, color: t.ink, boxShadow: "0 8px 22px -18px rgba(18,26,36,.55)" }}><div className="mb-[14px] text-[10px] font-semibold uppercase tracking-[.14em] opacity-62">{t.label}</div><div className="mb-2 text-[26px] md:text-[34px] font-extrabold leading-none tracking-[-.04em]">{t.value}</div><div className="mono text-[11.5px] opacity-62">{t.delta}</div></div>)}</div>
+
+      {/* Share panel: poster preview + big "Share your page" CTA. Uses the same ShareBrand
+          sheet as the public brand page, and fires the +25/day rewards hook via creditShare. */}
+      {brandObj && (
+        <div className="mb-5 grid gap-5 md:grid-cols-[1fr_260px] items-stretch">
+          <div className="card flex flex-col justify-between gap-4 rounded-lg p-5 md:p-6" style={{ background: brandObj.accent2 ? `linear-gradient(135deg, ${brandObj.accent ?? "#7C8C6F"}, ${brandObj.accent2})` : (brandObj.accent ?? "var(--sage)"), color: "var(--paper)" }}>
+            <div>
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.16em] text-paper/70">Share your page</div>
+              <h2 className="mb-2 text-[26px] md:text-[32px] leading-[1.05] tracking-[-.02em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>The best marketing is you telling your people.</h2>
+              <p className="max-w-[460px] text-[13px] md:text-[14px] leading-[1.55] text-paper/80">Post your Kindred link — every shopper who lands earns you rank, and you earn +25 rewards points the first time you share it each day.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <ShareBrand b={brandObj} label="Share your page" className="press inline-flex items-center gap-2 rounded-pill bg-paper px-5 py-[12px] text-[12px] font-semibold text-ink" />
+              <Link href={`/brand/${brandObj.slug}?edit=1`} className="press rounded-pill bg-ink/25 px-5 py-[12px] text-[12px] font-semibold text-paper">Edit your page</Link>
+            </div>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="card grid rounded-lg p-3 md:p-4 items-center">
+            <img
+              src={`/brand/${brandObj.slug}/poster?v=${brandObj.plan ?? "basic"}`}
+              alt={`Share poster for ${brandObj.name}`}
+              className="block h-auto w-full rounded-md"
+              width={1080}
+              height={1350}
+              loading="lazy"
+            />
+          </div>
+        </div>
+      )}
       <div className="mb-5 grid gap-5 xl:grid-cols-[1fr_380px] items-start">
         <div className="card rounded-lg p-5 md:p-[26px]"><div className="mb-6 flex items-baseline justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Sales</div><div className="mono text-[11.5px] text-ink/42">30 days</div></div><div className="flex h-[170px] items-end gap-[5px]">{DASH.chart.map((h, i) => <div key={i} className="flex-1 rounded-t-[4px]" style={{ height: seeded ? h : Math.max(4, (i > 24 ? myOrders.length * 30 : 0)), background: i > 26 ? "#121A24" : "#DCD5C7" }} />)}</div><div className="mono mt-3 flex justify-between text-[10.5px] text-ink/35"><span>Aug 4</span><span>Aug 18</span><span>Sep 2</span></div></div>
         <div className="card rounded-lg p-6">
