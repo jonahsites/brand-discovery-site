@@ -10,6 +10,9 @@ import { Fob } from "@/components/Fob";
 import { styleOverlap } from "@/lib/looks";
 import { rankProducts, toSignal } from "@/lib/rank";
 import ProductCard from "@/components/ProductCard";
+import CategoryTiles from "@/components/CategoryTiles";
+import Marquee from "@/components/Marquee";
+import SectionHeader from "@/components/SectionHeader";
 
 const SORTS = ["For you", "Newest", "Price · low to high", "Price · high to low", "Most followed"];
 type Key = "priceBands" | "leadTimes" | "studio" | "sizes" | "tiers" | "materials" | "values";
@@ -19,7 +22,7 @@ export default function Explore() { return <Suspense><ExploreInner /></Suspense>
 
 function ExploreInner() {
   const sp = useSearchParams(); const router = useRouter();
-  const { products, brands, promos, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch, styleTags, follows, saved, recent, waitlist, alerts, orders, views } = useApp();
+  const { products, brands, promos, drops, priceOf, sizes: mySizes, sizeOnly, setSizeOnly, openSearch, styleTags, follows, saved, recent, waitlist, alerts, orders, views } = useApp();
   const q = sp.get("q") ?? "";
   const gender = sp.get("gender") ?? undefined;
   const [chip, setChip] = useState(sp.get("cat") ?? "All");
@@ -57,9 +60,47 @@ function ExploreInner() {
   const emptyMarketplace = products.length === 0;
   const title = q ? `“${q}”` : gender ? `${gender}` : chip === "All" ? "Everything new" : chip;
 
+  // Marquee content: active drops + active promos. Fallback to a quiet mantra.
+  const activeDrops = drops.filter((d) => {
+    const t = Date.parse(d.at); return Number.isFinite(t);
+  }).slice(0, 6);
+  const activePromos = promos.filter((p) => p.active).slice(0, 4);
+  const tickerReady = activeDrops.length + activePromos.length > 0;
+
   return (
     <main className="mx-auto max-w-[1440px] px-4 md:px-8 pt-4 md:pt-7 pb-16">
       <h1 className="mb-3 text-[26px] md:hidden">Explore</h1>
+
+      {/* Category tiles — a colorful "shop the racks" row before filters. */}
+      {!q && (
+        <div className="mb-5 rise">
+          <SectionHeader eyebrow="Shop the racks" title="Every category" />
+          <CategoryTiles />
+        </div>
+      )}
+
+      {/* Active-drops marquee — only when something's actually happening. */}
+      {tickerReady && !q && (
+        <div className="mb-5 rise">
+          <div className="relative overflow-hidden rounded-pill bg-dusk text-paper">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-dusk to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-dusk to-transparent" />
+            <Marquee speed={60} gap={44} className="py-[10px]">
+              {activeDrops.map((d) => { const b = brands.find((x) => x.slug === d.brand); return (
+                <span key={`d-${d.id}`} className="mono flex items-center gap-3 whitespace-nowrap text-[11.5px] uppercase tracking-[.14em]">
+                  <span className="inline-block h-[6px] w-[6px] flex-none rounded-pill bg-paper/60" aria-hidden="true" />
+                  Drop · <span className="font-semibold">{b?.name}</span> · {d.title}
+                </span>); })}
+              {activePromos.map((p) => { const b = brands.find((x) => x.slug === p.brand); return (
+                <span key={`p-${p.id}`} className="mono flex items-center gap-3 whitespace-nowrap text-[11.5px] uppercase tracking-[.14em]">
+                  <span className="inline-block h-[6px] w-[6px] flex-none rounded-pill bg-paper/60" aria-hidden="true" />
+                  {p.pct}% off at <span className="font-semibold">{b?.name}</span>
+                </span>); })}
+            </Marquee>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 md:gap-4">
         <button onClick={() => openSearch()} className="flex flex-1 items-center gap-3 rounded-pill bg-white px-4 md:px-5 py-3 md:py-[14px] text-left soft"><span className="text-[13px] text-ink/40">⌕</span><span className="truncate text-[12px] md:text-[13px] font-medium text-ink/40">{q || `Search ${brands.length} brands — cut, fabric, city, lead time`}</span>{q && <button onClick={(e) => { e.stopPropagation(); router.push("/explore"); }} className="ml-auto text-[11px] font-semibold text-ink/55">Clear ✕</button>}</button>
         <button onClick={() => setOpen(!open)} className={clsx("press hidden md:block rounded-pill px-[22px] py-[14px] text-[12px] font-semibold", open ? "bg-ink text-paper" : "bg-white soft")}>Filters · {count}</button>
@@ -97,8 +138,15 @@ function ExploreInner() {
             <button onClick={() => { setF(EMPTY); setSizeOnly(false); }} className="mt-[22px] w-full rounded-pill bg-white py-3 text-[11px] font-semibold">Clear all</button>
           </div>
         )}
-        <div className={clsx("grid min-w-0 flex-1 w-full grid-cols-2 gap-[14px] md:gap-5", open ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-3 lg:grid-cols-4")}>
-          {grid.map((p) => <ProductCard key={p.slug} p={p} hoverAdd />)}
+        <div className={clsx("grid min-w-0 flex-1 w-full grid-cols-2 gap-[14px] md:gap-5 stagger", open ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-3 lg:grid-cols-4")}>
+          {grid.map((p) => {
+            const accent = bOf(p.brand)?.accent ?? "var(--sage)";
+            return (
+              <div key={p.slug} style={{ ["--brand-accent" as string]: accent }}>
+                <ProductCard p={p} hoverAdd />
+              </div>
+            );
+          })}
           {grid.length === 0 && (
             emptyMarketplace ? (
               <div className="card col-span-full rounded-lg p-10 md:p-14 text-center">

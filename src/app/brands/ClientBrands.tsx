@@ -7,6 +7,8 @@ import { STYLE_OPTIONS, VALUE_OPTIONS, brandTier } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import BrandTile from "@/components/BrandTile";
 import { Chip, Label, Page } from "@/components/ui";
+import NewThisWeek from "@/components/NewThisWeek";
+import Marquee from "@/components/Marquee";
 
 const TIERS = ["Indie", "Rising", "Established"];
 const SORTS = ["Trending", "Newest", "Most followed", "A–Z"];
@@ -40,6 +42,33 @@ function BrandsInner() {
         </div>
       </div>
       <Page className="pt-6">
+        {/* Marquee ribbon — mantra + follower count teasers, keeps the top of the page alive. */}
+        <div className="mb-5 rise">
+          <div className="relative overflow-hidden rounded-pill bg-cream">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-cream to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-cream to-transparent" />
+            <Marquee speed={45} gap={48} className="py-[9px]">
+              {[
+                "small brands · real people · made in real places",
+                `${brands.length} independent label${brands.length === 1 ? "" : "s"} on Kindred`,
+                "buy once · wear for years",
+                "every founder answers their own DMs",
+                "one bag, many labels",
+              ].map((m, i) => (
+                <span key={i} className="mono flex items-center gap-3 whitespace-nowrap text-[11px] uppercase tracking-[.14em] text-ink/60">
+                  <span className="inline-block h-[6px] w-[6px] flex-none rounded-pill bg-rust" aria-hidden="true" />
+                  {m}
+                </span>
+              ))}
+            </Marquee>
+          </div>
+        </div>
+
+        {/* New this week rail — only appears when there are fresh brands. */}
+        <div className="mb-8 rise">
+          <NewThisWeek brands={brands} products={products} />
+        </div>
+
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.035em]">{style === "All" ? "Every brand on Kindred" : `${style} brands`}</h1><div className="text-[12.5px] text-ink/48">{list.length} independent label{list.length === 1 ? "" : "s"} · {list.filter((b) => brandTier(b.followers) === "Indie").length} under 1k followers</div></div>
           <div className="flex gap-2"><button onClick={() => setShowFilters(!showFilters)} className={clsx("lg:hidden rounded-pill px-4 py-[10px] text-[12px] font-semibold", showFilters ? "bg-ink text-paper" : "bg-white soft")}>≡ Filters{tier.length + values.length + (country !== "All" ? 1 : 0) > 0 ? ` · ${tier.length + values.length + (country !== "All" ? 1 : 0)}` : ""}</button><select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-pill bg-white soft px-[18px] py-[10px] text-[12px] font-semibold outline-none">{SORTS.map((s) => <option key={s}>{s}</option>)}</select></div>
