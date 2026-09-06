@@ -29,6 +29,11 @@ const brandFromRow = (r: Row): Brand => ({
   headlineFont: r.headline_font as "serif" | "sans" | undefined,
   intro: r.intro as string | undefined, quote: r.quote as string | undefined, quoteBy: r.quote_by as string | undefined,
   plan: r.plan as Brand["plan"],
+  accent2: r.accent_2 as string | undefined,
+  coverVideo: r.cover_video as string | undefined,
+  pattern: (r.pattern as Brand["pattern"]) ?? "none",
+  heroStyle: (r.hero_style as Brand["heroStyle"]) ?? "cover",
+  motto: r.motto as string | undefined,
 });
 
 const brandToRow = (b: Brand, ownerId?: string) => ({
@@ -45,6 +50,11 @@ const brandToRow = (b: Brand, ownerId?: string) => ({
   accent: b.accent ?? null, bg: b.bg ?? null, headline_font: b.headlineFont ?? null,
   intro: b.intro ?? null, quote: b.quote ?? null, quote_by: b.quoteBy ?? null,
   plan: b.plan ?? null,
+  accent_2: b.accent2 ?? null,
+  cover_video: b.coverVideo ?? null,
+  pattern: b.pattern ?? "none",
+  hero_style: b.heroStyle ?? "cover",
+  motto: b.motto ?? null,
 });
 
 const productFromRow = (r: Row): Product => ({

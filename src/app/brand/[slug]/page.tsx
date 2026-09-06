@@ -17,6 +17,8 @@ type BrandRow = {
   made_in: string; batch: string; gender: string[]; price_min: number; price_max: number;
   size_min: string; size_max: string; ships_to: string[]; ships_from: string;
   logo: string | null; cover: string | null;
+  accent_2: string | null; cover_video: string | null; pattern: string | null;
+  hero_style: string | null; motto: string | null;
 };
 async function fetchBrand(slug: string): Promise<Brand | undefined> {
   const sb = getServiceClient();
@@ -33,6 +35,10 @@ async function fetchBrand(slug: string): Promise<Brand | undefined> {
     gender: r.gender ?? [], priceBand: [r.price_min ?? 0, r.price_max ?? 0],
     sizeRange: [r.size_min ?? "S", r.size_max ?? "XL"], shipsTo: r.ships_to ?? [], shipsFrom: r.ships_from ?? "",
     logo: r.logo ?? undefined, cover: r.cover ?? undefined,
+    accent2: r.accent_2 ?? undefined, coverVideo: r.cover_video ?? undefined,
+    pattern: (r.pattern as Brand["pattern"]) ?? "none",
+    heroStyle: (r.hero_style as Brand["heroStyle"]) ?? "cover",
+    motto: r.motto ?? undefined,
   };
 }
 

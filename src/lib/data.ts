@@ -23,6 +23,12 @@ export type Brand = {
   quote?: string;           // pull quote (from press or a customer)
   quoteBy?: string;         // attribution
   plan?: PlanKey;           // set at brand-onboarding checkout
+  /* --- Kindred v2.2 richer customization (migration 0005) --- */
+  accent2?: string;         // second accent color for duo-color moments (gradients)
+  coverVideo?: string;      // URL to MP4 or an embeddable YouTube/Vimeo link
+  pattern?: "none" | "grid" | "dot" | "arch" | "wave" | "grain"; // hero backing pattern
+  heroStyle?: "cover" | "portrait" | "split" | "story-first";    // hero layout
+  motto?: string;           // short manifesto / tagline in big serif (distinct from tagline)
 };
 
 export type PlanKey = "basic" | "signature" | "premium";
