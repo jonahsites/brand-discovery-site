@@ -49,7 +49,7 @@ export default function Gift() {
             </div>
             <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
               <Button size="lg" onClick={buy} disabled={!valid || busy} className={clsx((!valid || busy) && "opacity-40")}>{busy ? "Issuing…" : `Pay ${money(value || 0, true)}`}</Button>
-              <span className="text-[12px] text-ink/45">{custom && (value < 10 || value > 1000) ? "Custom amounts run from $10 to $1,000." : "Demo purchase. The code appears here and in your account; nothing is charged."}</span>
+              <span className="text-[12px] text-ink/45">{custom && (value < 10 || value > 1000) ? "Custom amounts run from $10 to $1,000." : "Payment coming soon — for now the code appears here and in your account. No card is charged."}</span>
             </div>
           </div>
           {issued && (

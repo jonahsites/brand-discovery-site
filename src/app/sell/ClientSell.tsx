@@ -78,7 +78,7 @@ export default function Sell() {
             <div className="mb-8 grid gap-3 sm:grid-cols-3">
               {[["No listing fee", "for your first 90 days, then 8% per order. No monthly plan."], ["Paid every Friday", "held only until each parcel scans. You ship from your workshop."], ["Found by feeling", "shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-cream p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-ink/60">{b}</div></div>)}
             </div>
-            <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-ink/50">{brands.length} brands live · {brands.filter((b) => b.followers < 1000).length} of them under 1k followers</span></div>
+            <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-ink/50">Independent labels only · no monthly fee, no per-order cut for 90 days</span></div>
           </div>
         ) : (
         <div className="card rounded-lg p-5 md:p-10">
@@ -88,7 +88,7 @@ export default function Sell() {
 
           {step === 0 && <Section title="Tell us who you are." body="This is the public header on your brand page. Everything else you answer stays on the page as facts shoppers can filter by.">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Brand name" hint={f.name ? (taken ? "That name is already on Kindred." : `kindred.shop/brand/${slug}`) : undefined}><input className={input} value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="Form & Void" /></Field>
+              <Field label="Brand name" hint={f.name ? (taken ? "That name is already on Kindred." : `shopkindred.org/brand/${slug}`) : undefined}><input className={input} value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="Form & Void" /></Field>
               <Field label="One-line tagline"><input className={input} value={f.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Workwear cut from one bolt at a time" /></Field>
               <Field label="City"><input className={input} value={f.city} onChange={(e) => set("city", e.target.value)} placeholder="Rotterdam" /></Field>
               <Field label="Country code"><input className={input} value={f.country} onChange={(e) => set("country", e.target.value)} placeholder="NL" maxLength={2} /></Field>
