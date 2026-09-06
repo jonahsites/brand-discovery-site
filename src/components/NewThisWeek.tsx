@@ -6,6 +6,7 @@
  */
 import type { Brand, Product } from "@/lib/data";
 import BrandRail from "@/components/BrandRail";
+import { useNow } from "@/components/Countdown";
 
 export default function NewThisWeek({
   brands,
@@ -16,7 +17,8 @@ export default function NewThisWeek({
   products: Product[];
   windowDays?: number;
 }) {
-  const cutoff = Date.now() - windowDays * 864e5;
+  const now = useNow();
+  const cutoff = (now || 0) - windowDays * 864e5;
   const fresh = brands
     .filter((b) => b.createdAt && Date.parse(b.createdAt) >= cutoff)
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))

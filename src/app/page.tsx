@@ -1,188 +1,295 @@
-/* eslint-disable @next/next/no-img-element -- brand-supplied image URLs */
 "use client";
-import { Suspense, useMemo, useState } from "react";
+/**
+ * Kindred home — the real marketplace feed. Structure top to bottom:
+ *  1. HeroSpotlight — rotates featured brands with per-brand color takeover
+ *  2. Marquee ticker — live activity or a static "small brands, real people" cycle
+ *  3. CategoryTiles — 8 colorful category hero tiles
+ *  4. NewThisWeek — brands added in the last 14 days (hides if none)
+ *  5. BrandRail "For you" — from rankBrands algorithm
+ *  6. Product carousel "Recently added pieces" — latest 12 products
+ *  7. BrandRail "Editor's picks" — state.featured (hides if empty)
+ *  8. LiveActivity — compact rolling feed near the bottom
+ *
+ * Every rail respects its own empty state and hides rather than showing a
+ * hollow grid. Personalisation still flows through toSignal / rankBrands so
+ * the onboarding answers steer the feed.
+ */
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { money } from "@/lib/data";
-import { dailyPick, searchCatalog } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
-import { FollowButton } from "@/components/BrandCard";
-import Countdown, { useNow } from "@/components/Countdown";
-import { Avatar, Placeholder, Page } from "@/components/ui";
-import { Fob, FobRow } from "@/components/Fob";
-import { styleOverlap } from "@/lib/looks";
+import { Page } from "@/components/ui";
 import { rankBrands, rankProducts, toSignal } from "@/lib/rank";
-
-const FEEDS = ["Dashboard", "Following", "Matched", "Saved"] as const;
-type Feed = (typeof FEEDS)[number];
+import HeroSpotlight from "@/components/HeroSpotlight";
+import Marquee from "@/components/Marquee";
+import CategoryTiles from "@/components/CategoryTiles";
+import BrandRail from "@/components/BrandRail";
+import NewThisWeek from "@/components/NewThisWeek";
+import LiveActivity from "@/components/LiveActivity";
+import SectionHeader from "@/components/SectionHeader";
+import Sparkles from "@/components/Sparkles";
+import { useNow } from "@/components/Countdown";
 
 export default function Home() { return <Suspense><HomeInner /></Suspense>; }
 
 function HomeInner() {
-  const sp = useSearchParams();
-  const initial = (sp.get("feed") as Feed) ?? "Dashboard";
-  const [feed, setFeed] = useState<Feed>(FEEDS.includes(initial) ? initial : "Dashboard");
-  const now = useNow();
   const app = useApp();
-  const { brands, products, promos, drops, follows, styleTags, session, notify, toggleNotify, priceOf, posts, likePost, featured, saved, bagGroups, bagCount, total, openBag, openSearch, sizes, recent } = app;
-  const signal = useMemo(() => toSignal({ styleTags, sizes: app.sizes, follows, saved: app.saved, recent: app.recent, waitlist: app.waitlist, alerts: app.alerts, orders: app.orders, views: app.views }), [styleTags, app.sizes, follows, app.saved, app.recent, app.waitlist, app.alerts, app.orders, app.views]);
-  const matched = useMemo(() => rankProducts(products, brands, signal), [products, brands, signal]);
-  const lookBrands = useMemo(() => rankBrands(brands, signal, products).slice(0, 6).map((b) => ({ b, n: styleOverlap(b.styles, styleTags) })), [brands, products, signal, styleTags]);
-  const week = Math.floor(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / (7 * 864e5));
-  const seedBrands = brands.filter((b) => !b.createdAt);
-  const featBrand = brands.find((b) => b.slug === featured) ?? seedBrands[week % Math.max(1, seedBrands.length)] ?? brands[0];
-  const pick = useMemo(() => dailyPick(products), [products]);
-  const followingP = products.filter((p) => follows.includes(p.brand));
-  const savedP = products.filter((p) => saved.includes(p.slug));
-  const upcoming = [...drops].filter((d) => new Date(d.at).getTime() > (now || 864e5) - 864e5).sort((a, b) => a.at.localeCompare(b.at));
-  const promo = promos.find((p) => p.active);
-  const promoBrand = promo && brands.find((b) => b.slug === promo.brand);
+  const now = useNow();
+  const {
+    brands, products, promos, drops, follows, styleTags, session,
+    featured, saved, bagCount, openBag, openSearch, sizes, recent,
+    waitlist, alerts, orders, views,
+  } = app;
+
+  // Personal signal — mirror of the old home page so onboarding answers still steer everything.
+  const signal = useMemo(
+    () => toSignal({ styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views }),
+    [styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views],
+  );
+  const rankedBrands = useMemo(() => rankBrands(brands, signal, products), [brands, products, signal]);
+  const rankedProducts = useMemo(() => rankProducts(products, brands, signal), [products, brands, signal]);
+  const productFor = useMemo(() => (slug: string) => products.find((p) => p.brand === slug && !!p.image), [products]);
+
+  // The hero rotates through: the currently featured brand (from dashboard) + top personal picks.
+  const spotlight = useMemo(() => {
+    const feat = brands.find((b) => b.slug === featured);
+    const top = rankedBrands.filter((b) => b.slug !== featured).slice(0, 4);
+    return [feat, ...top].filter((b): b is NonNullable<typeof b> => !!b);
+  }, [brands, featured, rankedBrands]);
+
+  // Recently added pieces — latest products with a real image.
+  const freshProducts = useMemo(() => {
+    const withImg = products.filter((p) => !!p.image);
+    return withImg
+      .slice()
+      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+      .slice(0, 12);
+  }, [products]);
+
+  const editorPicks = useMemo(() => {
+    const feat = brands.find((b) => b.slug === featured);
+    if (!feat) return [];
+    return [feat, ...rankedBrands.filter((b) => b.plan === "premium" || b.plan === "signature").filter((b) => b.slug !== feat.slug)].slice(0, 8);
+  }, [brands, featured, rankedBrands]);
+
+  // Marquee content — pull the newest activity, fall back to the brand mantra when quiet.
+  const tickerItems = useMemo(() => {
+    const recentBrand = brands.filter((b) => b.createdAt).sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 4);
+    const cutoff = (now || 0) - 3 * 864e5;
+    const upcoming = drops.filter((d) => Date.parse(d.at) > cutoff).slice(0, 3);
+    const active = promos.filter((p) => p.active).slice(0, 3);
+    const items: React.ReactNode[] = [];
+    for (const b of recentBrand) {
+      items.push(<span key={`nb-${b.slug}`}><span className="font-semibold">{b.name}</span> just landed on Kindred</span>);
+    }
+    for (const d of upcoming) {
+      const b = brands.find((x) => x.slug === d.brand);
+      if (b) items.push(<span key={`d-${d.id}`}><span className="font-semibold">{b.name}</span> drops {d.title} · {new Date(d.at).toLocaleDateString(undefined, { day: "2-digit", month: "short" })}</span>);
+    }
+    for (const p of active) {
+      const b = brands.find((x) => x.slug === p.brand);
+      if (b) items.push(<span key={`p-${p.id}`}>{p.pct}% off at <span className="font-semibold">{b.name}</span></span>);
+    }
+    if (items.length === 0) {
+      const mantra = ["small brands · real people · made in real places", "buy once · wear for years", "every founder answers their own DMs", "one bag, many labels", "no big-box, no dropship"];
+      return mantra.map((m, i) => <span key={`m-${i}`}>{m}</span>);
+    }
+    return items;
+  }, [brands, drops, promos, now]);
+
   const initials = session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
-  const hero = {
-    Dashboard: { kicker: promo ? `${promo.label} · ${promoBrand?.name}` : "This week on Kindred", t1: promo ? "Get up to" : "Not big.", t2: promo ? `${promo.pct}% off` : "Good.", cta: promo ? "Get discount" : "Start exploring", foot: promo?.ends ? `Valid until ${new Date(promo.ends).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}` : `${brands.length} independent brands live`, href: promo ? `/brand/${promo.brand}` : "/explore", img: featBrand ? products.find((p) => p.brand === featBrand.slug && p.image)?.image : undefined },
-    Following: { kicker: `Following · ${follows.length} brands`, t1: "New from", t2: "your makers", cta: "See what dropped", foot: `${followingP.length} pieces from brands you follow`, href: "/explore", img: followingP[0]?.image },
-    Matched: { kicker: "Matched for you", t1: "Cut and fit", t2: "you buy in", cta: "Refine my match", foot: `Based on ${styleTags.slice(0, 3).join(", ")}`, href: "/onboarding", img: matched[0]?.image },
-    Saved: { kicker: `Saved · ${savedP.length} pieces`, t1: "Back in stock", t2: "in your size", cta: "View saved", foot: `Size ${sizes.tops} · ${savedP.filter((p) => p.stock !== 0).length} available now`, href: "/account", img: savedP[0]?.image },
-  }[feed];
-  const gridM = (feed === "Following" ? followingP : feed === "Saved" ? savedP : matched).slice(0, 4);
-  const recentP = recent.map((s) => products.find((p) => p.slug === s)).filter((p): p is NonNullable<typeof p> => !!p).slice(0, 8);
-  const collections = [
-    { title: "Men", meta: `${products.filter((p) => brands.find((b) => b.slug === p.brand)?.gender.some((g) => g === "Men" || g === "Unisex")).length} pieces`, tone: "#121A24", fg: "#F6F4EF", href: "/explore?gender=Men", img: products.find((p) => p.slug === "panel-work-jacket")?.image },
-    { title: "Women", meta: `${products.filter((p) => brands.find((b) => b.slug === p.brand)?.gender.some((g) => g === "Women" || g === "Unisex")).length} pieces`, tone: "#B85A3C", fg: "#F6F4EF", href: "/explore?gender=Women", img: products.find((p) => p.slug === "boxy-poplin-shirt")?.image },
-    { title: "Top collection", meta: "Curated rail", tone: "#CFC8B8", href: "/lookbooks", img: products.find((p) => p.slug === "cotton-chore-coat")?.image, pills: [{ label: "Clothes", meta: `${products.filter((p) => p.category !== "Accessories" && p.category !== "Footwear").length} pieces`, tone: "#DCD5C7" }, { label: "Accessories", meta: `${products.filter((p) => p.category === "Accessories").length} pieces`, tone: "#C9C2B2" }] },
-  ];
   const rail = [["/", "⌗", "Discover"], ["/explore", "◎", "Explore"], ["/brands", "⌂", "Brands"], ["/account", "♡", "Saved"], ["/messages", "✉", "Messages"], ["/lookbooks", "◫", "Lookbooks"]] as const;
 
   return (
     <div className="mx-auto flex max-w-[1440px]">
-      {/* icon rail */}
+      {/* Icon rail (unchanged from prior home) */}
       <aside className="hidden lg:flex w-[82px] flex-none flex-col items-center gap-6 border-r border-ink/7 py-6 sticky top-[64px] h-[calc(100vh-64px)]">
         <Link href="/" className="grid h-[30px] w-[30px] place-items-center rounded-[10px] bg-sage text-[13px] font-bold text-paper">k</Link>
         <button onClick={() => openSearch()} className="grid h-11 w-11 place-items-center rounded-pill bg-ink text-[15px] text-paper" aria-label="Search">⌕</button>
-        <div className="flex flex-col items-center gap-4">{rail.map(([href, icon, label]) => <Link key={href} href={href} title={label} className={clsx("grid h-[38px] w-[38px] place-items-center rounded-pill text-[15px] shadow-[inset_0_0_0_1px_rgba(18,26,36,.12)]", href === "/" ? "bg-white text-ink" : "text-ink/45 hover:text-ink")}>{icon}</Link>)}</div>
+        <div className="flex flex-col items-center gap-4">
+          {rail.map(([href, icon, label]) => (
+            <Link
+              key={href}
+              href={href}
+              title={label}
+              className={clsx(
+                "grid h-[38px] w-[38px] place-items-center rounded-pill text-[15px] shadow-[inset_0_0_0_1px_rgba(18,26,36,.12)]",
+                href === "/" ? "bg-white text-ink" : "text-ink/45 hover:text-ink",
+              )}
+            >
+              {icon}
+            </Link>
+          ))}
+        </div>
         <div className="flex-1" />
-        <div className="flex flex-col items-center gap-4 text-[15px] text-ink/40"><Link href={session.role === "brand" ? "/dashboard" : "/sell"} title="Sell">⚙</Link><Link href="/account" title="Account">⏻</Link></div>
+        <div className="flex flex-col items-center gap-4 text-[15px] text-ink/40">
+          <Link href={session.role === "brand" ? "/dashboard" : "/sell"} title="Sell">⚙</Link>
+          <Link href="/account" title="Account">⏻</Link>
+        </div>
       </aside>
 
       <Page className="flex-1 pt-4 md:pt-6 !px-4 md:!px-8">
-        {/* mobile greeting */}
+        {/* Mobile greeting */}
         <div className="mb-4 flex items-center gap-3 md:hidden">
           <Link href="/account" className="grid h-[34px] w-[34px] place-items-center rounded-pill bg-sand text-[11px] font-semibold text-ink/60">{initials}</Link>
-          <div className="flex-1"><div className="text-[10px] text-ink/45">{greet}</div><div className="text-[14px] font-bold tracking-[-.02em]">{session.name}</div></div>
-          <button onClick={() => openBag()} className="relative grid h-[34px] w-[34px] place-items-center rounded-pill bg-white text-[12px] soft" aria-label="Bag">⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-4 min-w-4 place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{bagCount}</span>}</button>
-        </div>
-
-        {/* feed pills (desktop) */}
-        <div className="mb-6 hidden md:flex items-center gap-5">
-          <div className="flex rounded-pill bg-cream p-[5px]">{FEEDS.map((f) => <button key={f} onClick={() => setFeed(f)} className={clsx("press rounded-pill px-5 py-[9px] text-[12px] font-semibold", feed === f ? "bg-white text-ink shadow-[0_10px_24px_-18px_rgba(18,26,36,.8)]" : "text-ink/50")}>{f}</button>)}</div>
-          <div className="flex-1" />
-          <div className="text-[12px] text-ink/50">{brands.length} brands · {products.length} pieces</div>
-        </div>
-
-        <div className="flex flex-col xl:flex-row gap-[22px] items-start">
-          <div className="min-w-0 flex-1 w-full">
-            {/* hero */}
-            <div className="relative flex overflow-hidden rounded-[26px] bg-cream min-h-[250px] md:h-[330px]">
-              <div className="flex w-full md:w-[44%] flex-col justify-center p-6 md:p-10">
-                <h1 className="sr-only">Kindred — Independent clothing brand marketplace</h1><div className="text-[11px] md:text-[12px] font-medium text-ink/55">{hero.kicker}</div>
-                <h2 className="mt-2 md:mt-3 text-[30px] md:text-[46px] leading-[1.02]">{hero.t1}<br />{hero.t2}</h2>
-                <Link href={hero.href} className="mt-4 md:mt-6 self-start rounded-pill bg-ink px-5 md:px-[26px] py-[11px] md:py-[14px] text-[11px] md:text-[12px] font-semibold text-paper">{hero.cta}</Link>
-                <div className="mt-4 md:mt-6 text-[10px] text-ink/42">{hero.foot}</div>
-              </div>
-              <div className="absolute right-0 bottom-0 w-[52%] h-[132px] rounded-tl-[24px] md:static md:h-auto md:flex-1 md:rounded-none bg-sand overflow-hidden">
-                {hero.img && <img loading="lazy" decoding="async" src={hero.img} alt="" className="h-full w-full object-cover" />}
-                <div className="label absolute left-5 bottom-4 hidden md:block !text-ink/40">Campaign · {featBrand?.name ?? "Coming soon"}</div>
-              </div>
-            </div>
-
-            {/* mobile feed pills */}
-            <div className="mt-4 md:hidden"><FobRow scroll>{FEEDS.map((f) => <Fob key={f} active={feed === f} onClick={() => setFeed(f)} size="sm">{f}</Fob>)}</FobRow></div>
-
-            {feed === "Dashboard" && (
-              <>
-                <div className="mt-5 hidden md:grid grid-cols-3 gap-[18px]" style={{ gridTemplateColumns: "1fr 1fr 1.2fr" }}>
-                  {collections.map((c) => (
-                    <Link key={c.title} href={c.href} className="relative h-[280px] overflow-hidden rounded-[26px] shadow-[inset_0_0_0_1px_rgba(18,26,36,.06)]" style={{ background: c.tone }}>
-                      {c.img && <img loading="lazy" decoding="async" src={c.img} alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />}
-                      <div className="absolute inset-0 bg-gradient-to-b from-paper/85 via-transparent to-transparent" />
-                      <div className="absolute left-5 right-5 top-5"><div className="text-[20px] font-bold leading-[1.1] tracking-[-.03em]">{c.title}</div><div className="mt-1 text-[11px] text-ink/55">{c.meta}</div></div>
-                      {c.pills && <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">{c.pills.map((p) => <span key={p.label} className="flex items-center gap-2 rounded-pill bg-white/92 py-[7px] pl-[7px] pr-3 shadow-[0_8px_20px_-14px_rgba(18,26,36,.7)]"><span className="h-6 w-6 rounded-pill" style={{ background: p.tone }} /><span><span className="block text-[10px] font-semibold">{p.label}</span><span className="block text-[9px] text-ink/45">{p.meta}</span></span></span>)}</div>}
-                      <span className="absolute bottom-[14px] right-[14px] grid h-[30px] w-[30px] place-items-center rounded-pill bg-white/92 text-[12px]">↗</span>
-                    </Link>
-                  ))}
-                </div>
-                {upcoming.length > 0 && (
-                  <div className="mt-5 hidden md:grid gap-[18px] md:grid-cols-2">
-                    {upcoming.slice(0, 2).map((d) => { const b = brands.find((x) => x.slug === d.brand); if (!b) return null; const on = notify.includes(d.id); return (
-                      <div key={d.id} className="lift outlined-ink flex items-center gap-4 rounded-md p-5">
-                        <Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} />
-                        <div className="min-w-0 flex-1"><div className="text-[10px] text-paper/55">{b.name} · drop</div><div className="truncate text-[15px] font-bold tracking-[-.02em]">{d.title}</div><div className="mt-2"><Countdown at={d.at} dark compact /></div></div>
-                        <button onClick={() => toggleNotify(d.id)} className={clsx("rounded-pill px-3 py-2 text-[10px] font-semibold", on ? "bg-rust text-paper" : "bg-paper/15 text-paper hover:bg-paper/25")}>{on ? "✓ Set" : "Notify"}</button>
-                      </div>); })}
-                  </div>
-                )}
-                {pick && (
-                  <Link href={`/product/${pick.slug}`} className="lift outlined mt-5 hidden md:flex items-center gap-4 rounded-md p-3">
-                    <Placeholder src={pick.image} className="h-[72px] w-[64px] flex-none rounded-[14px]" />
-                    <div className="min-w-0 flex-1"><div className="text-[10px] font-semibold uppercase tracking-[.14em] opacity-70">Today&apos;s pick · daily</div><div className="mt-1 text-[16px] font-normal tracking-[-.02em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{pick.name}</div><div className="text-[11px] opacity-60">{brands.find((b) => b.slug === pick.brand)?.name} · {money(priceOf(pick).price)}</div></div>
-                    <span className="grid h-8 w-8 place-items-center rounded-pill bg-ink text-paper text-[12px]">↗</span>
-                  </Link>
-                )}
-                {posts.length > 0 && (
-                  <div className="mt-6 hidden md:block">
-                    <div className="mb-3 flex items-baseline justify-between"><h3 className="text-[24px]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>From the workshops</h3><Link href="/?feed=Following" className="text-[11px] font-semibold text-ink/55">Following →</Link></div>
-                    <div className="grid gap-[18px] md:grid-cols-3">{posts.slice(0, 3).map((x) => { const b = brands.find((y) => y.slug === x.brand); if (!b) return null; return <div key={x.id} className="card overflow-hidden rounded-[24px] p-[10px]"><Placeholder src={x.image} className="aspect-[4/3] rounded-[18px]" /><div className="px-2 pt-3 pb-1"><div className="flex items-center gap-2"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={22} src={b.logo} /><Link href={`/brand/${b.slug}`} className="text-[11px] font-semibold">{b.name}</Link><button onClick={() => likePost(x.id)} className="ml-auto text-[11px] text-ink/45">♡ {x.likes}</button></div><p className="mt-2 line-clamp-2 text-[12px] leading-[1.5] text-ink/70">{x.caption}</p></div></div>; })}</div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {feed === "Dashboard" && lookBrands.length > 0 && <div className="mt-5 md:mt-7"><div className="mb-3 flex items-baseline justify-between"><h3 className="text-[18px] md:text-[24px]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Brands you&apos;ll like</h3><Link href="/brands" className="text-[12px] font-semibold text-ink/50">All brands →</Link></div><div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:px-0 lg:grid-cols-6">{lookBrands.map(({ b, n }) => <Link key={b.slug} href={`/brand/${b.slug}`} className="card flex w-[200px] flex-none items-center gap-3 rounded-md p-3 md:w-auto lift"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={40} src={b.logo} /><span className="min-w-0"><span className="block truncate text-[13px] font-semibold">{b.name}</span><span className="block truncate text-[10.5px] text-sage">{n} shared {n === 1 ? "tag" : "tags"} · {b.styles.filter((s) => styleTags.includes(s)).slice(0, 2).join(", ")}</span></span></Link>)}</div></div>}
-            {feed === "Dashboard" && recentP.length > 0 && <div className="mt-5 md:mt-7"><div className="mb-3 flex items-baseline justify-between"><h3 className="text-[18px] md:text-[24px]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Recently viewed</h3><Link href="/explore" className="text-[12px] font-semibold text-ink/50">Keep browsing →</Link></div><div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:gap-[14px] md:px-0">{recentP.map((p) => <div key={p.slug} className="w-[150px] flex-none md:w-[200px]"><ProductCard p={p} /></div>)}</div></div>}
-            {(feed !== "Dashboard" || true) && (
-              <div className={clsx("mt-4 md:mt-6", feed === "Dashboard" && "md:hidden")}>
-                <div className="mb-3 flex items-baseline justify-between"><h3 className="text-[15px] md:text-[18px]">{feed === "Following" ? "New from brands you follow" : feed === "Saved" ? "Your saved pieces" : feed === "Matched" ? "Matched to your profile" : "Popular now"}</h3><Link href={feed === "Saved" ? "/account" : "/explore"} className="text-[11px] font-semibold text-ink/55">See all →</Link></div>
-                <div className="grid grid-cols-2 gap-[14px] md:grid-cols-4 md:gap-[18px]">{(feed === "Dashboard" ? matched.slice(0, 4) : feed === "Matched" ? matched.slice(0, 8) : gridM.length ? (feed === "Following" ? followingP.slice(0, 8) : savedP.slice(0, 8)) : []).map((p) => <ProductCard key={p.slug} p={p} compact />)}</div>
-                {feed === "Following" && followingP.length === 0 && <div className="card rounded-[24px] p-8 text-center text-[13px] text-ink/55">You aren&apos;t following anyone yet. <Link href="/brands" className="font-semibold text-ink">Find brands →</Link></div>}
-                {feed === "Saved" && savedP.length === 0 && <div className="card rounded-[24px] p-8 text-center text-[13px] text-ink/55">Nothing saved yet. Tap ♡ on anything.</div>}
-                {feed === "Following" && posts.filter((x) => follows.includes(x.brand)).length > 0 && <div className="mt-6 grid gap-[18px] md:grid-cols-2">{posts.filter((x) => follows.includes(x.brand)).map((x) => { const b = brands.find((y) => y.slug === x.brand); if (!b) return null; return <div key={x.id} className="card overflow-hidden rounded-[24px] p-[10px]"><Placeholder src={x.image} className="aspect-[16/10] rounded-[18px]" /><div className="px-2 pt-3 pb-1"><div className="flex items-center gap-2"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={22} src={b.logo} /><Link href={`/brand/${b.slug}`} className="text-[11px] font-semibold">{b.name}</Link><FollowButton slug={b.slug} size="sm" className="ml-auto" /></div><p className="mt-2 text-[12px] leading-[1.5] text-ink/70">{x.caption}</p><div className="mt-2 flex flex-wrap gap-1">{x.products.map((s) => { const p = products.find((y) => y.slug === s); return p ? <Link key={s} href={`/product/${s}`} className="rounded-pill bg-cream px-[10px] py-1 text-[10px] font-semibold">{p.name} · {money(priceOf(p).price)}</Link> : null; })}<button onClick={() => likePost(x.id)} className="ml-auto text-[11px] text-ink/45">♡ {x.likes}</button></div></div></div>; })}</div>}
-              </div>
-            )}
+          <div className="flex-1">
+            <div className="text-[10px] text-ink/45">{greet}</div>
+            <div className="text-[14px] font-bold tracking-[-.02em]">{session.name}</div>
           </div>
+          <button onClick={() => openBag()} className="relative grid h-[34px] w-[34px] place-items-center rounded-pill bg-white text-[12px] soft" aria-label="Bag">
+            ⛭{bagCount > 0 && <span className="absolute -right-[3px] -top-[3px] grid h-4 min-w-4 place-items-center rounded-pill bg-sage px-1 text-[9px] font-bold text-paper">{bagCount}</span>}
+          </button>
+        </div>
 
-          {/* bag panel */}
-          <aside className="hidden xl:block w-[290px] flex-none rounded-[26px] bg-cream p-5 sticky top-[88px]">
-            <div className="flex items-center justify-between"><div className="text-[17px] font-bold tracking-[-.02em]">Bag</div><button onClick={() => openBag()} className="grid h-7 w-7 place-items-center rounded-pill bg-white/80 text-[11px]">↗</button></div>
-            <div className="mt-4 flex flex-col gap-2">
-              {bagGroups.flatMap((g) => g.items).slice(0, 4).map((it, i) => (
-                <Link key={it.key} href={`/product/${it.p.slug}`} className={clsx("flex items-center gap-[11px] rounded-[18px] p-[10px]", i === 1 ? "bg-white shadow-[0_10px_24px_-18px_rgba(18,26,36,.8)]" : "bg-white/55")}>
-                  <Placeholder src={it.p.image} className="h-[38px] w-[38px] flex-none rounded-pill" />
-                  <div className="min-w-0 flex-1"><div className="truncate text-[12px] font-semibold tracking-[-.01em]">{it.p.name}</div><div className="mt-[2px] text-[10px] text-ink/45">{brands.find((b) => b.slug === it.p.brand)?.name} · {it.variant.split(" · ")[0]} · ×{it.qty}</div></div>
-                  <span className="text-[13px] text-ink/35">›</span>
-                </Link>
+        {/* Section 1 · HeroSpotlight — falls back to a plain welcome card if we have zero brands yet. */}
+        <div className="rise">
+          {spotlight.length > 0 ? (
+            <HeroSpotlight brands={spotlight} productFor={productFor} />
+          ) : (
+            <EmptyDayOneHero name={session.name} />
+          )}
+        </div>
+
+        {/* Section 2 · Marquee ticker */}
+        <div className="mt-4 md:mt-5 rise">
+          <div className="relative overflow-hidden rounded-pill bg-ink text-paper">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-ink to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-ink to-transparent" />
+            <Marquee speed={65} gap={48} className="py-[10px]">
+              {tickerItems.map((item, i) => (
+                <span key={i} className="mono flex items-center gap-3 whitespace-nowrap text-[11.5px] uppercase tracking-[.14em]">
+                  <span className="inline-block h-[6px] w-[6px] flex-none rounded-pill bg-paper/60" aria-hidden="true" />
+                  {item}
+                </span>
               ))}
-              {bagCount === 0 && <div className="rounded-[18px] bg-white/55 p-4 text-[12px] text-ink/55">Your bag is empty.</div>}
+            </Marquee>
+          </div>
+        </div>
+
+        {/* Section 3 · Category tiles */}
+        <div className="mt-8 rise">
+          <SectionHeader eyebrow="Shop the racks" title="Every category, one bag" href="/explore" linkLabel="All of Explore" />
+          <CategoryTiles />
+        </div>
+
+        {/* Section 4 · New this week */}
+        <div className="mt-10 rise">
+          <NewThisWeek brands={brands} products={products} />
+        </div>
+
+        {/* Section 5 · Brands you'll like */}
+        {rankedBrands.length > 0 && (
+          <div className="mt-10 rise">
+            <BrandRail
+              eyebrow="For you"
+              title={styleTags.length > 0 ? "Brands you'll like" : "Brands to start with"}
+              href="/brands"
+              linkLabel="All brands"
+              brands={rankedBrands.slice(0, 10)}
+              variant="cover"
+              productFor={productFor}
+            />
+          </div>
+        )}
+
+        {/* Section 6 · Recently added pieces */}
+        {freshProducts.length > 0 && (
+          <div className="mt-10 rise">
+            <SectionHeader eyebrow="Just in" title="Recently added pieces" href="/explore" linkLabel="See more" />
+            <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:gap-4 md:px-0 stagger">
+              {freshProducts.map((p) => {
+                const b = brands.find((x) => x.slug === p.brand);
+                const accent = b?.accent ?? "var(--sage)";
+                return (
+                  <div
+                    key={p.slug}
+                    className="w-[180px] flex-none snap-start md:w-[220px]"
+                    style={{ ["--brand-accent" as string]: accent }}
+                  >
+                    <ProductCard p={p} />
+                  </div>
+                );
+              })}
             </div>
-            <Link href="/checkout" className="mt-4 block rounded-pill bg-ink py-[15px] text-center text-[12px] font-semibold text-paper">({bagCount} items) Check out · {money(total)}</Link>
-            <div className="mt-[18px] border-t border-ink/10 pt-4">
-              <div className="label">Matched to you</div>
-              <div className="mt-3 flex flex-col gap-3">
-                {matched.filter((p) => !follows.includes(p.brand)).slice(0, 2).map((p) => { const b = brands.find((x) => x.slug === p.brand); if (!b) return null; return (
-                  <div key={p.slug} className="flex items-center gap-[11px]">
-                    <Placeholder src={p.image} className="h-[52px] w-[44px] flex-none rounded-[14px]" />
-                    <div className="min-w-0 flex-1"><Link href={`/product/${p.slug}`} className="block truncate text-[12px] font-semibold tracking-[-.01em]">{p.name}</Link><div className="mt-[2px] text-[10px] text-ink/45">{b.name} · {money(priceOf(p).price)}</div></div>
-                    <FollowButton slug={b.slug} size="sm" />
-                  </div>); })}
-              </div>
+          </div>
+        )}
+
+        {/* Section 7 · Editor's picks */}
+        {editorPicks.length > 0 && (
+          <div className="mt-10 rise">
+            <BrandRail
+              eyebrow="Editor's picks"
+              title="Featured this week"
+              href="/brands?sort=Trending"
+              linkLabel="See all"
+              brands={editorPicks}
+              variant="portrait"
+              productFor={productFor}
+            />
+          </div>
+        )}
+
+        {/* Following highlights: keep the "matched to your saved sizes" shortcut for logged-in shoppers */}
+        {follows.length > 0 && (
+          <div className="mt-10 rise">
+            <SectionHeader eyebrow={`Following · ${follows.length}`} title="New from your makers" href="/?feed=Following" linkLabel="Following feed" />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {rankedProducts.filter((p) => follows.includes(p.brand)).slice(0, 4).map((p) => (
+                <ProductCard key={p.slug} p={p} compact />
+              ))}
             </div>
-          </aside>
+          </div>
+        )}
+
+        {/* Section 8 · Live activity + tiny CTA row */}
+        <div className="mt-12 grid gap-4 md:mt-16 md:grid-cols-[1fr_1fr] rise">
+          <LiveActivity />
+          <Link
+            href="/sell"
+            className="grad-warm lift-color group flex items-center gap-4 rounded-[22px] p-5 md:p-6"
+          >
+            <span className="grid h-10 w-10 flex-none place-items-center rounded-pill bg-ink text-[16px] text-paper">
+              <Sparkles size={14} color="var(--paper)" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Your label</div>
+              <div className="mt-[2px] text-[15px] font-semibold tracking-[-.015em]">Open a brand page on Kindred</div>
+              <div className="mt-[2px] text-[11.5px] text-ink/55">Onboarding takes five minutes. Every answer becomes a filter.</div>
+            </div>
+            <span className="hidden md:grid h-8 w-8 flex-none place-items-center rounded-pill bg-white text-[13px] transition-transform group-hover:translate-x-1">→</span>
+          </Link>
+        </div>
+
+        {/* Bottom money band — the total quiet count. */}
+        <div className="mt-14 pb-6 text-center text-[10.5px] font-medium uppercase tracking-[.16em] text-ink/40">
+          {brands.length > 0 ? `${brands.length} independent brand${brands.length === 1 ? "" : "s"} · ${products.length} piece${products.length === 1 ? "" : "s"}` : "Kindred, day one"}
         </div>
       </Page>
     </div>
   );
 }
+
+function EmptyDayOneHero({ name }: { name: string }) {
+  return (
+    <section className="grad-hero relative overflow-hidden rounded-[26px]">
+      <div className="relative flex min-h-[380px] flex-col justify-center gap-4 p-6 md:p-12">
+        <div className="text-[10px] font-semibold uppercase tracking-[.18em] text-ink/60">Welcome{name ? `, ${name.split(" ")[0]}` : ""}</div>
+        <h1 className="text-[44px] leading-[0.98] tracking-[-.02em] md:text-[68px]" style={{ fontFamily: "var(--font-instrument), Georgia, serif" }}>
+          Small labels.<br />Big wardrobes.
+        </h1>
+        <p className="max-w-[440px] text-[14px] leading-[1.55] text-ink/70">
+          Kindred is a marketplace for clothing you buy once and wear for years. Independent labels, their own words, one bag.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/explore" className="press rounded-pill bg-ink px-5 py-[12px] text-[12px] font-semibold text-paper">Start exploring</Link>
+          <Link href="/sell" className="press rounded-pill bg-white/90 px-5 py-[12px] text-[12px] font-semibold text-ink soft">Sell your brand</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+

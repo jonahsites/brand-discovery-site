@@ -90,7 +90,7 @@ export default function LiveActivity({ limit = 3 }: { limit?: number }) {
               <Link href={`/brand/${it.slug}`} className="font-semibold text-ink hover:underline">{it.who}</Link>
               <span className="text-ink/60"> · {it.verb}</span>
             </span>
-            <span className="mono flex-none text-[10.5px] text-ink/40">{ago(now || Date.now(), it.when)}</span>
+            <span className="mono flex-none text-[10.5px] text-ink/40">{now > 0 ? ago(now, it.when) : ""}</span>
           </li>
         ))}
       </ul>

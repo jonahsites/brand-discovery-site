@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element -- brand-supplied covers come from any host */
 "use client";
 /**
  * Full-bleed hero that rotates through featured brands. Each beat lasts
