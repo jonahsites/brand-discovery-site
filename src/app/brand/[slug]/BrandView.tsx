@@ -14,6 +14,8 @@ import Countdown, { useNow } from "@/components/Countdown";
 import { styleOverlap } from "@/lib/looks";
 import { OwnerEditLayer } from "@/components/OwnerEditLayer";
 import InlineEdit from "@/components/InlineEdit";
+import CoverMedia from "@/components/CoverMedia";
+import { patternStyle } from "@/lib/patterns";
 
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
@@ -45,9 +47,37 @@ export default function BrandView({ slug }: { slug: string }) {
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   return (
     <OwnerEditLayer enabled={isOwner}>
-    <Page className="pt-4 md:pt-6" style={{ ["--sage" as string]: b.accent ?? "var(--sage)", background: b.bg ?? "transparent" }}>
-      <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-stretch">
-        <div className="card order-2 flex flex-col rounded-lg p-6 md:p-8 lg:order-1">
+    <Page className="pt-4 md:pt-6" style={{ ["--sage" as string]: b.accent ?? "var(--sage)", ["--accent2" as string]: b.accent2 ?? b.accent ?? "var(--sage)", background: b.bg ?? "transparent" }}>
+      {/* Story-first hero: motto or story leads in giant serif. Cover moves below the grid. */}
+      {(b.heroStyle ?? "cover") === "story-first" && (b.motto || b.story || isOwner) && (
+        <section className="relative mb-4 overflow-hidden rounded-lg p-8 md:p-12" style={{ background: "var(--paper-warm, var(--paper))" }}>
+          <div className="absolute inset-0 pointer-events-none" style={patternStyle(b.pattern, b.accent ?? "var(--ink)", 0.08)} aria-hidden="true" />
+          <div className="relative">
+            {b.motto && <p className="mb-4 max-w-[820px] text-[36px] md:text-[64px] leading-[.98] tracking-[-.02em] text-ink" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.motto}</p>}
+            {b.story && <p className="max-w-[640px] text-[15px] md:text-[17px] leading-[1.55] text-ink/70">{(b.story ?? "").split(/\n+/)[0]}</p>}
+          </div>
+        </section>
+      )}
+      <div className={clsx(
+        "relative gap-4 md:gap-5 items-stretch",
+        (b.heroStyle ?? "cover") === "cover" && "grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]",
+        (b.heroStyle ?? "cover") === "portrait" && "flex flex-col-reverse lg:flex-col-reverse",
+        (b.heroStyle ?? "cover") === "split" && "grid md:grid-cols-2",
+        (b.heroStyle ?? "cover") === "story-first" && "grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]",
+      )}>
+        {/* Pattern backing: sits under the hero grid, tinted with the accent color. */}
+        {(b.pattern ?? "none") !== "none" && (b.heroStyle ?? "cover") !== "story-first" && (
+          <div className="pointer-events-none absolute inset-0 -z-[1] rounded-lg" style={patternStyle(b.pattern, b.accent ?? "var(--ink)", 0.06)} aria-hidden="true" />
+        )}
+        <div
+          className={clsx(
+            "order-2 flex flex-col rounded-lg p-6 md:p-8 lg:order-1",
+            (b.heroStyle ?? "cover") === "split"
+              ? "text-paper"
+              : "card",
+          )}
+          style={(b.heroStyle ?? "cover") === "split" ? { background: b.accent2 ? `linear-gradient(135deg, ${b.accent ?? "#7C8C6F"}, ${b.accent2})` : (b.accent ?? "var(--sage)") } : undefined}
+        >
           <div className="mb-5 flex items-center gap-3">
             <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-[16px] text-[15px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img loading="lazy" decoding="async" src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
             <div className="min-w-0"><InlineEdit kind="text" label="Location" placeholder="City, CC" value={`${b.city}, ${b.country}`} onSave={async (next) => { const [city, country] = (next ?? "").split(",").map((s) => s.trim()); return await save({ city: city ?? b.city, country: (country ?? b.country).toUpperCase().slice(0, 2) }); }}><div className="label">{b.city}, {b.country}{b.founded ? ` · since ${b.founded}` : ""}</div></InlineEdit><div className="mt-[3px] truncate text-[12px] text-ink/50">{brandTier(followers)} · {b.batch} batch · ships from {b.shipsFrom}</div></div>
@@ -66,7 +96,12 @@ export default function BrandView({ slug }: { slug: string }) {
             <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
           </InlineEdit>
           <div className="mb-6 flex flex-wrap gap-2">
-            {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>}
+            {styleOverlap(b.styles, styleTags) > 0 && (
+              <span
+                className="rounded-pill px-[14px] py-2 text-[11px] font-semibold text-paper"
+                style={b.accent2 ? { background: `linear-gradient(135deg, ${b.accent ?? "#7C8C6F"}, ${b.accent2})` } : { background: b.accent ?? "var(--sage)" }}
+              >For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>
+            )}
             {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill bg-cream px-[14px] py-2 text-[11px] font-semibold text-ink/72">{t}</Link>)}
           </div>
           <div className="mt-auto flex flex-wrap items-center gap-3">
@@ -77,9 +112,20 @@ export default function BrandView({ slug }: { slug: string }) {
             </div>
           </div>
         </div>
-        <div className="order-1 lg:order-2">
+        <div className={clsx(
+          "order-1 lg:order-2",
+          (b.heroStyle ?? "cover") === "portrait" && "w-full",
+        )}>
           <InlineEdit kind="image" label="Cover image URL" clearable placeholder="https://…" value={b.cover} onSave={async (next) => await save({ cover: next })} className="block w-full">
-            <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · 16:9" wide className="h-[220px] rounded-lg md:h-[300px] lg:h-auto lg:min-h-[400px]" />
+            <CoverMedia
+              cover={b.cover}
+              coverVideo={b.coverVideo}
+              alt={`${b.name} cover`}
+              className={clsx(
+                "block w-full overflow-hidden rounded-lg",
+                (b.heroStyle ?? "cover") === "portrait" ? "h-[300px] md:h-[520px]" : "h-[220px] md:h-[300px] lg:h-auto lg:min-h-[400px]",
+              )}
+            />
           </InlineEdit>
           {isOwner && (
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -134,7 +180,10 @@ export default function BrandView({ slug }: { slug: string }) {
           <div className="flex flex-col gap-3">
             <InlineEdit kind="textarea" label="Pull quote" clearable placeholder='"A short quote from press or a customer."' value={b.quote} onSave={async (next) => await save({ quote: next })}>
               {b.quote ? (
-                <div className="rounded-lg p-6 md:p-8 text-paper" style={{ background: b.accent ?? "var(--sage)" }}>
+                <div
+                  className="rounded-lg p-6 md:p-8 text-paper"
+                  style={{ background: b.accent2 ? `linear-gradient(135deg, ${b.accent ?? "#7C8C6F"}, ${b.accent2})` : (b.accent ?? "var(--sage)") }}
+                >
                   <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-paper/70">In their own words</div>
                   <blockquote className="text-[22px] md:text-[26px] leading-[1.2] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>&ldquo;{b.quote}&rdquo;</blockquote>
                 </div>
