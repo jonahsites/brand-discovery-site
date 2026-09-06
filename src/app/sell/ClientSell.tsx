@@ -74,7 +74,10 @@ export default function Sell() {
       return;
     }
     setSession({ role: "brand", name: f.name.trim(), brand: slug });
-    router.push("/dashboard?welcome=1");
+    // Route to the celebration takeover — dismissing lands the owner on their
+    // own page in edit mode. The dashboard welcome card still fires the next
+    // time they hit /dashboard.
+    router.push(`/brand/${slug}/celebrate`);
   };
 
   return (

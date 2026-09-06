@@ -11,7 +11,7 @@ import { useApp } from "@/lib/store";
  * Native share uses `navigator.share` when available (iOS + Android + newer Chrome / Edge on
  * desktop). Everywhere else we fall back to opening a pre-typed X compose URL.
  */
-export default function ShareBrand({ b, className }: { b: Brand; className?: string }) {
+export default function ShareBrand({ b, className, label }: { b: Brand; className?: string; label?: string }) {
   const { toast } = useApp();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -50,7 +50,7 @@ export default function ShareBrand({ b, className }: { b: Brand; className?: str
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} aria-label="Share this brand" className={className ?? "press grid h-[38px] w-[38px] place-items-center rounded-md bg-cream text-ink/70"}>
-        <IconShare size={16} />
+        <IconShare size={16} />{label ? <span>{label}</span> : null}
       </button>
 
       {open && (
