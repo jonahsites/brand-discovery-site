@@ -7,7 +7,8 @@ import { BRANDS, planOf } from "@/lib/data";
 import { SITE } from "@/lib/seo";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const contentType = "image/png";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -15,7 +16,23 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   // Read seed + custom brands. Custom brands live in localStorage on the client only,
   // so the poster route can only find seed brands. That's fine — this API is called from
   // the brand's own page which passes the brand slug that exists somewhere in the app.
-  const b = BRANDS.find((x) => x.slug === slug);
+  let b: (typeof BRANDS)[number] | undefined = BRANDS.find((x) => x.slug === slug);
+  if (!b) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (url && key) {
+      try {
+        const res = await fetch(`${url}/rest/v1/brands?slug=eq.${encodeURIComponent(slug)}&select=slug,name,tagline,city,country,accent,plan&limit=1`, { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });
+        if (res.ok) {
+          const rows = (await res.json()) as Array<{ slug: string; name: string; tagline?: string; city?: string; country?: string; accent?: string; plan?: string }>;
+          if (rows[0]) {
+            const r = rows[0];
+            b = { slug: r.slug, name: r.name, city: r.city ?? "", country: r.country ?? "", tagline: r.tagline ?? "", accent: r.accent, plan: r.plan as (typeof BRANDS)[number]["plan"] } as (typeof BRANDS)[number];
+          }
+        }
+      } catch { /* fall through to slug-based fallback */ }
+    }
+  }
   const name = b?.name ?? slug.replace(/-/g, " ");
   const tagline = b?.tagline ?? "on Kindred";
   const city = b ? `${b.city}, ${b.country}` : "";
@@ -46,7 +63,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
         <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", marginTop: 40, marginBottom: 40, padding: 60, background: accent, color: paper, borderRadius: 20, position: "relative" }}>
           <div style={{ display: "flex", fontFamily: "sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", opacity: 0.75, marginBottom: 24 }}>{city}</div>
           <div style={{ fontSize: name.length > 20 ? 110 : name.length > 14 ? 138 : 168, lineHeight: 0.95, letterSpacing: -2, fontWeight: 400 }}>{name}</div>
-          <div style={{ marginTop: 32, fontSize: 34, lineHeight: 1.15, opacity: 0.9, maxWidth: 860, fontStyle: "italic" }}>&ldquo;{tagline}&rdquo;</div>
+          <div style={{ marginTop: 32, fontSize: 34, lineHeight: 1.15, opacity: 0.9, maxWidth: 860, fontStyle: "italic" }}>{`"${tagline}"`}</div>
         </div>
 
         {/* Footer */}
