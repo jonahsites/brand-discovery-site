@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook } from "./data";
+import { type Brand, type Product, type Promo, type Drop, type Order, type GiftCard, type Review, type Post, type Thread, type Lookbook, type Address } from "./data";
 import { computeCart, pointsEarned, type BagGroup } from "./cart";
 import { getSupabase, supabaseEnabled } from "./supabase";
 import * as db from "./db";
@@ -12,7 +12,8 @@ import { allBrands, allProducts, effectivePrice } from "./catalog";
 export type { BagItem, BagGroup, BagLine } from "./cart";
 import type { BagItem } from "./cart";
 export type Session = { role: "shopper" | "brand"; name: string; brand?: string };
-export type Account = { name: string; email: string; provider: "email" | "x" | "apple" | "google"; signedIn: boolean; createdAt: string; pendingConfirmation?: boolean };
+export type AccountRole = "shopper" | "brand" | "admin";
+export type Account = { name: string; email: string; provider: "email" | "x" | "apple" | "google"; signedIn: boolean; createdAt: string; pendingConfirmation?: boolean; role?: AccountRole };
 
 type Persisted = {
   bag: BagItem[]; follows: string[]; saved: string[]; ship: Record<string, number>;
@@ -41,12 +42,14 @@ type Ctx = State & {
   setShip: (brand: string, idx: number) => void;
   openBag: (v?: boolean) => void; openSearch: (v?: boolean) => void;
   setSession: (s: Session) => void;
-  upsertBrand: (b: Brand) => void;
+  upsertBrand: (b: Brand) => Promise<{ ok: true } | { ok: false; error: string }>;
   upsertProduct: (p: Product) => void; deleteProduct: (slug: string) => void;
   upsertPromo: (p: Promo) => void; deletePromo: (id: string) => void;
   upsertDrop: (d: Drop) => void; deleteDrop: (id: string) => void;
-  placeOrder: () => Order | undefined; setOrderStatus: (id: string, status: Order["status"]) => void;
-  addReview: (r: Omit<Review, "id" | "at">) => void;
+  placeOrder: (address?: Address) => Order | undefined; setOrderStatus: (id: string, status: Order["status"]) => void;
+  addReview: (r: Omit<Review, "id" | "at">) => Promise<{ ok: true } | { ok: false; error: string }>;
+  deleteReview: (id: string) => void;
+  canReview: (productSlug: string) => boolean;
   setStyleTags: (t: string[]) => void; setSizes: (s: Persisted["sizes"]) => void;
   toggleNotify: (dropId: string) => void; toggleAlert: (slug: string) => void;
   applyPromoCode: (code: string) => boolean; clearPromoCode: () => void;
@@ -54,7 +57,12 @@ type Ctx = State & {
   signUp: (a: { name: string; email: string; password?: string; provider: Account["provider"] }) => Promise<{ ok: true; needsConfirmation?: boolean } | { ok: false; error: string }>; logIn: (email: string, password?: string) => Promise<{ ok: true } | { ok: false; error: string }>; logOut: () => Promise<void>; completeOnboarding: () => Promise<void>; requestPasswordReset: (email: string) => Promise<{ ok: true } | { ok: false; error: string }>;
   buyGiftCard: (g: { amount: number; to: string; from: string; note?: string }) => string; applyGiftCode: (code: string) => boolean; clearGiftCode: () => void;
   addPost: (p: Omit<Post, "id" | "at" | "likes">) => void; deletePost: (id: string) => void; likePost: (id: string) => void;
-  sendMessage: (brand: string, text: string, from: "shopper" | "brand") => string;
+  /** Send a message either into an existing thread (`{ threadId }`) or start a new one with a brand
+   *  (`{ brandSlug }`). */
+  sendMessage: (target: { threadId?: string; brandSlug?: string }, text: string, from: "shopper" | "brand") => string | undefined;
+  /** Return the id of an existing (brand, current-shopper) thread, or undefined so /messages can
+   *  open a draft view without writing anything to the DB. */
+  openThreadWith: (brandSlug: string) => string | undefined;
   setSizeOnly: (v: boolean) => void;
   points: number;
   allLookbooks: Lookbook[];
@@ -123,13 +131,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Best-effort: profile flags, style tags, sizes, follows, saves. Ignore errors — the local
       // state stays intact if any of these fail (offline, RLS not applied yet, etc.).
       const [prof, tags, sz, fol, sav] = await Promise.all([
-        sb.from("profiles").select("onboarded").eq("id", userId).maybeSingle(),
+        sb.from("profiles").select("onboarded, role, brand_slug").eq("id", userId).maybeSingle(),
         sb.from("style_tags").select("tag").eq("user_id", userId),
         sb.from("sizes").select("tops, waist, shoe").eq("user_id", userId).maybeSingle(),
         sb.from("follows").select("brand_slug").eq("user_id", userId),
         sb.from("saves").select("product_slug").eq("user_id", userId),
       ]);
       if (!alive) return;
+      const dbRole = (prof.data?.role as AccountRole | undefined) ?? undefined;
+      const brandOwned = (prof.data?.brand_slug as string | null | undefined) ?? undefined;
       setState((p) => ({
         ...p,
         onboarded: prof.data?.onboarded ?? p.onboarded,
@@ -137,6 +147,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sizes: sz.data ? { tops: sz.data.tops ?? p.sizes.tops, waist: sz.data.waist ?? p.sizes.waist, shoe: sz.data.shoe ?? p.sizes.shoe } : p.sizes,
         follows: fol.data?.length ? fol.data.map((r: { brand_slug: string }) => r.brand_slug) : p.follows,
         saved: sav.data?.length ? sav.data.map((r: { product_slug: string }) => r.product_slug) : p.saved,
+        account: p.account ? { ...p.account, role: dbRole ?? p.account.role } : p.account,
+        // Keep session in sync with the profile's brand ownership so /dashboard's role check works
+        // for anyone who owns a brand on this account, even on a fresh device.
+        session: brandOwned ? { role: "brand", name: p.session.name, brand: brandOwned } : p.session,
       }));
     };
     const applySession = async () => {
@@ -207,7 +221,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     sb.auth.getUser().then(({ data }) => { if (data.user && alive) pullOwnerScoped(data.user.id).catch(() => {}); });
     // Realtime: any change to a shared table triggers a refetch. Coarse but correct.
     const debounced = (() => { let t: ReturnType<typeof setTimeout> | null = null; return () => { if (t) clearTimeout(t); t = setTimeout(() => pullShared().catch(() => {}), 200); }; })();
-    const unsubs = ["brands", "products", "removed_products", "promos", "drops", "posts", "reviews", "lookbooks", "lookbook_frames", "orders", "order_items", "threads", "messages", "gift_cards", "site_config"].map((t) => db.subscribe(t, debounced));
+    // `removed_products` was retired in migration 0004 — soft-delete lives on products.is_deleted,
+    // and the products subscription already covers those flips.
+    const unsubs = ["brands", "products", "promos", "drops", "posts", "reviews", "lookbooks", "lookbook_frames", "orders", "order_items", "threads", "messages", "gift_cards", "site_config"].map((t) => db.subscribe(t, debounced));
     return () => { alive = false; unsubs.forEach((u) => u()); };
   }, []);
 
@@ -274,26 +290,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
     openBag: (v = true) => up((p) => ({ bagOpen: v, searchOpen: v ? false : p.searchOpen })),
     openSearch: (v = true) => up((p) => ({ searchOpen: v, bagOpen: v ? false : p.bagOpen })),
     setSession: (session) => up(() => ({ session })),
-    upsertBrand: (b) => { up((p) => ({ customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)] })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) { await db.upsertBrandRow(b, data.user.id); await sb.from("profiles").update({ brand_slug: b.slug }).eq("id", data.user.id); } })().catch(() => {}); },
+    upsertBrand: async (b) => {
+      const sb = getSupabase();
+      if (!sb) {
+        // Local demo mode — no Supabase configured. Just mirror into local state and succeed.
+        up((p) => ({ customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)] }));
+        return { ok: true as const };
+      }
+      const { data: u } = await sb.auth.getUser();
+      if (!u.user) return { ok: false as const, error: "You need to be signed in to launch a brand." };
+      const { error } = await db.upsertBrandRowChecked(b, u.user.id);
+      if (error) return { ok: false as const, error };
+      // Mirror the brand's role onto the profile so future sessions know they own a brand.
+      await sb.from("profiles").update({ brand_slug: b.slug, role: "brand" }).eq("id", u.user.id);
+      up((p) => ({
+        customBrands: [b, ...p.customBrands.filter((x) => x.slug !== b.slug)],
+        account: p.account ? { ...p.account, role: "brand" } : p.account,
+      }));
+      return { ok: true as const };
+    },
     upsertProduct: (pr) => { up((p) => ({ customProducts: [pr, ...p.customProducts.filter((x) => x.slug !== pr.slug)], removedProducts: p.removedProducts.filter((s) => s !== pr.slug) })); db.upsertProductRow(pr).catch(() => {}); },
     deleteProduct: (slug) => { up((p) => ({ customProducts: p.customProducts.filter((x) => x.slug !== slug), removedProducts: [...new Set([...p.removedProducts, slug])], bag: p.bag.filter((b) => b.product !== slug) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.deleteProductRow(slug, data.user.id); })().catch(() => {}); },
     upsertPromo: (pr) => { up((p) => ({ promos: [pr, ...p.promos.filter((x) => x.id !== pr.id)] })); db.upsertPromoRow(pr).catch(() => {}); },
     deletePromo: (id) => { up((p) => ({ promos: p.promos.filter((x) => x.id !== id) })); db.deletePromoRow(id).catch(() => {}); },
     upsertDrop: (d) => { up((p) => ({ drops: [d, ...p.drops.filter((x) => x.id !== d.id)].sort((a, b) => a.at.localeCompare(b.at)) })); db.upsertDropRow(d).catch(() => {}); },
     deleteDrop: (id) => { up((p) => ({ drops: p.drops.filter((x) => x.id !== id) })); db.deleteDropRow(id).catch(() => {}); },
-    placeOrder: () => { track("place_order", { brands: [...new Set(derived.bagGroups.map((g) => g.brand.slug))].length, total: derived.total });
+    placeOrder: (address) => { track("place_order", { brands: [...new Set(derived.bagGroups.map((g) => g.brand.slug))].length, total: derived.total });
       if (derived.bagGroups.length === 0) return undefined;
       const order: Order = {
         id: "UN-" + String(40912 + state.orders.length + 1), placedAt: new Date().toISOString(), status: "Placed", promo: state.promoCode,
         items: derived.bagGroups.flatMap((g) => g.items.map((i) => ({ product: i.p.slug, name: i.p.name, brand: g.brand.slug, variant: i.variant, qty: i.qty, unit: i.unit }))),
         subtotal: derived.subtotal, shipping: derived.shipTotal, total: derived.total, credit: derived.credit, gift: derived.giftCredit || undefined,
+        address, buyerName: address?.name ?? state.account?.name, buyerEmail: address?.email ?? state.account?.email,
       };
       up((p) => ({ orders: [order, ...p.orders], bag: [], promoCode: undefined, giftCode: undefined, redeem: 0, giftCards: derived.giftCredit && p.giftCode ? p.giftCards.map((g) => (g.code === p.giftCode ? { ...g, balance: Math.max(0, Math.round((g.balance - derived.giftCredit) * 100) / 100) } : g)) : p.giftCards, customProducts: p.customProducts.map((cp) => { const bought = order.items.filter((i) => i.product === cp.slug).reduce((s, i) => s + i.qty, 0); return bought && cp.stock !== undefined ? { ...cp, stock: Math.max(0, cp.stock - bought) } : cp; }) }));
       const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) { await db.insertOrder(order, data.user.id); if (state.giftCode && derived.giftCredit) await db.debitGiftCard(state.giftCode, derived.giftCredit); for (const it of order.items) { const cp = state.customProducts.find((x) => x.slug === it.product); if (cp && cp.stock !== undefined) await db.upsertProductRow({ ...cp, stock: Math.max(0, cp.stock - it.qty) }); } } })().catch(() => {});
       return order;
     },
     setOrderStatus: (id, status) => { up((p) => ({ orders: p.orders.map((o) => (o.id === id ? { ...o, status } : o)) })); db.updateOrderStatus(id, status).catch(() => {}); },
-    addReview: (r) => { const rec = { ...r, id: uid(), at: new Date().toISOString() }; up((p) => ({ reviews: [rec, ...p.reviews] })); db.insertReview(rec).catch(() => {}); },
+    addReview: async (r) => {
+      const rec = { ...r, id: uid(), at: new Date().toISOString() };
+      const sb = getSupabase();
+      if (sb) {
+        // The reviews.insert policy requires an order_items row for this buyer + product.
+        // We surface RLS violations back to the UI instead of optimistically writing.
+        const { data: u } = await sb.auth.getUser();
+        const { error } = await sb.from("reviews").insert({
+          id: rec.id, product_slug: rec.product, author_name: rec.name, init: rec.init,
+          tint: rec.tint, stars: rec.stars, fit: rec.fit, body: rec.body, size: rec.size, created_at: rec.at,
+          author_id: u.user?.id ?? null,
+        });
+        if (error) return { ok: false as const, error: /row-level security/i.test(error.message) ? "Only buyers of this piece can review it." : error.message };
+      }
+      up((p) => ({ reviews: [rec, ...p.reviews] }));
+      return { ok: true as const };
+    },
+    deleteReview: (id) => {
+      up((p) => ({ reviews: p.reviews.filter((x) => x.id !== id) }));
+      const sb = getSupabase(); if (!sb) return;
+      // RLS scopes delete to the review's author, so this silently no-ops for anyone else.
+      sb.from("reviews").delete().eq("id", id).then(() => {});
+    },
+    canReview: (productSlug) => state.orders.some((o) => o.items.some((i) => i.product === productSlug)),
     setStyleTags: (styleTags) => up(() => ({ styleTags })),
     setSizes: (sizes) => up(() => ({ sizes })),
     toggleNotify: (id) => { const on = !state.notify.includes(id); up((p) => ({ notify: toggleIn(p.notify, id) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.toggleNotifyRow(data.user.id, id, on); })().catch(() => {}); },
@@ -365,21 +423,60 @@ signUp: async ({ name, email, password, provider }) => {
     addPost: (post) => { const rec = { ...post, id: uid(), at: new Date().toISOString(), likes: 0 }; up((p) => ({ posts: [rec, ...p.posts] })); db.insertPost(rec).catch(() => {}); },
     deletePost: (id) => { up((p) => ({ posts: p.posts.filter((x) => x.id !== id) })); db.deletePostRow(id).catch(() => {}); },
     likePost: (id) => { up((p) => ({ posts: p.posts.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x)) })); db.likePostRow(id).catch(() => {}); },
-    sendMessage: (brand, text, from) => {
-      const shopper = state.session.role === "brand" ? "Jules Renard" : state.session.name;
-      const existing = state.threads.find((t) => t.brand === brand && t.shopper === shopper);
+    sendMessage: (target, text, from) => {
+      const trimmed = text.trim();
+      if (!trimmed) return undefined;
+      // Reply into a specific existing thread when a threadId is provided — this is what a brand
+      // replying to a shopper does, so we never mis-route replies to a fake "Jules Renard" thread.
+      let existing = target.threadId ? state.threads.find((t) => t.id === target.threadId) : undefined;
+      // Fall back to (brand, current-user) matching when only a brand slug was passed — this is
+      // the shopper starting a first conversation.
+      if (!existing && target.brandSlug && from === "shopper" && state.session.name) {
+        existing = state.threads.find((t) => t.brand === target.brandSlug && t.shopper === state.session.name);
+      }
+      if (!existing && !target.brandSlug) return undefined;
+      const brand = existing?.brand ?? target.brandSlug!;
+      const shopper = existing?.shopper ?? (from === "shopper" ? state.session.name : "");
       const id = existing?.id ?? uid();
-      const msg = { id: uid(), from, text, at: new Date().toISOString() };
-      up((p) => ({ threads: existing ? p.threads.map((t) => (t.id === id ? { ...t, messages: [...t.messages, msg] } : t)) : [{ id, brand, shopper, messages: [msg] }, ...p.threads] }));
-      const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (!data.user) return; const shopperId = from === "shopper" ? data.user.id : data.user.id; const tid = await db.upsertThread(brand, shopperId, shopper); if (tid) { await db.insertMessage(tid, from, text); if (!existing) up((p) => ({ threads: p.threads.map((t) => (t.id === id ? { ...t, id: tid } : t)) })); } })().catch(() => {});
+      const msg = { id: uid(), from, text: trimmed, at: new Date().toISOString() };
+      up((p) => ({ threads: existing
+        ? p.threads.map((t) => (t.id === id ? { ...t, messages: [...t.messages, msg] } : t))
+        : [{ id, brand, shopper, messages: [msg] }, ...p.threads]
+      }));
+      const sb = getSupabase();
+      if (sb) (async () => {
+        const { data } = await sb.auth.getUser();
+        if (!data.user) return;
+        // For a shopper's first message we create the thread with their auth uid so RLS lets
+        // them read/write it. Brand replies always target an existing thread by id.
+        let tid = target.threadId;
+        if (!tid) {
+          tid = (await db.upsertThread(brand, data.user.id, shopper || state.session.name)) ?? undefined;
+        }
+        if (tid) {
+          await db.insertMessage(tid, from, trimmed);
+          if (!existing) up((p) => ({ threads: p.threads.map((t) => (t.id === id ? { ...t, id: tid! } : t)) }));
+        }
+      })().catch(() => {});
       return id;
+    },
+    openThreadWith: (brandSlug) => {
+      const existing = state.threads.find((t) => t.brand === brandSlug && t.shopper === state.session.name);
+      return existing?.id ?? undefined;
     },
     setSizeOnly: (sizeOnly) => up(() => ({ sizeOnly })),
     upsertLookbook: (l) => { up((p) => ({ lookbooks: [l, ...p.lookbooks.filter((x) => x.slug !== l.slug)] })); db.upsertLookbookRow(l).catch(() => {}); },
     deleteLookbook: (slug) => { up((p) => ({ lookbooks: p.lookbooks.filter((x) => x.slug !== slug) })); db.deleteLookbookRow(slug).catch(() => {}); },
     renameShopper: (name) => up((p) => ({ session: { ...p.session, name: name.trim() || p.session.name } })),
     toggleWaitlist: (slug) => { const on = !state.waitlist.includes(slug); up((p) => ({ waitlist: toggleIn(p.waitlist, slug) })); const sb = getSupabase(); if (sb) (async () => { const { data } = await sb.auth.getUser(); if (data.user) await db.toggleWaitlistRow(data.user.id, slug, on); })().catch(() => {}); },
-    setFeatured: (featured) => { up(() => ({ featured })); db.setFeaturedRow(featured).catch(() => {}); },
+    setFeatured: (featured) => {
+      if (state.account?.role !== "admin") {
+        up((p) => ({ toasts: [...p.toasts, { id: uid(), text: "Only Kindred admins can set the featured brand." }] }));
+        return;
+      }
+      up(() => ({ featured }));
+      db.setFeaturedRow(featured).catch(() => {});
+    },
     markViewed,
     setRedeem: (redeem) => up(() => ({ redeem: Math.max(0, Math.min(redeem, points)) })),
     toast: (text, href) => { const id = uid(); up((p) => ({ toasts: [...p.toasts, { id, text, href }] })); setTimeout(() => setState((p) => ({ ...p, toasts: p.toasts.filter((t) => t.id !== id) })), 2600); },

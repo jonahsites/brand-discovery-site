@@ -29,7 +29,7 @@ export type PlanKey = "basic" | "signature" | "premium";
 export type Plan = { key: PlanKey; name: string; price: number; tagline: string; boost: number; features: string[]; badge?: string; badgeBg?: string };
 /** One-time placement fee tiers. Higher plans get a ranking boost + visible badge. */
 export const PLANS: Plan[] = [
-  { key: "basic", name: "Basic", price: 250, tagline: "You’re on Kindred.", boost: 0, features: ["A public brand page at kindred.shop/brand/you", "Every product in Explore + search + filters", "Message shoppers directly, no add-on", "Your own accent color + fonts + intro"] },
+  { key: "basic", name: "Basic", price: 250, tagline: "You’re on Kindred.", boost: 0, features: ["A public brand page at shopkindred.org/brand/you", "Every product in Explore + search + filters", "Message shoppers directly, no add-on", "Your own accent color + fonts + intro"] },
   { key: "signature", name: "Signature", price: 450, tagline: "Ranked above Basic in every feed.", boost: 6, features: ["Everything in Basic", "“Signature brand” badge on your card", "Higher default rank in For‑you and Brands you’ll like", "Featured slot rotation on Discover", "Priority email support"], badge: "Signature", badgeBg: "#3A5A3F" },
   { key: "premium", name: "Premium", price: 700, tagline: "First slot in the discovery feed.", boost: 14, features: ["Everything in Signature", "“Premium brand” badge in sage accent", "Guaranteed slot in Brands you’ll like", "First card in the TikTok‑style /feed", "One feature in the monthly newsletter", "Direct line to the founding team"], badge: "Premium", badgeBg: "#C65A2F" },
 ];
@@ -37,7 +37,8 @@ export const planOf = (key?: PlanKey): Plan => PLANS.find((p) => p.key === key) 
 export type Promo = { id: string; brand: string; code: string; pct: number; label: string; products: string[] | "all"; ends?: string; active: boolean };
 export type Drop = { id: string; brand: string; title: string; at: string; pieces: number; blurb: string; products: string[] };
 export type OrderItem = { product: string; name: string; brand: string; variant: string; qty: number; unit: number };
-export type Order = { id: string; placedAt: string; items: OrderItem[]; subtotal: number; shipping: number; total: number; status: "Placed" | "Packed" | "In transit" | "Delivered"; promo?: string; credit?: number; gift?: number };
+export type Address = { name: string; email: string; line: string; city: string; zip: string; country: string };
+export type Order = { id: string; placedAt: string; items: OrderItem[]; subtotal: number; shipping: number; total: number; status: "Placed" | "Packed" | "In transit" | "Delivered"; promo?: string; credit?: number; gift?: number; address?: Address; buyerName?: string; buyerEmail?: string };
 export type GiftCard = { code: string; amount: number; balance: number; to: string; from: string; note?: string; at: string };
 export type Review = { id: string; product: string; name: string; init: string; tint: string; stars: number; fit: 1 | 2 | 3; body: string; size: string; at: string };
 
@@ -87,12 +88,23 @@ export const CATEGORIES = [
   { name: "Trousers", n: 241 }, { name: "Footwear", n: 137 }, { name: "Accessories", n: 184 }, { name: "Archive", n: 62 },
 ];
 
-export const ACCORDIONS = [
-  ["Details", "Boxy fit with dropped shoulders and a four-panel front. Two flap chest pockets, corozo buttons, single-piece back yoke. Model is 6'1\" wearing L."],
-  ["Materials & care", "14oz garment-dyed organic cotton canvas, woven in Portugal. Cold wash inside out, hang dry. Expect a half-size of shrink and honest fading at the seams."],
-  ["Size guide", "Sizes run one up from standard streetwear. L fits a 42\" chest with room for a mid-layer. Chest, length and sleeve measurements are listed per size in the table."],
-  ["Shipping & returns", "Ships from Rotterdam within 2–4 working days, tracked. Free returns within 30 days — Kindred covers the label on every order over $120."],
-] as const;
+/** Build the product-page accordion from real brand + product fields. Sections whose data
+ * is missing are omitted rather than filled with placeholder copy. */
+export function buildAccordion(p: Product, b: Brand): [string, string][] {
+  const out: [string, string][] = [];
+  if (p.description?.trim()) out.push(["Details", p.description.trim()]);
+  const mats = [...(p.materials ?? []), ...b.materials].filter((v, i, a) => a.indexOf(v) === i);
+  if (mats.length) out.push(["Materials", mats.join(", ")]);
+  const shipBits: string[] = [];
+  if (b.shipsFrom) shipBits.push(`Ships from ${b.shipsFrom}`);
+  if (b.shipsTo.length) shipBits.push(`Ships to ${b.shipsTo.join(", ")}`);
+  if (shipBits.length) out.push(["Shipping", shipBits.join(" · ")]);
+  const made: string[] = [];
+  if (b.madeIn) made.push(`Made in ${b.madeIn}`);
+  if (b.batch) made.push(`${b.batch} batch`);
+  if (made.length) out.push(["Made", made.join(" · ")]);
+  return out;
+}
 
 export const REVIEWS: { stars: string; meta: string; body: string; init: string; tint: string }[] = [];
 

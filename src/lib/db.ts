@@ -111,12 +111,14 @@ const giftFromRow = (r: Row): GiftCard => ({
   to: (r.to_name as string) ?? "", from: (r.from_name as string) ?? "",
   note: r.note as string | undefined, at: r.created_at as string,
 });
-const orderFromRow = (r: Row, items: OrderItem[]): Order => ({
+const orderFromRow = (r: Row, items: OrderItem[], buyerName?: string, buyerEmail?: string): Order => ({
   id: r.id as string, placedAt: r.placed_at as string, status: r.status as Order["status"],
   promo: r.promo_code as string | undefined,
   items, subtotal: Number(r.subtotal), shipping: Number(r.shipping), total: Number(r.total),
   credit: r.credit != null ? Number(r.credit) : undefined,
   gift: r.gift != null ? Number(r.gift) : undefined,
+  address: (r.shipping_address as Order["address"]) ?? undefined,
+  buyerName, buyerEmail,
 });
 const orderItemFromRow = (r: Row): OrderItem => ({
   product: r.product_slug as string, name: r.name as string, brand: r.brand_slug as string,
@@ -131,11 +133,13 @@ export async function fetchBrands(): Promise<Brand[]> {
 }
 export async function fetchProducts(): Promise<{ products: Product[]; removed: string[] }> {
   const sb = getSupabase(); if (!sb) return { products: [], removed: [] };
-  const [p, r] = await Promise.all([
-    sb.from("products").select("*"),
-    sb.from("removed_products").select("product_slug"),
-  ]);
-  return { products: (p.data ?? []).map(productFromRow), removed: (r.data ?? []).map((x: { product_slug: string }) => x.product_slug) };
+  // The DB-level policy hides deleted rows from non-owners; the owning brand still sees them
+  // and can un-delete. We filter client-side so the merged store never surfaces one either way.
+  const { data } = await sb.from("products").select("*");
+  const rows = (data ?? []) as Row[];
+  const products = rows.filter((r) => !r.is_deleted).map(productFromRow);
+  const removed = rows.filter((r) => !!r.is_deleted).map((r) => r.slug as string);
+  return { products, removed };
 }
 export async function fetchPromos(): Promise<Promo[]> {
   const sb = getSupabase(); if (!sb) return [];
@@ -183,10 +187,24 @@ export async function fetchOrders(): Promise<Order[]> {
   const { data: os } = await sb.from("orders").select("*").order("placed_at", { ascending: false });
   if (!os?.length) return [];
   const ids = os.map((o) => o.id);
-  const { data: items } = await sb.from("order_items").select("*").in("order_id", ids);
+  const buyerIds = [...new Set((os as Row[]).map((o) => o.buyer_id).filter((x): x is string => !!x))];
+  const [{ data: items }, { data: buyers }] = await Promise.all([
+    sb.from("order_items").select("*").in("order_id", ids),
+    buyerIds.length
+      ? sb.from("profiles").select("id,name,email").in("id", buyerIds)
+      : Promise.resolve({ data: [] as { id: string; name: string; email: string }[] }),
+  ]);
   const byOrder: Record<string, OrderItem[]> = {};
   for (const it of (items ?? []) as Row[]) (byOrder[it.order_id as string] ??= []).push(orderItemFromRow(it));
-  return (os as Row[]).map((r) => orderFromRow(r, byOrder[r.id as string] ?? []));
+  const byBuyer: Record<string, { name: string; email: string }> = {};
+  for (const b of (buyers ?? []) as { id: string; name: string; email: string }[]) byBuyer[b.id] = { name: b.name, email: b.email };
+  return (os as Row[]).map((r) => {
+    const buyer = r.buyer_id ? byBuyer[r.buyer_id as string] : undefined;
+    // Fall back to the shipping address's name when the profiles join returned nothing
+    // (buyer deleted, RLS denied, or the row belongs to an anonymous checkout).
+    const addr = r.shipping_address as Order["address"] | undefined;
+    return orderFromRow(r, byOrder[r.id as string] ?? [], buyer?.name ?? addr?.name, buyer?.email ?? addr?.email);
+  });
 }
 export async function fetchThreads(): Promise<Thread[]> {
   const sb = getSupabase(); if (!sb) return [];
@@ -234,15 +252,25 @@ export async function upsertBrandRow(b: Brand, ownerId: string): Promise<void> {
   const sb = getSupabase(); if (!sb) return;
   await sb.from("brands").upsert(brandToRow(b, ownerId));
 }
+/** Same as upsertBrandRow but surfaces the error to the caller so /sell can toast + stay put on
+ *  RLS or network failures instead of fire-and-forget navigating away. */
+export async function upsertBrandRowChecked(b: Brand, ownerId: string): Promise<{ error: string | null }> {
+  const sb = getSupabase(); if (!sb) return { error: null };
+  const { error } = await sb.from("brands").upsert(brandToRow(b, ownerId));
+  return { error: error?.message ?? null };
+}
 export async function upsertProductRow(p: Product): Promise<void> {
   const sb = getSupabase(); if (!sb) return;
-  await sb.from("products").upsert(productToRow(p));
-  await sb.from("removed_products").delete().eq("product_slug", p.slug);
+  // Un-deletes when the owner re-saves. `is_deleted` is set explicitly so a repeat save
+  // after a soft-delete flips the flag back cleanly.
+  await sb.from("products").upsert({ ...productToRow(p), is_deleted: false });
 }
-export async function deleteProductRow(slug: string, byUser: string): Promise<void> {
+export async function deleteProductRow(slug: string, _byUser: string): Promise<void> {
+  void _byUser;
   const sb = getSupabase(); if (!sb) return;
-  await sb.from("products").delete().eq("slug", slug);
-  await sb.from("removed_products").upsert({ product_slug: slug, removed_by: byUser });
+  // Soft-delete: the products RLS policy only lets the owning brand flip this. Anonymous
+  // users, other brands and shoppers cannot mark a product deleted any more.
+  await sb.from("products").update({ is_deleted: true }).eq("slug", slug);
 }
 export async function upsertPromoRow(p: Promo): Promise<void> {
   const sb = getSupabase(); if (!sb) return;
@@ -266,6 +294,7 @@ export async function insertOrder(order: Order, buyerId: string): Promise<void> 
     id: order.id, buyer_id: buyerId, subtotal: order.subtotal, shipping: order.shipping,
     total: order.total, credit: order.credit ?? null, gift: order.gift ?? null,
     promo_code: order.promo ?? null, status: order.status, placed_at: order.placedAt,
+    shipping_address: order.address ?? null,
   });
   if (order.items.length) {
     await sb.from("order_items").insert(order.items.map((i) => ({
@@ -304,7 +333,6 @@ export async function likePostRow(id: string): Promise<void> {
   if (!u.user) return;
   const { error } = await sb.from("post_likes").insert({ user_id: u.user.id, post_id: id });
   if (error) return; // already liked
-  await sb.rpc("increment_view", { p_type: "brand", p_id: "post-" + id }); // no-op placeholder
   const { data: cur } = await sb.from("posts").select("likes").eq("id", id).maybeSingle();
   if (cur) await sb.from("posts").update({ likes: (cur.likes ?? 0) + 1 }).eq("id", id);
 }
