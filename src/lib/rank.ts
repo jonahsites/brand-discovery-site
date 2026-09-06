@@ -152,6 +152,49 @@ export function rankBrands(brands: Brand[], signal: Signal, products?: Product[]
   return scored.map((r) => r.b);
 }
 
+/**
+ * Rank other brands by how much they share with the given one — the "if you like X"
+ * surface. Similarity is Jaccard-ish over four sets: styles, moods, categories, values.
+ * A shopper's own signal boosts brands whose style tags they already care about, and
+ * follows/orders give an extra bump so a great match they already engage with wins.
+ * The source brand is always excluded.
+ */
+export function relatedBrands(source: Brand, all: Brand[], signal: Signal, limit = 6): Brand[] {
+  const src = {
+    styles: new Set(source.styles.map((s) => s.toLowerCase())),
+    moods: new Set(source.moods.map((s) => s.toLowerCase())),
+    categories: new Set(source.categories.map((s) => s.toLowerCase())),
+    values: new Set(source.values.map((s) => s.toLowerCase())),
+  };
+  const jaccard = (a: Set<string>, b: string[]) => {
+    if (a.size === 0 && b.length === 0) return 0;
+    const bs = new Set(b.map((s) => s.toLowerCase()));
+    let inter = 0;
+    for (const v of a) if (bs.has(v)) inter += 1;
+    const union = a.size + bs.size - inter;
+    return union === 0 ? 0 : inter / union;
+  };
+  const scored = all
+    .filter((b) => b.slug !== source.slug)
+    .map((b) => {
+      // Weighted similarity: styles first, then moods, then categories, then values.
+      const s =
+        jaccard(src.styles, b.styles) * 40 +
+        jaccard(src.moods, b.moods) * 20 +
+        jaccard(src.categories, b.categories) * 25 +
+        jaccard(src.values, b.values) * 10;
+      // Shopper affinity boosts — help a great match they already engage with rise.
+      const affinity =
+        (signal.follows.includes(b.slug) ? 10 : 0) +
+        (signal.orderedBrands.includes(b.slug) ? 6 : 0) +
+        styleOverlap(b.styles, signal.styleTags) * 2;
+      return { b, score: s + affinity };
+    })
+    .filter((x) => x.score > 0);
+  scored.sort((a, x) => x.score - a.score);
+  return scored.slice(0, limit).map((x) => x.b);
+}
+
 export function rankProducts(products: Product[], brands: Brand[], signal: Signal): Product[] {
   const bmap = new Map(brands.map((b) => [b.slug, b]));
   const brandScoreCache = new Map<string, number>();

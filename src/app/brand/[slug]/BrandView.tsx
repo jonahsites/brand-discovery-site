@@ -16,11 +16,14 @@ import { OwnerEditLayer } from "@/components/OwnerEditLayer";
 import InlineEdit from "@/components/InlineEdit";
 import CoverMedia from "@/components/CoverMedia";
 import { patternStyle } from "@/lib/patterns";
+import BrandRail from "@/components/BrandRail";
+import { relatedBrands, toSignal } from "@/lib/rank";
+import { useMemo } from "react";
 
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, openThreadWith, allLookbooks, recordView, views, styleTags, reviews, upsertBrand } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, openThreadWith, allLookbooks, recordView, views, styleTags, reviews, upsertBrand, sizes, saved, recent, waitlist, alerts, orders } = useApp();
   const router = useRouter();
   const counted = useRef<string | null>(null);
   useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
@@ -35,6 +38,9 @@ export default function BrandView({ slug }: { slug: string }) {
     if (!b) return { ok: false as const, error: "brand not loaded" };
     return await upsertBrand({ ...(b as Brand), ...patch });
   }, [upsertBrand, b]);
+  const signal = useMemo(() => toSignal({ styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views }), [styleTags, sizes, follows, saved, recent, waitlist, alerts, orders, views]);
+  const related = useMemo(() => (b ? relatedBrands(b, brands, signal, 6) : []), [b, brands, signal]);
+  const productFor = useMemo(() => (s: string) => products.find((p) => p.brand === s && !!p.image), [products]);
   if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-ink">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
   const ownSlugs = new Set(own.map((p) => p.slug));
@@ -277,6 +283,21 @@ export default function BrandView({ slug }: { slug: string }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* "You might also like" — cross-brand recs. Only render when we have 3+ candidates. */}
+      {related.length >= 3 && (
+        <section className="mt-10 md:mt-14">
+          <BrandRail
+            eyebrow="You might also like"
+            title={`If you like ${b.name}`}
+            href="/brands"
+            linkLabel="All brands"
+            brands={related}
+            variant="cover"
+            productFor={productFor}
+          />
+        </section>
       )}
     </Page>
     </OwnerEditLayer>

@@ -20,7 +20,7 @@ import clsx from "clsx";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { Page } from "@/components/ui";
-import { rankBrands, rankProducts, toSignal } from "@/lib/rank";
+import { rankBrands, rankProducts, relatedBrands, toSignal } from "@/lib/rank";
 import HeroSpotlight from "@/components/HeroSpotlight";
 import Marquee from "@/components/Marquee";
 import CategoryTiles from "@/components/CategoryTiles";
@@ -66,6 +66,20 @@ function HomeInner() {
       .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
       .slice(0, 12);
   }, [products]);
+
+  // "Because you follow X" — up to 2 rails, one per followed brand with 3+ related candidates.
+  const becauseYouFollow = useMemo(() => {
+    if (follows.length === 0) return [] as Array<{ src: (typeof brands)[number]; related: (typeof brands) }>;
+    const out: Array<{ src: (typeof brands)[number]; related: (typeof brands) }> = [];
+    for (const slug of follows) {
+      const src = brands.find((b) => b.slug === slug);
+      if (!src) continue;
+      const rel = relatedBrands(src, brands, signal, 3);
+      if (rel.length >= 3) out.push({ src, related: rel });
+      if (out.length >= 2) break;
+    }
+    return out;
+  }, [brands, follows, signal]);
 
   const editorPicks = useMemo(() => {
     const feat = brands.find((b) => b.slug === featured);
@@ -232,6 +246,21 @@ function HomeInner() {
             />
           </div>
         )}
+
+        {/* Because you follow X — cross-brand recs anchored on a followed brand. Max 2 rails. */}
+        {becauseYouFollow.map(({ src, related }) => (
+          <div key={src.slug} className="mt-10 rise">
+            <BrandRail
+              eyebrow={`Because you follow ${src.name}`}
+              title={`If you like ${src.name}`}
+              href="/brands"
+              linkLabel="All brands"
+              brands={related}
+              variant="cover"
+              productFor={productFor}
+            />
+          </div>
+        ))}
 
         {/* Following highlights: keep the "matched to your saved sizes" shortcut for logged-in shoppers */}
         {follows.length > 0 && (
