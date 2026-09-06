@@ -39,7 +39,7 @@ export default function OG() {
             <div style={{ height: 8, width: 8, borderRadius: 4, background: "#4D6B52" }} />
             <span>Independent · Small batch · Made to order</span>
           </div>
-          <div>kindred.shop</div>
+          <div>shopkindred.org</div>
         </div>
       </div>
     ),

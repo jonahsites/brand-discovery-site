@@ -12,10 +12,10 @@ export default function TermsPage() {
       <p>You own it. You&apos;re responsible for what happens under your login and for keeping your credentials safe. We reserve the right to suspend accounts that break these terms.</p>
 
       <LegalH2>Orders</LegalH2>
-      <p>Every order is a contract between you and the brand you bought from. Kindred is the payment holder and the customer-service backup, not the seller. If something&apos;s wrong with a piece, the brand handles the return; if the brand goes silent, we step in.</p>
+      <p>Every order is a contract between you and the brand you bought from. Kindred records the order and passes your details to the brand; today the brand contacts you directly to arrange payment and shipping (built-in payment is coming). If something&apos;s wrong with a piece, the brand handles the return; if the brand goes silent, we step in.</p>
 
       <LegalH2>Brand-side terms</LegalH2>
-      <p>Brands agree to describe their pieces accurately, ship in the window they promised, and honour the return policy on the product page. Kindred keeps 8% of each order after the first 90 free days; payouts land every Friday, held only until the parcel scans.</p>
+      <p>Brands agree to describe their pieces accurately, ship in the window they promised, and set a return policy on their brand page. Kindred takes a one-time placement fee to list on the marketplace; per-order fees and payout schedules will be described here once built-in payment is live.</p>
 
       <LegalH2>Connecting your Instagram or TikTok</LegalH2>
       <p>You may optionally connect the Instagram or TikTok account that belongs to your brand so we can automatically display your public posts on your Kindred brand page. When you connect an account:</p>

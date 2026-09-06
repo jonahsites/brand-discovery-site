@@ -1,9 +1,9 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { CATEGORY_OPTIONS, COLORS, DASH, PLANS, SIZE_LADDER, money, lookCount, planOf, type Brand, type Drop, type Product, type Promo, type LookFrame, type PlanKey } from "@/lib/data";
+import { CATEGORY_OPTIONS, COLORS, DASH, PLANS, SIZE_LADDER, money, lookCount, planOf, type Brand, type Drop, type Order, type Product, type Promo, type LookFrame, type PlanKey } from "@/lib/data";
 import { slugify } from "@/lib/catalog";
 import { useApp, uid } from "@/lib/store";
 import { integrationStatus, type Provider } from "@/lib/integrations";
@@ -18,32 +18,47 @@ export default function Dashboard() { return <Suspense><DashInner /></Suspense>;
 
 function DashInner() {
   const sp = useSearchParams();
+  const router = useRouter();
   const app = useApp();
-  const { session, brands, products, orders, promos, drops, hydrated, setSession, threads } = app;
+  const { session, brands, products, orders, promos, drops, hydrated, setSession, threads, account, toast } = app;
   const [nav, setNav] = useState(sp.get("tab") ?? "Overview");
   const welcome = sp.get("welcome") === "1";
-  const brand = brands.find((b) => b.slug === (session.role === "brand" ? session.brand : "form-and-void"));
+  const brand = session.role === "brand" && session.brand ? brands.find((b) => b.slug === session.brand) : undefined;
+  // Gate the dashboard to brand accounts. A signed-in shopper who lands here gets bounced to /sell
+  // so they don't see fictional revenue for a demo brand they don't own.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (session.role !== "brand" || !brand) {
+      toast("Brand accounts only. Open one here.");
+      router.replace("/sell");
+    }
+  }, [hydrated, session.role, brand, router, toast]);
   if (!hydrated) return null;
-  if (!brand) return <div className="grid min-h-screen place-items-center p-6 text-center"><div><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">No brand account yet.</h1><Link href="/sell" className="font-semibold text-ink">Open one in five minutes →</Link></div></div>;
+  if (session.role !== "brand" || !brand) {
+    return <div className="grid min-h-screen place-items-center p-6 text-center"><div><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">Brand accounts only.</h1><Link href="/sell" className="font-semibold text-ink">Open one in five minutes →</Link></div></div>;
+  }
   const mine = products.filter((p) => p.brand === brand.slug);
   const myOrders = orders.filter((o) => o.items.some((i) => i.brand === brand.slug));
   const myPromos = promos.filter((p) => p.brand === brand.slug);
   const myDrops = drops.filter((d) => d.brand === brand.slug);
   const revenue = myOrders.reduce((s, o) => s + o.items.filter((i) => i.brand === brand.slug).reduce((a, i) => a + i.unit * i.qty, 0), 0);
-  const seeded = !brand.createdAt;
   const stats = [
-    { label: "Sales · 30d", value: money((0) + revenue), delta: `${myOrders.length} live orders`, bg: "#121A24", ink: "#F6F4EF" },
-    { label: "Orders", value: String((0) + myOrders.length), delta: "since launch", bg: "#2A3A52", ink: "#F6F4EF" },
-    { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) && !seeded ? 1 : 0)).toLocaleString(), delta: "share your page", bg: "#EDE8DE", ink: "#121A24" },
-    { label: "Profile views", value: ((0) + (app.views[brand.slug] ?? 0)).toLocaleString(), delta: `${mine.length} products · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#4D6B52", ink: "#F6F4EF" },
+    { label: "Sales", value: money(revenue), delta: `${myOrders.length} order${myOrders.length === 1 ? "" : "s"}`, bg: "#121A24", ink: "#F6F4EF" },
+    { label: "Orders", value: String(myOrders.length), delta: "since launch", bg: "#2A3A52", ink: "#F6F4EF" },
+    { label: "Followers", value: (brand.followers + (app.follows.includes(brand.slug) ? 1 : 0)).toLocaleString(), delta: "share your page", bg: "#EDE8DE", ink: "#121A24" },
+    { label: "Profile views", value: (app.views[brand.slug] ?? 0).toLocaleString(), delta: `${mine.length} product${mine.length === 1 ? "" : "s"} · ${mine.filter((p) => p.stock === 0).length} sold out`, bg: "#4D6B52", ink: "#F6F4EF" },
   ];
+  const isAdmin = account?.role === "admin";
+  // `seeded` is retained as a permanent `false` so the existing conditionals collapse to real
+  // data. No more fictional Jules Renard rows or $4,182 payouts leaking through.
+  const seeded = false;
   return (
     <div className="flex min-h-screen">
       <aside className="hidden md:flex w-[252px] flex-none flex-col bg-ink p-5 pt-7 sticky top-0 h-screen">
         <div className="px-[10px] pb-[26px]"><div className="flex items-center gap-[11px]"><div className="grid h-9 w-9 place-items-center rounded-sm text-[12px] font-extrabold" style={{ background: brand.tint, color: brand.ink }}>{brand.init}</div><div><div className="text-[14px] font-bold tracking-[-.02em] text-paper">{brand.name}</div><div className="mono text-[9.5px] text-paper/45">Seller account</div></div></div></div>
         <div className="flex flex-col gap-[3px]">{NAV.map((l) => <button key={l} onClick={() => setNav(l)} className={clsx("rounded-sm px-[14px] py-[11px] text-left text-[13px] font-medium", nav === l ? "bg-paper/12 text-paper" : "text-paper/55 hover:text-paper/80")}>{l}</button>)}</div>
-        <div className="mt-auto rounded-md bg-paper/10 p-[18px]"><div className="mb-[6px] text-[12.5px] font-semibold text-paper">Payout Friday</div><div className="mb-2 text-[24px] font-extrabold tracking-[-.03em] text-moss">{money(Math.round(((seeded ? 4182 : 0) + revenue * 0.92)))}</div><div className="mono text-[10.5px] leading-[1.5] text-paper/50">Held until parcels scan · 8% Kindred fee</div></div>
-        <div className="mt-4 flex flex-col gap-1 px-[10px] text-[12px] font-medium text-paper/50"><Link href={`/brand/${brand.slug}`}>View public page →</Link><Link href="/">← Back to Kindred</Link>{session.role === "brand" && <button onClick={() => setSession({ role: "shopper", name: "Jules Renard" })} className="text-left">Switch to shopper</button>}</div>
+        <div className="mt-auto rounded-md bg-paper/10 p-[18px]"><div className="mb-[6px] text-[12.5px] font-semibold text-paper">Payouts</div><div className="mb-2 text-[24px] font-extrabold tracking-[-.03em] text-moss">{money(Math.round(revenue * 0.92))}</div><div className="mono text-[10.5px] leading-[1.5] text-paper/50">Est. after 8% Kindred fee. Payouts start once payment is live.</div></div>
+        <div className="mt-4 flex flex-col gap-1 px-[10px] text-[12px] font-medium text-paper/50"><Link href={`/brand/${brand.slug}`}>View public page →</Link><Link href="/">← Back to Kindred</Link>{session.role === "brand" && <button onClick={() => setSession({ role: "shopper", name: account?.name ?? session.name })} className="text-left">Switch to shopper</button>}</div>
       </aside>
 
       <div className="min-w-0 flex-1 bg-paper">
@@ -53,7 +68,7 @@ function DashInner() {
         </div>
         <div className="p-4 md:p-[34px] pb-16">
           {welcome && nav === "Overview" && <div className="mb-6 rounded-lg bg-cream p-6"><div className="label mb-2 !text-ink/48">You&apos;re live</div><h2 className="mb-2 text-[24px] font-extrabold tracking-[-.035em]">Welcome to Kindred, {brand.name}.</h2><p className="mb-4 max-w-[520px] text-[14px] leading-[1.55] text-ink/65">Your page is up at /brand/{brand.slug}. Add your first product so it shows in Explore and search, then schedule a drop to land at the top of followers&apos; feeds.</p><div className="flex gap-2"><Button onClick={() => setNav("Products")}>Add a product</Button><Link href={`/brand/${brand.slug}`}><Button variant="ghost">See your page</Button></Link></div></div>}
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4"><div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.038em]">{nav}</h1><div className="text-[12.5px] text-ink/50">{nav === "Overview" ? "Last 30 days · compared to the 30 before" : nav === "Products" ? `${mine.length} listed` : nav === "Promos" ? "Codes shoppers can apply at checkout" : nav === "Drops" ? "Scheduled releases with countdowns" : nav === "Orders" ? `${myOrders.length} live orders` : nav === "Audience" ? "Who follows you and which pieces hold attention" : nav === "Lookbooks" ? "Editorial pages with shoppable hotspots" : nav === "Messages" ? "Shoppers asking before they buy" : nav === "Connections" ? "Connect Instagram and TikTok — every post shows up on your Posts tab" : "Your onboarding facts drive filters and search"}</div></div>{nav === "Overview" && <div className="flex gap-[10px]"><Button variant={app.featured === brand.slug ? "navy" : "secondary"} onClick={() => app.setFeatured(app.featured === brand.slug ? undefined : brand.slug)}>{app.featured === brand.slug ? "✓ Featured on home" : "Feature on home · $40/wk"}</Button><Button onClick={() => setNav("Products")}>+ New product</Button></div>}</div>
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4"><div><h1 className="mb-[5px] text-[26px] md:text-[30px] font-extrabold leading-[1.05] tracking-[-.038em]">{nav}</h1><div className="text-[12.5px] text-ink/50">{nav === "Overview" ? "Last 30 days · compared to the 30 before" : nav === "Products" ? `${mine.length} listed` : nav === "Promos" ? "Codes shoppers can apply at checkout" : nav === "Drops" ? "Scheduled releases with countdowns" : nav === "Orders" ? `${myOrders.length} live orders` : nav === "Audience" ? "Who follows you and which pieces hold attention" : nav === "Lookbooks" ? "Editorial pages with shoppable hotspots" : nav === "Messages" ? "Shoppers asking before they buy" : nav === "Connections" ? "Connect Instagram and TikTok — every post shows up on your Posts tab" : "Your onboarding facts drive filters and search"}</div></div>{nav === "Overview" && <div className="flex gap-[10px]">{isAdmin && <Button variant={app.featured === brand.slug ? "navy" : "secondary"} onClick={() => app.setFeatured(app.featured === brand.slug ? undefined : brand.slug)}>{app.featured === brand.slug ? "✓ Featured on home" : "Feature on home"}</Button>}<Button onClick={() => setNav("Products")}>+ New product</Button></div>}</div>
 
           {nav === "Overview" && <Overview stats={stats} mine={mine} myOrders={myOrders} seeded={seeded} brand={brand.slug} />}
           {nav === "Audience" && <Audience brand={brand} mine={mine} seeded={seeded} />}
@@ -100,7 +115,7 @@ function Overview({ stats, mine, myOrders, seeded, brand }: { stats: { label: st
         <div className="card rounded-lg p-5 md:p-6">
           <div className="mb-[18px] flex items-center justify-between"><div className="text-[16px] font-semibold tracking-[-.02em]">Orders</div><span className="rounded-pill bg-sage px-[13px] py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em] text-paper">{myOrders.filter((o) => o.status === "Placed").length + (seeded ? 6 : 0)} to pack</span></div>
           <div className="flex flex-col gap-[10px]">
-            {myOrders.slice(0, 3).map((o) => <div key={o.id} className="flex items-center gap-3 rounded-md bg-cream px-[15px] py-[13px]"><Avatar init="JR" tint="#DCD5C7" size={32} /><div className="min-w-0 flex-1"><div className="text-[12.5px] font-medium">Jules Renard</div><div className="mono text-[10px] text-ink/42">#{o.id} · {o.status}</div></div><div className="text-[12.5px] font-medium">{money(o.items.filter((i) => i.brand === brand).reduce((s, i) => s + i.unit * i.qty, 0), true)}</div></div>)}
+            {myOrders.slice(0, 3).map((o) => { const name = o.buyerName ?? o.address?.name ?? "Customer"; const init = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?"; return <div key={o.id} className="flex items-center gap-3 rounded-md bg-cream px-[15px] py-[13px]"><Avatar init={init} tint="#DCD5C7" size={32} /><div className="min-w-0 flex-1"><div className="text-[12.5px] font-medium">{name}</div><div className="mono text-[10px] text-ink/42">#{o.id} · {o.status}</div></div><div className="text-[12.5px] font-medium">{money(o.items.filter((i) => i.brand === brand).reduce((s, i) => s + i.unit * i.qty, 0), true)}</div></div>; })}
             {seeded && DASH.orderRows.slice(0, 5 - Math.min(3, myOrders.length)).map((o) => <div key={o.meta} className="flex items-center gap-3 rounded-md bg-cream px-[15px] py-[13px]"><Avatar init={o.init} tint={o.tint} ink={o.ink} size={32} /><div className="min-w-0 flex-1"><div className="text-[12.5px] font-medium">{o.name}</div><div className="mono text-[10px] text-ink/42">{o.meta}</div></div><div className="text-[12.5px] font-medium">{o.total}</div></div>)}
             {!seeded && myOrders.length === 0 && <div className="text-[13px] text-ink/50">No orders yet.</div>}
           </div>
@@ -294,22 +309,31 @@ function Drops({ brand, mine, myDrops }: { brand: string; mine: Product[]; myDro
   );
 }
 
-function Orders({ brand, myOrders, seeded }: { brand: string; myOrders: ReturnType<typeof useApp>["orders"]; seeded: boolean }) {
+function Orders({ brand, myOrders }: { brand: string; myOrders: Order[]; seeded?: boolean }) {
   const { setOrderStatus } = useApp();
   const NEXT: Record<string, string> = { Placed: "Packed", Packed: "In transit", "In transit": "Delivered" };
   return (
     <div className="card rounded-lg p-4 md:p-[26px]">
       <div className="flex flex-col gap-2">
-        {myOrders.map((o) => { const items = o.items.filter((i) => i.brand === brand); return (
-          <div key={o.id} className="flex flex-wrap items-center gap-3 rounded-md bg-cream px-4 py-3">
-            <Avatar init="JR" tint="#DCD5C7" size={36} />
-            <div className="min-w-0 flex-1"><div className="text-[13.5px] font-medium">Jules Renard · #{o.id}</div><div className="mono text-[10.5px] text-ink/42">{items.map((i) => `${i.name} (${i.variant} ×${i.qty})`).join(", ")} · {new Date(o.placedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div></div>
-            <span className="text-[13px] font-medium">{money(items.reduce((s, i) => s + i.unit * i.qty, 0), true)}</span>
-            <span className={clsx("rounded-pill px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]", o.status === "Delivered" ? "bg-white text-ink/55" : "bg-sand")}>{o.status}</span>
-            {NEXT[o.status] && <Button size="sm" onClick={() => setOrderStatus(o.id, NEXT[o.status] as typeof o.status)}>Mark {NEXT[o.status].toLowerCase()}</Button>}
-          </div>); })}
-        {seeded && DASH.orderRows.map((o) => <div key={o.meta} className="flex items-center gap-3 rounded-md bg-cream px-4 py-3"><Avatar init={o.init} tint={o.tint} ink={o.ink} size={36} /><div className="min-w-0 flex-1"><div className="text-[13.5px] font-medium">{o.name}</div><div className="mono text-[10.5px] text-ink/42">{o.meta}</div></div><span className="text-[13px] font-medium">{o.total}</span><span className="rounded-pill bg-sand px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]">To pack</span></div>)}
-        {!seeded && myOrders.length === 0 && <div className="rounded-md bg-cream p-8 text-center text-[13px] text-ink/50">No orders yet.</div>}
+        {myOrders.map((o) => {
+          const items = o.items.filter((i) => i.brand === brand);
+          const name = o.buyerName ?? o.address?.name ?? "Customer";
+          const init = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+          const addr = o.address;
+          return (
+            <div key={o.id} className="rounded-md bg-cream px-4 py-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <Avatar init={init} tint="#DCD5C7" size={36} />
+                <div className="min-w-0 flex-1"><div className="text-[13.5px] font-medium">{name} · #{o.id}</div><div className="mono text-[10.5px] text-ink/42">{items.map((i) => `${i.name} (${i.variant} ×${i.qty})`).join(", ")} · {new Date(o.placedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div></div>
+                <span className="text-[13px] font-medium">{money(items.reduce((s, i) => s + i.unit * i.qty, 0), true)}</span>
+                <span className={clsx("rounded-pill px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]", o.status === "Delivered" ? "bg-white text-ink/55" : "bg-sand")}>{o.status}</span>
+                {NEXT[o.status] && <Button size="sm" onClick={() => setOrderStatus(o.id, NEXT[o.status] as typeof o.status)}>Mark {NEXT[o.status].toLowerCase()}</Button>}
+              </div>
+              {addr && <div className="mt-2 border-t border-ink/6 pt-2 mono text-[10.5px] text-ink/55">Ship to · {addr.name}, {addr.line}, {addr.city} {addr.zip}, {addr.country}{o.buyerEmail || addr.email ? ` · ${o.buyerEmail ?? addr.email}` : ""}</div>}
+            </div>
+          );
+        })}
+        {myOrders.length === 0 && <div className="rounded-md bg-cream p-8 text-center text-[13px] text-ink/50">No orders yet.</div>}
       </div>
     </div>
   );
@@ -328,7 +352,7 @@ function Settings({ brand }: { brand: string }) {
         <div className="mb-1 text-[24px] leading-none tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{planOf(b.plan).name}</div>
         <div className="mb-4 text-[12px] text-paper/70">${planOf(b.plan).price} · one-time · {planOf(b.plan).tagline}</div>
         <div className="flex flex-wrap gap-2">{PLANS.filter((p) => p.key !== (b.plan ?? "basic")).map((p) => (
-          <button key={p.key} type="button" onClick={() => { if (confirm(`Upgrade to ${p.name} for $${p.price}? Demo: no charge.`)) upsertBrand({ ...b, plan: p.key as PlanKey }); }} className="rounded-sm bg-paper/12 px-3 py-[8px] text-[11.5px] font-semibold text-paper hover:bg-paper/20">Switch to {p.name} · ${p.price}</button>
+          <button key={p.key} type="button" onClick={() => { if (confirm(`Switch to ${p.name} for $${p.price}? A Kindred admin will follow up to arrange payment.`)) upsertBrand({ ...b, plan: p.key as PlanKey }); }} className="rounded-sm bg-paper/12 px-3 py-[8px] text-[11.5px] font-semibold text-paper hover:bg-paper/20">Switch to {p.name} · ${p.price}</button>
         ))}</div>
       </div>
       <div className="mb-5 flex items-center justify-between rounded-md bg-cream px-4 py-3"><div><div className="text-[13.5px] font-semibold">Verified badge</div><div className="text-[12px] text-ink/55">{b.verified ? "You're verified. Shoppers see the ✓ next to your name." : b.verification === "pending" ? "Application received. We review within 5 working days." : "Prove you make what you sell. We check a workshop photo and one order."}</div></div>{!b.verified && b.verification !== "pending" && <Button size="sm" onClick={() => upsertBrand({ ...b, verification: "pending" })}>Apply</Button>}{b.verification === "pending" && <span className="rounded-pill bg-sand px-3 py-[6px] text-[10.5px] font-semibold uppercase tracking-[.08em]">Pending</span>}</div>
@@ -399,34 +423,33 @@ function LookbookBuilder({ brand, mine }: { brand: string; mine: Product[] }) {
   );
 }
 
-const SEED_FOLLOWERS: [string, string, string][] = [["Mara Lindqvist", "Stockholm", "3 orders"], ["Theo Okafor", "London", "1 order"], ["Yuki Hamada", "Osaka", "saved 4 pieces"], ["Lena Baur", "Zürich", "2 orders"], ["Sam Whitfield", "Portland", "on a waitlist"], ["Ines Ferreira", "Porto", "saved 2 pieces"], ["Daniel Ruiz", "Madrid", "1 order"], ["Priya Nair", "Berlin", "new this week"]];
-const BASE_VIEWS = [1840, 1210, 960, 720, 540, 410, 300, 220];
+// SEED_FOLLOWERS / BASE_VIEWS were fake demo overlays; they were dropped when the Audience
+// tab switched to real per-brand analytics.
 
-function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seeded: boolean }) {
-  const { views, saved, waitlist, follows, orders, threads, session, styleTags } = useApp();
+function Audience({ brand, mine }: { brand: Brand; mine: Product[]; seeded?: boolean }) {
+  const { views, saved, waitlist, follows, orders, threads, session, account, styleTags } = useApp();
   const shopperFollows = follows.includes(brand.slug);
   const brandLooks = looksOfBrand(brand.styles);
-  const reach = (seeded ? 3120 : 0) + brandLooks.length * (seeded ? 640 : 0) + (styleOverlap(brand.styles, styleTags) > 0 ? 1 : 0);
-  const shopperName = session.role === "brand" ? "Jules Renard" : session.name;
-  const followers: [string, string, string][] = [...(shopperFollows ? [[shopperName, "Paris", "following from this device"] as [string, string, string]] : []), ...(seeded ? SEED_FOLLOWERS : [])];
-  const rows = mine.map((p, i) => {
-    const base = seeded ? BASE_VIEWS[i] ?? 120 : 0;
-    const v = base + (views[p.slug] ?? 0);
-    const s = (seeded ? Math.round(base * 0.11) : 0) + (saved.includes(p.slug) ? 1 : 0);
-    const w = (seeded && p.stock === 0 ? 14 : 0) + (waitlist.includes(p.slug) ? 1 : 0);
-    const o = orders.reduce((n, ord) => n + ord.items.filter((it) => it.product === p.slug).reduce((a, it) => a + it.qty, 0), 0) + (seeded ? Math.round(base * 0.028) : 0);
+  const reach = styleOverlap(brand.styles, styleTags) > 0 ? 1 : 0;
+  const shopperName = session.role === "brand" ? (account?.name ?? "Shopper") : session.name;
+  const followers: [string, string, string][] = shopperFollows ? [[shopperName, "", "following from this device"]] : [];
+  const rows = mine.map((p) => {
+    const v = views[p.slug] ?? 0;
+    const s = saved.includes(p.slug) ? 1 : 0;
+    const w = waitlist.includes(p.slug) ? 1 : 0;
+    const o = orders.reduce((n, ord) => n + ord.items.filter((it) => it.product === p.slug).reduce((a, it) => a + it.qty, 0), 0);
     return { p, v, s, w, o };
   }).sort((a, b) => b.v - a.v);
-  const profileViews = (0) + (views[brand.slug] ?? 0);
+  const profileViews = views[brand.slug] ?? 0;
   const productViews = rows.reduce((a, r) => a + r.v, 0);
   const saves = rows.reduce((a, r) => a + r.s, 0);
   const ordered = rows.reduce((a, r) => a + r.o, 0);
   const pct = (n: number, d: number, digits = 0) => (d > 0 ? `${Math.min(100, (n / d) * 100).toFixed(digits)}%` : "—");
   const cards = [
-    { label: "Followers", value: (brand.followers + (shopperFollows && !seeded ? 1 : 0)).toLocaleString(), sub: seeded ? "↑ 214 this month" : shopperFollows ? "1 from this device" : "share your page to grow this" },
+    { label: "Followers", value: (brand.followers + (shopperFollows ? 1 : 0)).toLocaleString(), sub: shopperFollows ? "1 from this device" : "share your page to grow this" },
     { label: "Profile → piece", value: pct(productViews, profileViews), sub: "profile visits that open a piece" },
-    { label: "Save rate", value: pct(saves, productViews, 1), sub: `${saves.toLocaleString()} saves across ${mine.length} pieces` },
-    { label: "Conversion", value: pct(ordered, productViews, 1), sub: `${ordered.toLocaleString()} pieces ordered` },
+    { label: "Save rate", value: pct(saves, productViews, 1), sub: `${saves.toLocaleString()} save${saves === 1 ? "" : "s"} across ${mine.length} piece${mine.length === 1 ? "" : "s"}` },
+    { label: "Conversion", value: pct(ordered, productViews, 1), sub: `${ordered.toLocaleString()} piece${ordered === 1 ? "" : "s"} ordered` },
   ];
   const open = threads.filter((t) => t.brand === brand.slug).length;
   const copyCsv = () => { navigator.clipboard?.writeText(["name,city,note", ...followers.map((f) => f.join(","))].join("\n")); };
@@ -434,7 +457,7 @@ function Audience({ brand, mine, seeded }: { brand: Brand; mine: Product[]; seed
     <>
       <div className="mb-5 rounded-lg bg-ink p-6 text-paper md:p-7">
         <div className="label mb-2 !text-paper/55">Who sees you first</div>
-        <div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{reach.toLocaleString()} shoppers in {brandLooks.length ? brandLooks.map((l) => l.name).join(" + ") : "no look yet"}</div>
+        <div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{reach.toLocaleString()} shopper{reach === 1 ? "" : "s"} in {brandLooks.length ? brandLooks.map((l) => l.name).join(" + ") : "no look yet"}</div>
         <div className="max-w-[640px] text-[13px] leading-[1.55] text-paper/70">Kindred dresses itself to each shopper&apos;s look, chosen from the same style tags you picked in onboarding{brand.styles.length ? ` (${brand.styles.join(", ")})` : ""}. Your pieces rank first on Explore for these shoppers and your brand appears in their “Brands in your look” row on Discover.{styleOverlap(brand.styles, styleTags) > 0 ? " The shopper on this device is one of them." : ""}</div>
       </div>
       <div className="mb-5 grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">{cards.map((c) => <div key={c.label} className="card rounded-lg p-5 md:p-6"><div className="label mb-[14px]">{c.label}</div><div className="mb-1 text-[26px] font-extrabold tracking-[-.04em]">{c.value}</div><div className="text-[12px] text-ink/50">{c.sub}</div></div>)}</div>

@@ -11,7 +11,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <header className="relative z-10 flex items-center justify-between px-5 py-5 text-[12px] font-semibold md:px-10 md:py-7">
         <Link href="/" className="text-ink/70 hover:text-ink">← Back</Link>
         <Link href="/" className="flex items-center gap-2"><span className="grid h-[24px] w-[24px] place-items-center rounded-[8px] bg-ink text-[11px] font-extrabold text-paper">k</span><span className="text-[15px] font-extrabold tracking-[-.03em]">Kindred</span></Link>
-        <a href="mailto:hello@kindred.shop" className="text-ink/70 hover:text-ink">Contact support</a>
+        <a href="mailto:hello@shopkindred.org" className="text-ink/70 hover:text-ink">Contact support</a>
       </header>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%]">
         <img src={ART} alt="" className="h-full w-full object-cover opacity-90" />

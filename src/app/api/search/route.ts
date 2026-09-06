@@ -15,11 +15,17 @@ type Intent = { summary: string; moods: string[]; styles: string[]; categories: 
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ ok: false, reason: "no-key" }, { status: 200 });
-  const { q, brands, products } = (await req.json()) as { q: string; brands: Brand[]; products: Product[] };
+  // Accept either the full types (legacy) or the lite shape the client now sends.
+  type BrandLite = Pick<Brand, "slug" | "name" | "tagline" | "styles" | "categories" | "moods" | "materials" | "values" | "priceBand"> & Partial<Brand>;
+  type ProductLite = Pick<Product, "slug" | "name" | "brand" | "category" | "price" | "tags"> & Partial<Product>;
+  const { q, brands, products } = (await req.json()) as { q: string; brands: BrandLite[]; products: ProductLite[] };
   if (!q?.trim()) return NextResponse.json({ ok: false, reason: "empty" });
 
+  // Bound the payload we hand Claude — the client caps it too; this is belt-and-braces.
+  const brandsIn = brands.slice(0, 100);
+  const productsIn = products.slice(0, 300);
   const client = new Anthropic();
-  const catalogue = brands.map((b) => ({ slug: b.slug, name: b.name, where: `${b.city}, ${b.country}`, styles: b.styles, moods: b.moods, categories: b.categories, materials: b.materials, values: b.values, priceBand: b.priceBand, products: products.filter((p) => p.brand === b.slug).map((p) => ({ slug: p.slug, name: p.name, price: p.price, category: p.category, tags: p.tags ?? [] })) }));
+  const catalogue = brandsIn.map((b) => ({ slug: b.slug, name: b.name, tagline: b.tagline, styles: b.styles, moods: b.moods, categories: b.categories, materials: b.materials, values: b.values, priceBand: b.priceBand, products: productsIn.filter((p) => p.brand === b.slug).map((p) => ({ slug: p.slug, name: p.name, price: p.price, category: p.category, tags: p.tags ?? [] })) }));
 
   try {
     const response = await client.messages.create({

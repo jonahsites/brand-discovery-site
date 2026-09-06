@@ -17,15 +17,16 @@ import { useRouter } from "next/navigation";
  * accent (Dashboard → Settings → Make it yours) the glow, dot and hover shift pick it up.
  */
 export default function BrandTile({ b, hero }: { b: Brand; hero?: string }) {
-  const { follows, styleTags, sendMessage, toast } = useApp();
+  const { follows, styleTags, openThreadWith } = useApp();
   const router = useRouter();
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   const accent = b.accent ?? "var(--sage)";
   const match = styleOverlap(b.styles, styleTags);
   const message = () => {
-    const id = sendMessage(b.slug, `Hi ${b.name} — quick question about sizing.`, "shopper");
-    toast(`Message opened with ${b.name}`);
-    router.push(`/messages?t=${id}`);
+    // Navigate to /messages with the brand pinned; nothing writes to the DB until the shopper
+    // types their own first message. No canned "quick question about sizing" is sent.
+    const id = openThreadWith(b.slug);
+    router.push(id ? `/messages?t=${id}` : `/messages?to=${b.slug}`);
   };
   return (
     <div className="relative pb-14" style={{ ["--brand-accent" as string]: accent }}>

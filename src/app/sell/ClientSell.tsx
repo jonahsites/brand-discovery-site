@@ -20,8 +20,10 @@ const input = inputCls;
 
 export default function Sell() {
   const router = useRouter();
-  const { upsertBrand, setSession, brands } = useApp();
+  const { upsertBrand, setSession, brands, toast } = useApp();
   const [step, setStep] = useState(-1);
+  const [launching, setLaunching] = useState(false);
+  const [launchErr, setLaunchErr] = useState("");
   const [f, setF] = useState({
     name: "", city: "", country: "", founded: String(new Date().getFullYear()), website: "", tagline: "",
     styles: [] as string[], moods: [] as string[], gender: ["Unisex"] as string[],
@@ -50,7 +52,10 @@ export default function Sell() {
   ];
   const completeness = Math.round((valid.slice(0, 7).filter(Boolean).length / 7) * 100);
 
-  const launch = () => {
+  const launch = async () => {
+    if (launching) return;
+    setLaunchErr("");
+    setLaunching(true);
     const [tint, ink] = TINTS[f.tint % TINTS.length];
     const b: Brand = {
       slug, name: f.name.trim(), init: initials(f.name), city: f.city.trim(), country: f.country.trim().toUpperCase().slice(0, 2), tagline: f.tagline.trim(),
@@ -58,7 +63,16 @@ export default function Sell() {
       styles: f.styles, moods: f.moods, categories: f.categories, materials: f.materials, values: f.values, madeIn: f.madeIn.trim(), batch: f.batch, gender: f.gender,
       priceBand: [Number(f.priceMin), Number(f.priceMax)], sizeRange: [f.sizeMin, f.sizeMax], shipsTo: f.shipsTo, shipsFrom: f.shipsFrom.trim(), createdAt: new Date().toISOString(), plan: f.plan,
     };
-    upsertBrand(b);
+    // Wait for the Supabase write to succeed before navigating away. If it fails (RLS, network,
+    // dupe slug) we stay on /sell and surface the error so the brand doesn't end up in a state
+    // where their page only exists in localStorage.
+    const res = await upsertBrand(b);
+    if (!res.ok) {
+      setLaunching(false);
+      setLaunchErr(res.error);
+      toast(`Couldn't launch: ${res.error}`);
+      return;
+    }
     setSession({ role: "brand", name: f.name.trim(), brand: slug });
     router.push("/dashboard?welcome=1");
   };
@@ -76,9 +90,9 @@ export default function Sell() {
             <h1 className="mb-4 max-w-[640px] text-[32px] md:text-[48px] font-extrabold leading-[1.02] tracking-[-.045em]">Shoppers here come to find brands like yours. Not to compare you to Zara.</h1>
             <p className="mb-8 max-w-[560px] text-[15px] md:text-[16px] leading-[1.6] text-ink/62">Kindred is a marketplace for independent clothing labels. You answer one honest onboarding about what you make and who it&apos;s for; we turn that into filters, search results, and a page shoppers actually read. You keep your own shipping and your own customers.</p>
             <div className="mb-8 grid gap-3 sm:grid-cols-3">
-              {[["No listing fee", "for your first 90 days, then 8% per order. No monthly plan."], ["Paid every Friday", "held only until each parcel scans. You ship from your workshop."], ["Found by feeling", "shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-cream p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-ink/60">{b}</div></div>)}
+              {[["One-time placement fee", "No monthly plan, no per-order cut. Same fee whether you sell one piece or ten thousand."], ["You ship from your workshop", "Each order is a direct contract with the shopper. Keep your customers, keep your shipping."], ["Found by feeling", "Shoppers type “cozy for a rainy weekend”; your onboarding answers are what we match."]].map(([t, b]) => <div key={t} className="rounded-md bg-cream p-5"><div className="mb-1 text-[15px] font-semibold tracking-[-.02em]">{t}</div><div className="text-[13px] leading-[1.55] text-ink/60">{b}</div></div>)}
             </div>
-            <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-ink/50">Independent labels only · no monthly fee, no per-order cut for 90 days</span></div>
+            <div className="flex flex-wrap items-center gap-4"><Button size="lg" onClick={() => setStep(0)}>Start · takes 5 minutes</Button><span className="text-[13px] text-ink/50">Independent labels only · one-time placement fee, no subscription</span></div>
           </div>
         ) : (
         <div className="card rounded-lg p-5 md:p-10">
@@ -170,17 +184,18 @@ export default function Sell() {
               )}
               {promoErr && <div className="mt-2 text-[11.5px] text-rust">{promoErr}</div>}
             </div>
-            <div className="mt-3 text-[11.5px] text-ink/45">Demo checkout — nothing is actually charged today. Stripe Connect drops in with the backend.</div>
+            <div className="mt-3 text-[11.5px] text-ink/45">Payment coming soon. Your brand page launches today and a Kindred admin follows up to arrange placement payment.</div>
           </Section>}
 
           <div className="mt-8 flex flex-col md:flex-row md:items-center gap-3">
-            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={launch} disabled={completeness < 100} className={clsx(completeness < 100 && "opacity-40")}>{skipped ? "Launch brand page · free" : `Pay $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
+            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={() => { void launch(); }} disabled={completeness < 100 || launching} className={clsx((completeness < 100 || launching) && "opacity-40")}>{launching ? "Launching…" : skipped ? "Launch brand page · free" : `Reserve $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
             {step >= 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-ink/50">Back</button>}
             <span className="text-[12.5px] text-ink/45 md:ml-auto">{step === 7 ? "One-time fee — no monthly, no per-order." : (!valid[step] && step < 6 ? "Fill in the required bits to continue" : "")}</span>
           </div>
+          {launchErr && <div className="mt-3 rounded-md bg-rust/10 px-4 py-3 text-[12.5px] text-rust">Couldn&apos;t save: {launchErr}</div>}
         </div>
         )}
-        <p className="mt-5 text-center text-[12px] text-ink/45">No listing fee for your first 90 days · Kindred keeps 8% per order after that.</p>
+        <p className="mt-5 text-center text-[12px] text-ink/45">One-time placement fee — no monthly plan, no per-order cut.</p>
       </div>
     </div>
   );

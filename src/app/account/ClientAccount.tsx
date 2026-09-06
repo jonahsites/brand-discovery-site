@@ -38,7 +38,7 @@ function AccountInner() {
         <div className="hidden md:flex gap-[10px]">
           <Button variant="secondary" onClick={() => { setNameDraft(session.name); setEditName(true); }}>Edit profile</Button>
           {session.role === "brand" ? <Link href="/dashboard"><Button variant="navy">Brand dashboard</Button></Link> : <Link href="/sell"><Button variant="secondary">Open a brand account</Button></Link>}
-          {session.role === "brand" && <Button variant="secondary" onClick={() => setSession({ role: "shopper", name: "Jules Renard" })}>Switch to shopper</Button>}
+          {session.role === "brand" && <Button variant="secondary" onClick={() => setSession({ role: "shopper", name: account?.name ?? session.name })}>Switch to shopper</Button>}
         </div>
       </div>
       <div className="mb-[22px] flex gap-2 md:hidden">{["Saved", "Orders", "Profile"].map((t) => <button key={t} onClick={() => setTab(t)} className={clsx("flex-1 rounded-pill py-3 text-center text-[12.5px] font-semibold", tab === t ? "bg-ink text-paper" : "bg-white soft")}>{t}</button>)}</div>
@@ -74,7 +74,7 @@ function AccountInner() {
                       <div className="mb-4 flex items-center gap-2">{STEPS.map((s, i) => <div key={s} className="flex flex-1 items-center gap-2"><div className={clsx("h-[6px] flex-1 rounded-pill", i <= idx ? "bg-sage" : "bg-ink/10")} /></div>)}</div>
                       <div className="mb-4 flex justify-between text-[10.5px] font-semibold uppercase tracking-[.1em]">{STEPS.map((s, i) => <span key={s} className={i <= idx ? "text-ink" : "text-ink/35"}>{s}</span>)}</div>
                       {real ? <div className="flex flex-col gap-2">{real.items.map((it, i) => <Link key={i} href={`/product/${it.product}`} className="flex items-center justify-between rounded-md bg-cream px-4 py-[10px] text-[13px]"><span><span className="font-medium">{it.name}</span> <span className="text-ink/50">· {it.variant} · ×{it.qty}</span></span><span className="font-medium">{money(it.unit * it.qty, true)}</span></Link>)}<div className="mono mt-1 text-[11px] text-ink/45">Shipping {money(real.shipping, true)}{real.credit ? ` · points −${money(real.credit, true)}` : ""}{real.gift ? ` · gift card −${money(real.gift, true)}` : ""}{real.promo ? ` · code ${real.promo}` : ""} · Kindred holds payment until each parcel scans.</div></div>
-                        : <div className="text-[12.5px] text-ink/50">Demo order. Real orders you place show their pieces here.</div>}
+                        : <div className="text-[12.5px] text-ink/50">Placeholder order. Real orders you place show their pieces here.</div>}
                     </div>
                   )}
                 </div>); })}

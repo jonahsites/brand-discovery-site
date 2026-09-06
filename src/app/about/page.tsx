@@ -16,7 +16,7 @@ export default function AboutPage() {
       <LegalH2>What Kindred is not</LegalH2>
       <p>Not a fast-fashion aggregator. Not a re-seller — we never hold your inventory. Not a social network with a shop bolted on. The feed is optional; the marketplace is the point.</p>
       <LegalH2>How we make money</LegalH2>
-      <p>Brands keep 100% for their first 90 days. After that, Kindred takes 8% of each order. Nothing else — no listing fee, no featured-placement upcharge, no monthly plan.</p>
+      <p>Brands pay a one-time placement fee to list on the marketplace. No monthly plan, no featured-placement upcharge, no subscription. Per-order fees will be described here once built-in payment is live.</p>
       <LegalH2>Who&apos;s on Kindred</LegalH2>
       <p>{BRANDS.length} independent labels at launch, most under 5,000 followers, most producing in small runs, many made-to-order. Onboarding takes five minutes and asks about the questions shoppers actually care about — where a piece is made, what it&apos;s made of, how many pieces exist.</p>
       <LegalH2>Who runs it</LegalH2>

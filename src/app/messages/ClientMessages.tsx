@@ -13,11 +13,21 @@ function MessagesInner() {
   const { threads, brands, session, sendMessage, hydrated } = useApp();
   const asBrand = session.role === "brand";
   const mine = threads.filter((t) => (asBrand ? t.brand === session.brand : true));
-  const [active, setActive] = useState<string | null>(sp.get("t"));
+  const requestedThread = sp.get("t");
+  const startBrand = sp.get("to");
+  const [active, setActive] = useState<string | null>(requestedThread);
   const [text, setText] = useState("");
-  const thread = mine.find((t) => t.id === active) ?? mine[0];
-  const b = thread ? brands.find((x) => x.slug === thread.brand) : undefined;
-  const send = () => { if (!thread || !text.trim()) return; sendMessage(thread.brand, text.trim(), asBrand ? "brand" : "shopper"); setText(""); };
+  // If the URL asks to start a conversation with a brand, pin that brand as the target — nothing
+  // is written until the shopper actually types.
+  const draftBrand = !asBrand && startBrand && !requestedThread ? brands.find((x) => x.slug === startBrand) : undefined;
+  const thread = mine.find((t) => t.id === active) ?? (draftBrand ? undefined : mine[0]);
+  const b = thread ? brands.find((x) => x.slug === thread.brand) : draftBrand;
+  const send = () => {
+    if (!text.trim() || !b) return;
+    if (thread) sendMessage({ threadId: thread.id }, text.trim(), asBrand ? "brand" : "shopper");
+    else sendMessage({ brandSlug: b.slug }, text.trim(), "shopper");
+    setText("");
+  };
   if (!hydrated) return null;
   return (
     <Page narrow className="pt-6 md:pt-9">
@@ -33,11 +43,11 @@ function MessagesInner() {
           {mine.length === 0 && <div className="p-6 text-center text-[13px] text-ink/50">No conversations yet. {asBrand ? "Shoppers will reach you from your brand page." : <>Hit <span className="font-semibold">Message</span> on any brand page.</>}</div>}
         </div>
         <div className="card flex min-h-[460px] flex-col rounded-lg">
-          {thread && b ? (
+          {b ? (
             <>
               <div className="flex items-center gap-3 border-b border-ink/6 px-5 py-4"><Avatar init={b.init} tint={b.tint} ink={b.ink} size={36} src={b.logo} /><div className="flex-1"><Link href={`/brand/${b.slug}`} className="text-[14px] font-semibold">{b.name}</Link><div className="mono text-[10.5px] text-ink/45">{b.city} · usually replies within a day</div></div></div>
               <div className="flex flex-1 flex-col gap-3 overflow-auto px-5 py-5">
-                {thread.messages.map((m) => { const me = (m.from === "brand") === asBrand; return <div key={m.id} className={clsx("max-w-[78%] rounded-[18px] px-4 py-[10px] text-[13.5px] leading-[1.5]", me ? "self-end bg-ink text-paper" : "self-start bg-cream")}>{m.text}<div className={clsx("mono mt-1 text-[9.5px]", me ? "text-paper/50" : "text-ink/40")}>{new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</div></div>; })}
+                {thread ? thread.messages.map((m) => { const me = (m.from === "brand") === asBrand; return <div key={m.id} className={clsx("max-w-[78%] rounded-[18px] px-4 py-[10px] text-[13.5px] leading-[1.5]", me ? "self-end bg-ink text-paper" : "self-start bg-cream")}>{m.text}<div className={clsx("mono mt-1 text-[9.5px]", me ? "text-paper/50" : "text-ink/40")}>{new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</div></div>; }) : <div className="m-auto text-[13px] text-ink/45">Say hi — the brand sees your first message.</div>}
               </div>
               <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2 border-t border-ink/6 p-4"><input value={text} onChange={(e) => setText(e.target.value)} placeholder={asBrand ? "Reply as the brand…" : "Ask about fit, fabric, shipping…"} className={clsx(inputCls, "!rounded-pill")} /><Button type="submit">Send</Button></form>
             </>

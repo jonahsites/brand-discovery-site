@@ -16,7 +16,7 @@ import { styleOverlap } from "@/lib/looks";
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, sendMessage, allLookbooks, recordView, toast, views, styleTags } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, openThreadWith, allLookbooks, recordView, views, styleTags, reviews } = useApp();
   const router = useRouter();
   const counted = useRef<string | null>(null);
   useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
@@ -27,6 +27,9 @@ export default function BrandView({ slug }: { slug: string }) {
   const b = brands.find((x) => x.slug === slug);
   if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-ink">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
+  const ownSlugs = new Set(own.map((p) => p.slug));
+  const brandReviews = reviews.filter((r) => ownSlugs.has(r.product));
+  const avgRating = brandReviews.length ? (brandReviews.reduce((s, r) => s + r.stars, 0) / brandReviews.length).toFixed(1) : undefined;
   const books = allLookbooks.filter((l) => l.brand === b.slug);
   const drop = drops.find((d) => d.brand === b.slug && new Date(d.at).getTime() > (now || 0));
   const promo = promos.find((p) => p.active && p.brand === b.slug);
@@ -52,9 +55,9 @@ export default function BrandView({ slug }: { slug: string }) {
           </div>
           <div className="mt-auto flex flex-wrap items-center gap-3">
             <FollowButton slug={b.slug} size="lg" className="flex-1 sm:flex-none" />
-            <Button variant="secondary" size="lg" className="flex-1 sm:flex-none" onClick={() => { const id = sendMessage(b.slug, `Hi ${b.name} — quick question about sizing.`, "shopper"); router.push(`/messages?t=${id}`); }}>Message</Button>
+            <Button variant="secondary" size="lg" className="flex-1 sm:flex-none" onClick={() => { const id = openThreadWith(b.slug); router.push(id ? `/messages?t=${id}` : `/messages?to=${b.slug}`); }}>Message</Button>
             <div className="ml-auto hidden gap-5 sm:flex">
-              {[[own.length, "Items"], [followers.toLocaleString(), "Followers"], ["4.7", "Rating"], ...(isOwner ? [[(views[b.slug] ?? 0).toLocaleString(), "Views"]] : [])].map(([v, l]) => <div key={String(l)} className="text-right"><div className="text-[18px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
+              {([[own.length, "Items"] as [React.ReactNode, string], [followers.toLocaleString(), "Followers"], ...(avgRating ? [[avgRating, "Rating"] as [React.ReactNode, string]] : []), ...(isOwner ? [[(views[b.slug] ?? 0).toLocaleString(), "Views"] as [React.ReactNode, string]] : [])]).map(([v, l]) => <div key={l} className="text-right"><div className="text-[18px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
             </div>
           </div>
         </div>
@@ -62,7 +65,7 @@ export default function BrandView({ slug }: { slug: string }) {
       </div>
 
       <div className="card mt-4 flex gap-5 rounded-lg px-[18px] py-[14px] sm:hidden">
-        {[[own.length, "Items"], [followers.toLocaleString(), "Followers"], ["4.7", "Rating"]].map(([v, l]) => <div key={l}><div className="text-[16px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
+        {([[own.length, "Items"] as [React.ReactNode, string], [followers.toLocaleString(), "Followers"], ...(avgRating ? [[avgRating, "Rating"] as [React.ReactNode, string]] : [])]).map(([v, l]) => <div key={l}><div className="text-[16px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
       </div>
 
       {(b.intro || b.quote) && (
@@ -148,7 +151,7 @@ export default function BrandView({ slug }: { slug: string }) {
               <div className="flex flex-col gap-[11px] text-[13.5px] text-ink/68">
                 <div className="flex justify-between"><span>Ships from</span><span className="font-medium text-ink">{b.shipsFrom}</span></div>
                 {b.shipsTo.map((r) => <div key={r} className="flex justify-between"><span>{r}</span><span className="font-medium text-ink">Yes</span></div>)}
-                <div className="flex justify-between"><span>Returns</span><span className="font-medium text-ink">30 days, free</span></div>
+                <div className="flex justify-between"><span>Returns</span><span className="font-medium text-ink">Handled by brand</span></div>
               </div>
             </div>
           </div>

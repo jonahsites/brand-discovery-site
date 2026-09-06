@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { ACCORDIONS, COLORS, SIZES, money } from "@/lib/data";
+import { buildAccordion, COLORS, SIZES, money } from "@/lib/data";
 import { searchCatalog, sizesBetween } from "@/lib/catalog";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
@@ -11,9 +11,8 @@ import { Avatar, Button, IconCircle, Label, Placeholder, QtyStepper, SectionHead
 import { Fob } from "@/components/Fob";
 
 export default function ProductView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, recordView, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
+  const { brands, products, hydrated, priceOf, addToBag, openBag, toggleSaved, isSaved, reviews, addReview, deleteReview, canReview, account, alerts, toggleAlert, session, waitlist, toggleWaitlist, markViewed, recordView, promos, toast, boards, createBoard, toggleInBoard, allLookbooks } = useApp();
   const [boardOpen, setBoardOpen] = useState(false);
-  const [guide, setGuide] = useState(false);
   const [boardName, setBoardName] = useState("");
   useEffect(() => { markViewed(slug); recordView(slug); }, [slug, markViewed, recordView]);
   const p = products.find((x) => x.slug === slug);
@@ -26,6 +25,7 @@ export default function ProductView({ slug }: { slug: string }) {
   const [thumb, setThumb] = useState(0);
   const [added, setAdded] = useState(false);
   const [rev, setRev] = useState({ stars: 5, fit: 2 as 1 | 2 | 3, body: "", open: false });
+  const [revErr, setRevErr] = useState("");
   const own = p ? [...reviews.filter((r) => r.product === p.slug)] : [];
   if (!p || !b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "That piece isn't here." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55"><Link href="/explore" className="font-semibold text-ink">Back to Explore →</Link></p>}</Page>;
   const { price, compareAt, promo } = priceOf(p);
@@ -42,7 +42,15 @@ export default function ProductView({ slug }: { slug: string }) {
   const alertOn = alerts.includes(p.slug);
   const avg = own.length ? (own.reduce((s, r) => s + r.stars, 0) / own.length).toFixed(1) : "—";
   const fitAvg = own.length ? own.reduce((s, r) => s + r.fit, 0) / own.length : 2;
-  const submitReview = () => { if (rev.body.trim().length < 10) return; addReview({ product: p.slug, name: session.name, init: session.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(), tint: "#DCD5C7", stars: rev.stars, fit: rev.fit, body: rev.body.trim(), size }); setRev({ stars: 5, fit: 2, body: "", open: false }); };
+  const submitReview = async () => {
+    if (rev.body.trim().length < 10) return;
+    setRevErr("");
+    const res = await addReview({ product: p.slug, name: account?.name ?? session.name, init: (account?.name ?? session.name).split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(), tint: "#DCD5C7", stars: rev.stars, fit: rev.fit, body: rev.body.trim(), size });
+    if (!res.ok) { setRevErr(res.error); return; }
+    setRev({ stars: 5, fit: 2, body: "", open: false });
+  };
+  const buyerOf = canReview(p.slug);
+  const myName = account?.name ?? session.name;
   return (
     <Page className="pt-4 md:pt-7">
       <div className="mono mb-4 md:mb-[22px] text-[12px] text-ink/40"><Link href="/explore">Explore</Link> / <Link href={`/explore?cat=${encodeURIComponent(p.category)}`}>{p.category}</Link> / <Link href={`/brand/${b.slug}`}>{b.name}</Link></div>
@@ -66,7 +74,7 @@ export default function ProductView({ slug }: { slug: string }) {
             {compareAt && <><span className="text-[17px] text-ink/35 line-through">{money(compareAt)}</span><Tag>{Math.round((1 - price / compareAt) * 100)}% off{promo ? ` · ${promo.label}` : ""}</Tag></>}
           </div>
           {p.description && <p className="mb-6 max-w-[520px] text-[14px] leading-[1.6] text-ink/65">{p.description}</p>}
-          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><button onClick={() => setGuide(true)} className="text-[12px] font-semibold text-ink/55 underline-offset-2 hover:underline">Size guide</button></div>
+          <div className="mb-3 flex items-center justify-between"><Label>Size</Label><span className="text-[12px] text-ink/45">{b.sizeRange[0]}–{b.sizeRange[1]}</span></div>
           <div className="mb-6 md:mb-7 flex flex-wrap gap-2 md:gap-[9px]">
             {sizes.map((s) => <Fob key={s} active={size === s} onClick={() => { setSize(s); setAdded(false); }} className="min-w-[58px]">{s}</Fob>)}
           </div>
@@ -89,22 +97,13 @@ export default function ProductView({ slug }: { slug: string }) {
             </div>
           )}
           <div className="mb-2 flex flex-wrap gap-2"><button onClick={() => toggleAlert(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", alertOn ? "bg-sand" : "bg-cream")}>{alertOn ? "◔ Price alert on" : "◔ Alert me if the price drops"}</button>{soldOut && <button onClick={() => toggleWaitlist(p.slug)} className={clsx("rounded-pill px-4 py-2 text-[12px] font-semibold", waitlist.includes(p.slug) ? "bg-ink text-paper" : "bg-cream")}>{waitlist.includes(p.slug) ? "✓ On the waitlist" : "Join the waitlist"}</button>}</div>
-          <div className="mb-6 md:mb-[30px] text-[12.5px] text-ink/50">{preorder ? <>Pre-order: made after you order, ships from {b.shipsFrom} on <span className="font-semibold text-ink" suppressHydrationWarning>{shipsOn}</span>. Charged now, cancel any time before it ships.</> : <>Ships from {b.shipsFrom} in 2–4 days · free returns for 30 days</>}</div>
-          <Accordion items={ACCORDIONS} />
+          <div className="mb-6 md:mb-[30px] text-[12.5px] text-ink/50">{preorder ? <>Pre-order: made after you order, ships from {b.shipsFrom} on <span className="font-semibold text-ink" suppressHydrationWarning>{shipsOn}</span>. The brand will contact you to arrange payment.</> : <>Ships from {b.shipsFrom} · returns handled by the brand.</>}</div>
+          <Accordion items={buildAccordion(p, b)} />
         </div>
       </div>
 
       {completeLook.length > 0 && <><SectionHead title="Complete the look" sub={`Worn together in ${inLooks[0].title}`} action="See the lookbook" href={`/lookbook/${inLooks[0].slug}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{completeLook.map((x) => <ProductCard key={x.slug} p={x} showBrand={x.brand !== b.slug} />)}</div></>}
-      {guide && (
-        <div className="fixed inset-0 z-50"><div onClick={() => setGuide(false)} className="absolute inset-0 bg-ink/20 backdrop-blur-[2px]" />
-          <div className="card absolute left-1/2 top-1/2 w-[min(560px,calc(100%-24px))] -translate-x-1/2 -translate-y-1/2 rounded-lg p-6">
-            <div className="mb-1 flex items-center justify-between"><div className="text-[20px] font-bold tracking-[-.03em]">Size guide · {b.name}</div><button onClick={() => setGuide(false)} className="grid h-9 w-9 place-items-center rounded-pill bg-cream text-[14px]">✕</button></div>
-            <div className="mb-4 text-[12.5px] text-ink/55">Body measurements in cm. {b.name} cuts {b.sizeRange[0]}–{b.sizeRange[1]}; your profile says {session.name.split(" ")[0]} wears <span className="font-semibold text-ink">{size}</span>.</div>
-            <div className="overflow-x-auto rounded-md bg-cream"><table className="w-full text-[12.5px]"><thead><tr className="label !text-[9.5px]"><th className="px-3 py-2 text-left">Size</th><th className="px-3 py-2 text-left">Chest</th><th className="px-3 py-2 text-left">Waist</th><th className="px-3 py-2 text-left">Length</th></tr></thead><tbody>{sizes.map((s, i) => <tr key={s} className={clsx(s === size && "bg-sand/70")}><td className="px-3 py-2 font-semibold">{s}</td><td className="px-3 py-2">{92 + i * 6}–{97 + i * 6}</td><td className="px-3 py-2">{76 + i * 6}–{81 + i * 6}</td><td className="px-3 py-2">{66 + i * 2}</td></tr>)}</tbody></table></div>
-            <div className="mt-3 text-[12px] text-ink/50">Reviews say this piece runs {fitAvg < 1.7 ? "small" : fitAvg > 2.3 ? "large" : "true to size"}. Free returns for 30 days if it doesn&apos;t.</div>
-          </div>
-        </div>
-      )}
+      {/* Per-brand size guides will land when brands upload their own chart — no invented tables. */}
       <SectionHead title={`More from ${b.name}`} action="Visit brand" href={`/brand/${b.slug}`} />
       <div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{more.map((x) => <ProductCard key={x.slug} p={x} showBrand={false} />)}{more.length === 0 && <div className="col-span-full text-[13px] text-ink/50">This is {b.name}&apos;s only piece so far.</div>}</div>
       {similar.length > 0 && <><SectionHead title="Similar from other brands" sub={`Matched on ${p.category.toLowerCase()} and ${b.moods.slice(0, 2).join(", ")}`} action="Explore" href={`/explore?q=${encodeURIComponent(p.category + " " + b.moods.slice(0, 2).join(" "))}`} /><div className="mb-10 md:mb-11 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">{similar.map((x) => <ProductCard key={x.slug} p={x} />)}</div></>}
@@ -113,11 +112,11 @@ export default function ProductView({ slug }: { slug: string }) {
         <div className="rounded-lg bg-ink p-7 md:p-[30px] text-paper">
           <Label light className="mb-4">Reviews</Label>
           <div className="mb-[6px] text-[52px] font-bold leading-none tracking-[-.04em]">{avg}</div>
-          <div className="mb-[26px] text-[12.5px] text-paper/70">from {own.length} verified buyer{own.length === 1 ? "" : "s"}</div>
+          <div className="mb-[26px] text-[12.5px] text-paper/70">from {own.length} buyer{own.length === 1 ? "" : "s"}</div>
           <Label light className="mb-[14px]">Fit</Label>
           <div className="relative mb-3 h-[5px] rounded-pill bg-paper/20"><div className="absolute top-[-6px] h-[17px] w-[17px] -ml-2 rounded-pill bg-moss" style={{ left: `${((fitAvg - 1) / 2) * 100}%` }} /></div>
           <div className="mono mb-6 flex justify-between text-[11px] text-paper/65"><span>Runs small</span><span>True</span><span>Runs large</span></div>
-          <button onClick={() => setRev((r) => ({ ...r, open: !r.open }))} className="rounded-pill bg-paper px-4 py-2 text-[12px] font-semibold text-ink">{rev.open ? "Close" : "Write a review"}</button>
+          <button onClick={() => setRev((r) => ({ ...r, open: !r.open }))} disabled={!buyerOf} className={clsx("rounded-pill bg-paper px-4 py-2 text-[12px] font-semibold text-ink", !buyerOf && "opacity-40 cursor-not-allowed")} title={buyerOf ? undefined : "Only buyers of this piece can review it"}>{rev.open ? "Close" : buyerOf ? "Write a review" : "Reviews open to buyers"}</button>
         </div>
         <div className="flex flex-col gap-[14px]">
           {rev.open && (
@@ -127,19 +126,21 @@ export default function ProductView({ slug }: { slug: string }) {
                 <div><Label className="mb-2">Fit</Label><div className="flex gap-2">{(["Runs small", "True", "Runs large"] as const).map((f, i) => <button key={f} onClick={() => setRev((r) => ({ ...r, fit: (i + 1) as 1 | 2 | 3 }))} className={clsx("rounded-pill px-3 py-[6px] text-[12px] font-medium", rev.fit === i + 1 ? "bg-ink text-paper" : "bg-cream")}>{f}</button>)}</div></div>
               </div>
               <textarea value={rev.body} onChange={(e) => setRev((r) => ({ ...r, body: e.target.value }))} placeholder="How does it wear? Sizing, fabric, shipping…" className={clsx(inputCls, "mb-3 min-h-[90px] resize-y")} />
-              <Button onClick={submitReview} disabled={rev.body.trim().length < 10} className={clsx(rev.body.trim().length < 10 && "opacity-40")}>Post review · size {size}</Button>
+              <Button onClick={() => { void submitReview(); }} disabled={rev.body.trim().length < 10} className={clsx(rev.body.trim().length < 10 && "opacity-40")}>Post review · size {size}</Button>
+              {revErr && <div className="mt-2 text-[12px] text-rust">{revErr}</div>}
             </div>
           )}
-          {own.map((r) => (
+          {own.map((r) => { const mine = r.name === myName; return (
             <div key={r.id} className="card rounded-lg p-5 md:p-6">
               <div className="mb-[14px] flex items-center gap-[11px]">
                 <Avatar init={r.init} tint={r.tint} size={38} />
-                <div className="flex-1"><div className="text-[13.5px] font-semibold">{r.name}</div><div className="mono text-[11.5px] text-ink/40">Bought size {r.size}{r.at ? ` · ${new Date(r.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : " · 3 weeks ago"}</div></div>
+                <div className="flex-1"><div className="text-[13.5px] font-semibold">{r.name}</div><div className="mono text-[11.5px] text-ink/40">Bought size {r.size}{r.at ? ` · ${new Date(r.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}</div></div>
                 <span className="rounded-pill bg-cream px-[13px] py-[6px] text-[11.5px] font-semibold">★ {r.stars.toFixed(1)}</span>
+                {mine && <button onClick={() => { if (confirm("Remove your review?")) deleteReview(r.id); }} className="rounded-pill bg-cream px-3 py-[6px] text-[11px] font-semibold text-ink/55">Remove</button>}
               </div>
               <p className="text-[13.5px] leading-[1.6] text-ink/70">{r.body}</p>
             </div>
-          ))}
+          ); })}
           {own.length === 0 && !rev.open && <div className="card rounded-lg p-6 text-[13.5px] text-ink/55">No reviews yet. Be the first.</div>}
         </div>
       </div>

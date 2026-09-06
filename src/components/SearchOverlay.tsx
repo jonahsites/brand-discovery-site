@@ -37,7 +37,11 @@ function SearchPanel() {
     timer.current = setTimeout(async () => {
       setAiState("loading");
       try {
-        const r = await fetch("/api/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: asked, brands, products }) });
+        // Send only the fields the intent classifier needs. Story/description/images/stock
+        // blow the request up on every keystroke and none of it changes the intent.
+        const bLite = brands.slice(0, 100).map((b) => ({ slug: b.slug, name: b.name, tagline: b.tagline, styles: b.styles, categories: b.categories, moods: b.moods, materials: b.materials, values: b.values, priceBand: b.priceBand }));
+        const pLite = products.slice(0, 300).map((p) => ({ slug: p.slug, name: p.name, brand: p.brand, category: p.category, price: p.price, tags: p.tags ?? [] }));
+        const r = await fetch("/api/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: asked, brands: bLite, products: pLite }) });
         const j = await r.json();
         if (j.ok) { setAiRes({ q: asked, intent: j.intent }); setAiState("idle"); } else { setAiState(j.reason === "no-key" ? "off" : "idle"); }
       } catch { setAiState("idle"); }

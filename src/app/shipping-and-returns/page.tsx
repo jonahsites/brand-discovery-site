@@ -12,9 +12,9 @@ export default function ShippingPage() {
       <LegalH2>Cost</LegalH2>
       <p>Set by the brand. Two or three tiers per brand (standard, express, made-to-order). Displayed at checkout, per parcel.</p>
       <LegalH2>Returns</LegalH2>
-      <p>Free returns within 30 days of delivery on any ready-made piece. Made-to-order and final-sale pieces aren&apos;t returnable — we say so on the product page.</p>
+      <p>Each brand sets its own return policy on its brand page. Made-to-order and final-sale pieces aren&apos;t returnable — the brand notes that on the product page.</p>
       <LegalH2>Where&apos;s my order?</LegalH2>
-      <p>Your account carries every order with its live status. Kindred holds payment until each parcel scans, and each brand marks it packed → in transit → delivered.</p>
+      <p>Your account carries every order with its live status. Each brand marks it packed → in transit → delivered as they process it.</p>
     </LegalPage>
   );
 }

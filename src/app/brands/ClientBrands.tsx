@@ -88,7 +88,7 @@ function BrandsInner() {
               <div className="card col-span-full rounded-lg p-10 md:p-14 text-center">
                 <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">{brands.length === 0 ? "Kindred, day one" : "Nothing matches"}</div>
                 <h2 className="mb-3 text-[28px] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{brands.length === 0 ? "The first brand hasn't landed yet." : "No brands match those filters yet."}</h2>
-                <p className="mb-6 mx-auto max-w-[440px] text-[13.5px] text-ink/60">{brands.length === 0 ? "Kindred launched today. If you make clothes, you can be the first label here — onboarding takes five minutes and your first 90 days are free." : "Loosen a filter or clear one to see everyone."}</p>
+                <p className="mb-6 mx-auto max-w-[440px] text-[13.5px] text-ink/60">{brands.length === 0 ? "Kindred is a new marketplace. If you make clothes, you can be one of the first labels here — onboarding takes five minutes." : "Loosen a filter or clear one to see everyone."}</p>
                 {brands.length === 0 && <Link href="/sell" className="press inline-flex rounded-sm bg-ink px-5 py-[11px] text-[12px] font-semibold text-paper">Open a brand account</Link>}
               </div>
             )}

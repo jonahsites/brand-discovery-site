@@ -2,30 +2,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { SHIP_OPTS, money, type Order } from "@/lib/data";
+import { SHIP_OPTS, money, type Address, type Order } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { Avatar, Button, Label, Placeholder, Page, inputCls } from "@/components/ui";
 
-type Addr = { name: string; email: string; line: string; city: string; zip: string; country: string };
-function AddrField({ k, addr, setAddr, span, placeholder }: { k: keyof Addr; addr: Addr; setAddr: (fn: (a: Addr) => Addr) => void; span?: boolean; placeholder?: string }) {
+function AddrField({ k, addr, setAddr, span, placeholder }: { k: keyof Address; addr: Address; setAddr: (fn: (a: Address) => Address) => void; span?: boolean; placeholder?: string }) {
   return <input value={addr[k]} onChange={(e) => setAddr((a) => ({ ...a, [k]: e.target.value }))} placeholder={placeholder} className={clsx(inputCls, "!bg-cream", span && "sm:col-span-2")} />;
 }
 const Step = ({ n, t }: { n: number; t: string }) => <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-pill bg-ink text-[12px] font-semibold text-paper">{n}</span><span className="text-[18px] font-semibold tracking-[-.02em]">{t}</span></div>;
 
 export default function Checkout() {
-  const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, promoCode, points, redeem, setRedeem } = useApp();
-  const [addr, setAddr] = useState<Addr>({ name: session.name || (typeof window !== "undefined" ? (JSON.parse(localStorage.getItem("kindred.v2") || "{}").account?.name ?? "") : ""), email: "", line: "", city: "", zip: "", country: "" });
-  const [card, setCard] = useState({ number: "4242 4242 4242 4242", exp: "09 / 29", cvc: "123" });
+  const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, account, promoCode, points, redeem, setRedeem } = useApp();
+  const [addr, setAddr] = useState<Address>({ name: session.name || account?.name || "", email: account?.email ?? "", line: "", city: "", zip: "", country: "" });
   const [done, setDone] = useState<Order | null>(null);
   const [busy, setBusy] = useState(false);
-  const valid = Object.values(addr).every((v) => v.trim()) && card.number.replace(/\s/g, "").length >= 15 && card.exp.trim() && card.cvc.trim().length >= 3;
-  const pay = async () => { if (!valid || busy) return; setBusy(true); await new Promise((r) => setTimeout(r, 900)); const o = placeOrder(); setBusy(false); if (o) setDone(o); };
+  const valid = Object.values(addr).every((v) => v.trim());
+  const place = async () => { if (!valid || busy) return; setBusy(true); await new Promise((r) => setTimeout(r, 400)); const o = placeOrder(addr); setBusy(false); if (o) setDone(o); };
   if (done) return (
     <Page narrow className="pt-16 text-center">
       <div className="mx-auto max-w-[560px] rounded-lg bg-cream p-10">
-        <div className="label mb-4 !text-ink/48">Order #{done.id} placed</div>
+        <div className="label mb-4 !text-ink/48">Order #{done.id} recorded</div>
         <h1 className="mb-3 text-[42px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Thanks, {addr.name.split(" ")[0]}.</h1>
-        <p className="mb-6 text-[14.5px] leading-[1.55] text-ink/66">{new Set(done.items.map((i) => i.brand)).size} parcels from {new Set(done.items.map((i) => i.brand)).size} workshops, {money(done.total, true)} total. Kindred holds payment until each brand scans your parcel.</p>
+        <p className="mb-6 text-[14.5px] leading-[1.55] text-ink/66">{new Set(done.items.map((i) => i.brand)).size} brand{new Set(done.items.map((i) => i.brand)).size === 1 ? "" : "s"} will reach out to arrange payment and shipping. Your address is on file with each of them.</p>
         <div className="flex justify-center gap-3"><Link href="/account?tab=Orders"><Button>Track order</Button></Link><Link href="/"><Button variant="ghost">Back to Discover</Button></Link></div>
       </div>
     </Page>
@@ -46,12 +44,10 @@ export default function Checkout() {
   );
   return (
     <Page className="pt-6 md:pt-[34px]">
-      <div className="mono mb-4 hidden md:block text-[12px] text-ink/45">Secure checkout · {bagGroups.length} brands</div>
+      <div className="mono mb-4 hidden md:block text-[12px] text-ink/45">Checkout · {bagGroups.length} brand{bagGroups.length === 1 ? "" : "s"}</div>
       <div className="grid gap-8 lg:grid-cols-[1fr_400px] items-start">
         <div>
           <h1 className="mb-5 text-[42px] md:text-[52px] leading-[.95] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>Checkout</h1>
-          <div className="mb-6 grid grid-cols-2 gap-[10px] sm:grid-cols-3"><Button size="lg" onClick={pay}>Apple Pay</Button><Button size="lg" variant="secondary" onClick={pay}>Google Pay</Button><div className="hidden sm:block"><Button full size="lg" variant="secondary" onClick={pay}>Shop Pay</Button></div></div>
-          <div className="mono mb-6 flex items-center gap-[14px] text-[11.5px] text-ink/38"><span className="h-px flex-1 bg-ink/10" />or pay by card<span className="h-px flex-1 bg-ink/10" /></div>
           <div className="card mb-4 rounded-lg p-5 md:p-[30px]"><div className="mb-[22px]"><Step n={1} t="Delivery address" /></div><div className="grid gap-3 sm:grid-cols-2"><AddrField k="name" addr={addr} setAddr={setAddr} placeholder="Full name" /><AddrField k="email" addr={addr} setAddr={setAddr} placeholder="Email" /><AddrField k="line" addr={addr} setAddr={setAddr} span placeholder="Street address" /><AddrField k="city" addr={addr} setAddr={setAddr} placeholder="City" /><AddrField k="zip" addr={addr} setAddr={setAddr} placeholder="Postcode" /><AddrField k="country" addr={addr} setAddr={setAddr} span placeholder="Country" /></div></div>
           <div className="card mb-4 rounded-lg p-5 md:p-[30px]">
             <div className="mb-2"><Step n={2} t="Shipping, per brand" /></div>
@@ -63,14 +59,10 @@ export default function Checkout() {
               </div>); })}
           </div>
           <div className="card rounded-lg p-5 md:p-[30px]">
-            <div className="mb-[22px]"><Step n={3} t="Payment" /></div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="relative sm:col-span-2"><input value={card.number} onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))} placeholder="Card number" className={clsx(inputCls, "!bg-cream pr-16")} /><span className="mono absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-ink/40">VISA</span></div>
-              <input value={card.exp} onChange={(e) => setCard((c) => ({ ...c, exp: e.target.value }))} placeholder="MM / YY" className={clsx(inputCls, "!bg-cream")} />
-              <input value={card.cvc} onChange={(e) => setCard((c) => ({ ...c, cvc: e.target.value }))} placeholder="CVC" className={clsx(inputCls, "!bg-cream")} />
+            <div className="mb-[18px]"><Step n={3} t="Payment" /></div>
+            <div className="rounded-md bg-cream p-5 text-[13px] leading-[1.55] text-ink/70">
+              Payment isn&apos;t live on Kindred yet. Place the order and each brand will email you directly to arrange payment and shipping using the address above. No card is captured today.
             </div>
-            <label className="mt-[18px] flex cursor-pointer items-center gap-[11px] text-[12.5px] text-ink/70 select-none"><input type="checkbox" defaultChecked className="peer sr-only" /><span className="grid h-5 w-5 flex-none place-items-center rounded-[7px] bg-cream text-[11px] font-semibold text-transparent peer-checked:bg-ink peer-checked:text-paper transition-colors">✓</span><span>Save this card for one-tap checkout across all brands</span></label>
-            <div className="mt-3 text-[11.5px] text-ink/40">Demo checkout. No card is charged; Stripe Connect lands with the backend.</div>
           </div>
         </div>
         <div className="card rounded-lg p-6 md:p-7 lg:sticky lg:top-[100px]">
@@ -82,12 +74,11 @@ export default function Checkout() {
             {promoDiscount > 0 && <div className="flex justify-between text-ink"><span>Code {promoCode}</span><span className="font-medium">−{money(promoDiscount, true)}</span></div>}
             {credit > 0 && <div className="flex justify-between text-ink"><span>Kindred points</span><span className="font-medium">−{money(credit, true)}</span></div>}
             {giftCredit > 0 && <div className="flex justify-between text-ink"><span>Gift card ····{giftCode?.slice(-4)}</span><span className="font-medium">−{money(giftCredit, true)}</span></div>}
-            <div className="flex justify-between"><span>VAT included</span><span className="font-medium text-ink">—</span></div>
           </div>
           {points >= 100 && <div className="mt-4 rounded-md bg-cream p-3"><div className="mb-2 flex justify-between text-[12.5px]"><span className="font-semibold">Spend points</span><span className="text-ink/55">{points.toLocaleString()} available · 100 = $1</span></div><input type="range" min={0} max={Math.min(points, Math.floor((subtotal + shipTotal - promoDiscount) * 100))} step={100} value={redeem} onChange={(e) => setRedeem(Number(e.target.value))} className="w-full accent-ink" /><div className="mono mt-1 text-[11px] text-ink/55">Using {redeem.toLocaleString()} points = {money(redeem / 100, true)}</div></div>}
           <div className="mb-5 mt-[18px] flex items-baseline justify-between border-t border-ink/9 pt-[18px]"><span className="text-[15px] font-semibold">Total</span><span className="text-[28px] font-semibold tracking-[-.03em]">{money(total, true)}</span></div>
-          <Button full size="lg" onClick={pay} disabled={!valid || busy} className={clsx((!valid || busy) && "opacity-50")}>{busy ? "Placing order…" : `Pay ${money(total, true)}`}</Button>
-          <div className="mt-[14px] text-center text-[11.5px] leading-[1.5] text-ink/45">Kindred holds payment until each brand marks your parcel shipped.</div>
+          <Button full size="lg" onClick={place} disabled={!valid || busy} className={clsx((!valid || busy) && "opacity-50")}>{busy ? "Recording your order…" : `Place order · ${money(total, true)}`}</Button>
+          <div className="mt-[14px] text-center text-[11.5px] leading-[1.5] text-ink/45">Payment coming soon. The brand will contact you to arrange payment and shipping.</div>
         </div>
       </div>
     </Page>
