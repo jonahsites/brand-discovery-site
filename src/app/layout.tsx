@@ -54,7 +54,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F6F4EF",
+  // Warmer chrome on mobile — matches the new --paper-warm ground so pull-to-refresh
+  // doesn't reveal a strip of stark white behind the paper page.
+  themeColor: "#F7F3EC",
   width: "device-width",
   initialScale: 1,
 };

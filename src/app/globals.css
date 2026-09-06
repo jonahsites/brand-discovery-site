@@ -171,8 +171,8 @@
 }
 
 @utility press {
-  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease;
-  &:active { transform: scale(0.985); }
+  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, filter 0.12s ease;
+  &:active { transform: scale(0.985); filter: saturate(1.3) contrast(1.03); }
 }
 
 /* Tone placeholders */

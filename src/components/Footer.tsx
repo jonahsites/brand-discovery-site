@@ -13,11 +13,14 @@ export default function Footer() {
     ["Support", [["Shipping & returns", "/shipping-and-returns"], ["Contact", "/contact"], ["Privacy", "/privacy"], ["Terms", "/terms"]]],
   ] as const;
   return (
-    <footer className="mt-16 rounded-t-[30px] bg-cream">
+    <footer className="grad-warm mt-16 rounded-t-[30px]">
       <div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-10">
         <div>
-          <div className="mb-3 flex items-center gap-[9px]"><span className="grid h-[26px] w-[26px] place-items-center rounded-[9px] bg-ink text-[13px] font-extrabold text-paper">k</span><span className="text-[20px] font-extrabold tracking-[-.04em]">Kindred</span></div>
-          <p className="mb-6 max-w-[300px] text-[13px] leading-[1.6] text-ink/55">A marketplace for clothing you buy once and wear for years. Independent labels, their own words, one bag.</p>
+          <div className="mb-3 flex items-center gap-[9px]" style={{ animation: "rise .6s ease-out both" }}>
+            <span className="grid h-[26px] w-[26px] place-items-center rounded-[9px] bg-ink text-[13px] font-extrabold text-paper">k</span>
+            <span className="text-[20px] font-extrabold tracking-[-.04em]">Kindred</span>
+          </div>
+          <p className="mb-6 max-w-[300px] text-[13px] leading-[1.6] text-ink/60">A marketplace for clothing you buy once and wear for years. Independent labels, their own words, one bag.</p>
           <NewsletterForm />
         </div>
         {cols.map(([title, links]) => (
@@ -27,7 +30,10 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="mono mx-auto flex max-w-[1440px] items-center justify-between px-4 pb-8 text-[10.5px] text-ink/40 md:px-10"><span suppressHydrationWarning>© {new Date().getFullYear()} Kindred</span><span>Made for small brands</span></div>
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 px-4 pb-8 text-[10.5px] text-ink/45 md:px-10">
+        <span className="mono" suppressHydrationWarning>© {new Date().getFullYear()} Kindred</span>
+        <span className="mono">Made by independent brands · 2026</span>
+      </div>
     </footer>
   );
 }

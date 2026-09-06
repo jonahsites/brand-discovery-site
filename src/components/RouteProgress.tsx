@@ -58,12 +58,11 @@ export default function RouteProgress() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[80] h-[2px]">
       <div
-        className="h-full origin-left transition-[width,opacity] duration-200 ease-out"
+        className="route-progress h-full origin-left transition-[width,opacity] duration-200 ease-out"
         style={{
           width: `${progress * 100}%`,
           opacity: visible ? 1 : 0,
-          background: "var(--rust)",
-          boxShadow: "0 0 8px 0 var(--rust)",
+          boxShadow: "0 0 8px 0 var(--ember)",
         }}
       />
     </div>
