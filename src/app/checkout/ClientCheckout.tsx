@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { SHIP_OPTS, money, type Address, type Order } from "@/lib/data";
@@ -12,8 +12,18 @@ function AddrField({ k, addr, setAddr, span, placeholder }: { k: keyof Address; 
 const Step = ({ n, t }: { n: number; t: string }) => <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-pill bg-ink text-[12px] font-semibold text-paper">{n}</span><span className="text-[18px] font-semibold tracking-[-.02em]">{t}</span></div>;
 
 export default function Checkout() {
-  const { bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, account, promoCode, points, redeem, setRedeem } = useApp();
+  const { hydrated, bagGroups, bagCount, subtotal, shipTotal, promoDiscount, credit, giftCredit, giftCode, total, ship, setShip, placeOrder, session, account, promoCode, points, redeem, setRedeem } = useApp();
   const [addr, setAddr] = useState<Address>({ name: session.name || account?.name || "", email: account?.email ?? "", line: "", city: "", zip: "", country: "" });
+  // Name/email hydrate a tick after the initial render (the store setTimeouts localStorage
+  // reads). Sync them once — but only into fields the shopper hasn't already typed into.
+  useEffect(() => {
+    if (!hydrated) return;
+    setAddr((prev) => ({
+      ...prev,
+      name: prev.name || session.name || account?.name || "",
+      email: prev.email || account?.email || "",
+    }));
+  }, [hydrated, session.name, account?.name, account?.email]);
   const [done, setDone] = useState<Order | null>(null);
   const [busy, setBusy] = useState(false);
   const valid = Object.values(addr).every((v) => v.trim());

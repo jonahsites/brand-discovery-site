@@ -11,8 +11,9 @@ const isMobile = (page: Page) => page.viewportSize()!.width < 768;
 test("discover renders the hero, feed pills and product grid", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: /kindred/i }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Following" })).toBeVisible();
-  await expect(page.locator('a[href^="/product/"]:visible').first()).toBeVisible();
+  // The home page reworked its feed switcher into section headers; just verify a real
+  // product link renders below the hero so we know the marketplace is hydrated.
+  await expect(page.locator('a[href^="/product/"]:visible').first()).toBeVisible({ timeout: 15_000 });
 });
 
 test("explore filters by a feel query and opens a product", async ({ page }) => {
@@ -41,8 +42,8 @@ test("shopper can add to bag, apply a promo, and place an order", async ({ page 
   await page.getByPlaceholder("City").fill("Paris");
   await page.getByPlaceholder("Postcode").fill("75020");
   await page.getByPlaceholder("Country").fill("France");
-  await page.getByRole("button", { name: /^Pay \$/ }).click();
-  await expect(page.getByText(/Order #UN-\d+ placed/i)).toBeVisible();
+  await page.getByRole("button", { name: /^Place order · \$/ }).click();
+  await expect(page.getByText(/Order #UN-\d+ recorded/i)).toBeVisible();
   await page.goto("/account?tab=Orders");
   await expect(page.getByText(/#UN-\d+ · placed/).first()).toBeVisible();
 });
@@ -66,8 +67,8 @@ test("gift card is issued, applied, and debited by checkout", async ({ page }) =
   await page.getByPlaceholder("City").fill("Paris");
   await page.getByPlaceholder("Postcode").fill("75020");
   await page.getByPlaceholder("Country").fill("France");
-  await page.getByRole("button", { name: /^Pay \$/ }).click();
-  await expect(page.getByText(/placed/i).first()).toBeVisible();
+  await page.getByRole("button", { name: /^Place order · \$/ }).click();
+  await expect(page.getByText(/recorded|placed/i).first()).toBeVisible();
   await page.goto("/gift");
   await expect(page.getByText("$0.00").first()).toBeVisible();
 });
@@ -100,7 +101,7 @@ test("brand onboarding creates a live brand page and dashboard", async ({ page }
   await page.locator("textarea").fill("Started in a garage in Lisbon with two sewing machines and a roll of linen we could not stop touching.");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: /Continue to plan/i }).click();
-  await page.getByRole("button", { name: /^Pay \$250/ }).click();
+  await page.getByRole("button", { name: /^Reserve \$250/ }).click();
   await expect(page).toHaveURL(/\/dashboard/);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   await page.goto("/brand/test-atelier");
