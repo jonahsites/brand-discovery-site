@@ -14,6 +14,20 @@
   --rust: #c65a2f;    /* punchier warm accent */
   --indigo: #22314a;  /* dark navy for large accent tiles */
   --clay: #d6926a;    /* still a warm neutral */
+  /* Kindred v2.1 — secondary palette. Richer color moments so the site doesn't
+     feel like one long tan sheet. Kept warm and considered, not neon. */
+  --ember: #b53a1f;      /* deep terracotta-red for loud accents */
+  --dusk: #2b2540;       /* dark blue-ink-plum for big hero moments */
+  --pistachio: #b7c99a;  /* soft warm green — for NEW pills */
+  --butter: #f2ead8;     /* warm cream cousin for hover ground */
+  --paper-warm: #f7f3ec; /* a touch warmer than paper — less clinical */
+  /* Semantic tone tokens — anything speaking "hot"/"cool"/"loud" resolves here. */
+  --tone-hot: var(--rust);
+  --tone-cool: var(--sage);
+  --tone-loud: var(--ember);
+  /* Per-brand scope: sections wrap themselves in style={{['--brand-accent']:…}}
+     so grad-brand and lift-color tint themselves without extra classes. */
+  --brand-accent: var(--sage);
   --card: #ffffff;
   --ink-rgb: 15, 17, 19;
     --sh-card: 0 1px 0 rgba(var(--ink-rgb), 0.08), 0 14px 28px -22px rgba(var(--ink-rgb), 0.55);
@@ -35,6 +49,11 @@
   --color-rust: var(--rust);
   --color-indigo: var(--indigo);
   --color-clay: var(--clay);
+  --color-ember: var(--ember);
+  --color-dusk: var(--dusk);
+  --color-pistachio: var(--pistachio);
+  --color-butter: var(--butter);
+  --color-paper-warm: var(--paper-warm);
   /* legacy names kept so every screen shifts palette at once */
   --color-offwhite: var(--cream);
   --color-sky: var(--sand);
@@ -201,3 +220,141 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 #main > * { animation: kindred-page-in 0.28s ease-out; }
+
+/* ============================================================
+   Kindred v2.1 — gradient utilities & motion primitives.
+   All animation is CSS only. Everything below respects
+   prefers-reduced-motion (block near the bottom of this file).
+   ============================================================ */
+
+/* Gradient utilities. `grad-brand` picks up the current --brand-accent scope,
+   so a section wrapped in `style={{ ['--brand-accent']: brand.accent }}` gets
+   its own color rail without extra classes. */
+@utility grad-hero {
+  background:
+    radial-gradient(120% 60% at 15% 10%, color-mix(in srgb, var(--dusk) 24%, transparent), transparent 60%),
+    radial-gradient(90% 50% at 90% 90%, color-mix(in srgb, var(--ember) 22%, transparent), transparent 55%),
+    var(--paper-warm);
+}
+@utility grad-warm {
+  background: linear-gradient(135deg, var(--butter) 0%, var(--paper-warm) 45%, color-mix(in srgb, var(--clay) 22%, var(--paper-warm)) 100%);
+}
+@utility grad-brand {
+  background:
+    radial-gradient(80% 60% at 20% 20%, color-mix(in srgb, var(--brand-accent, var(--sage)) 32%, transparent), transparent 65%),
+    linear-gradient(135deg, color-mix(in srgb, var(--brand-accent, var(--sage)) 12%, var(--paper-warm)) 0%, var(--paper-warm) 60%, color-mix(in srgb, var(--brand-accent, var(--sage)) 8%, var(--butter)) 100%);
+}
+@utility grad-progress {
+  background: linear-gradient(90deg, var(--rust) 0%, var(--ember) 50%, var(--rust) 100%);
+  background-size: 200% 100%;
+}
+
+/* Keyframes — kept short, each one does one thing. */
+@keyframes tickerX {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-accent, var(--sage)) 0%, transparent); }
+  50%      { box-shadow: 0 0 0 10px color-mix(in srgb, var(--brand-accent, var(--sage)) 18%, transparent); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes progressSlide {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes sparklePulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.85) rotate(0deg); }
+  50%      { opacity: 1;   transform: scale(1.15) rotate(45deg); }
+}
+@keyframes tinyLift {
+  from { opacity: 0; transform: translate3d(0, 3px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* .lift-color — hover raises, and tints the ground toward the current brand accent.
+   Never a bigger shadow (site-wide rule). Falls back to butter when no accent scope. */
+@utility lift-color {
+  transition: transform 0.24s ease, background-color 0.28s ease, border-color 0.28s ease;
+  & img { transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  &:hover {
+    transform: translateY(-3px);
+    background-color: color-mix(in srgb, var(--brand-accent, var(--sage)) 10%, var(--butter));
+  }
+  &:hover img { transform: scale(1.04); }
+}
+
+/* .rise — one-shot fade-up-6px on mount, easy to tag onto any element. */
+@utility rise {
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* .stagger — children animate in with a small per-index delay. */
+@layer components {
+  .stagger > * { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .stagger > *:nth-child(1)  { animation-delay: 0.02s; }
+  .stagger > *:nth-child(2)  { animation-delay: 0.06s; }
+  .stagger > *:nth-child(3)  { animation-delay: 0.10s; }
+  .stagger > *:nth-child(4)  { animation-delay: 0.14s; }
+  .stagger > *:nth-child(5)  { animation-delay: 0.18s; }
+  .stagger > *:nth-child(6)  { animation-delay: 0.22s; }
+  .stagger > *:nth-child(7)  { animation-delay: 0.26s; }
+  .stagger > *:nth-child(8)  { animation-delay: 0.30s; }
+  .stagger > *:nth-child(9)  { animation-delay: 0.34s; }
+  .stagger > *:nth-child(10) { animation-delay: 0.38s; }
+  .stagger > *:nth-child(11) { animation-delay: 0.42s; }
+  .stagger > *:nth-child(12) { animation-delay: 0.46s; }
+}
+
+/* Skeleton — pulses in sand-2 → cream. Used for BrandCard / ProductCard placeholders. */
+@utility skeleton {
+  background:
+    linear-gradient(90deg, var(--sand-2) 0%, var(--cream) 40%, var(--sand-2) 80%);
+  background-size: 600px 100%;
+  animation: shimmer 1.6s linear infinite;
+  color: transparent;
+}
+
+/* Marquee track — the ticker component sets width; this just moves it. */
+@layer components {
+  .marquee-track {
+    display: inline-flex;
+    animation: tickerX var(--marquee-duration, 40s) linear infinite;
+    will-change: transform;
+  }
+  .marquee-pause:hover .marquee-track { animation-play-state: paused; }
+}
+
+/* .press tactile feel — 120ms ink saturation on click, on top of the scale nudge. */
+@layer components {
+  .press-tactile { transition: transform 0.16s ease, filter 0.12s ease; }
+  .press-tactile:active { transform: scale(0.985); filter: saturate(1.35) contrast(1.05); }
+}
+
+/* Progress bar (RouteProgress) — a rust→ember→rust slide instead of a flat rust. */
+@layer components {
+  .route-progress {
+    background: linear-gradient(90deg, var(--rust) 0%, var(--ember) 50%, var(--rust) 100%);
+    background-size: 200% 100%;
+    animation: progressSlide 1.6s linear infinite;
+  }
+}
+
+/* Reduced motion — turn every keyframe animation off, keep layouts identical. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track { animation: none !important; transform: none !important; }
+  .stagger > * { animation-delay: 0s !important; }
+}
