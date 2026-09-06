@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element -- brand-supplied image URLs come from any host; next/image needs allow-listed remotePatterns */
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { POSTS, brandTier, lookCount, planOf } from "@/lib/data";
+import { POSTS, brandTier, lookCount, planOf, type Brand } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import ProductCard from "@/components/ProductCard";
 import { FollowButton } from "@/components/BrandCard";
@@ -12,11 +12,13 @@ import { Button, Label, Placeholder, Verified, Page } from "@/components/ui";
 import ShareBrand from "@/components/ShareBrand";
 import Countdown, { useNow } from "@/components/Countdown";
 import { styleOverlap } from "@/lib/looks";
+import { OwnerEditLayer } from "@/components/OwnerEditLayer";
+import InlineEdit from "@/components/InlineEdit";
 
 const TABS = ["Shop", "Lookbooks", "About", "Posts"];
 
 export default function BrandView({ slug }: { slug: string }) {
-  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, openThreadWith, allLookbooks, recordView, views, styleTags, reviews } = useApp();
+  const { brands, products, hydrated, drops, promos, session, follows, posts, likePost, openThreadWith, allLookbooks, recordView, views, styleTags, reviews, upsertBrand } = useApp();
   const router = useRouter();
   const counted = useRef<string | null>(null);
   useEffect(() => { if (hydrated && counted.current !== slug) { counted.current = slug; recordView(slug); } }, [slug, hydrated, recordView]);
@@ -25,6 +27,12 @@ export default function BrandView({ slug }: { slug: string }) {
   const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "Shop");
   const now = useNow();
   const b = brands.find((x) => x.slug === slug);
+  // Save a single-field patch to the brand row. Every InlineEdit funnels through here.
+  // Declared before any early return so hook order stays stable.
+  const save = useCallback(async (patch: Partial<Brand>) => {
+    if (!b) return { ok: false as const, error: "brand not loaded" };
+    return await upsertBrand({ ...(b as Brand), ...patch });
+  }, [upsertBrand, b]);
   if (!b) return <Page className="pt-20 text-center"><h1 className="mb-2 text-[28px] font-extrabold tracking-[-.03em]">{hydrated ? "No brand here yet." : "Loading…"}</h1>{hydrated && <p className="text-[14px] text-ink/55">Nothing lives at /brand/{slug}. <Link href="/explore" className="font-semibold text-ink">Browse brands →</Link></p>}</Page>;
   const own = products.filter((p) => p.brand === b.slug);
   const ownSlugs = new Set(own.map((p) => p.slug));
@@ -36,19 +44,27 @@ export default function BrandView({ slug }: { slug: string }) {
   const isOwner = session.role === "brand" && session.brand === b.slug;
   const followers = b.followers + (follows.includes(b.slug) && b.followers === 0 ? 1 : 0);
   return (
+    <OwnerEditLayer enabled={isOwner}>
     <Page className="pt-4 md:pt-6" style={{ ["--sage" as string]: b.accent ?? "var(--sage)", background: b.bg ?? "transparent" }}>
       <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-stretch">
         <div className="card order-2 flex flex-col rounded-lg p-6 md:p-8 lg:order-1">
           <div className="mb-5 flex items-center gap-3">
             <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-[16px] text-[15px] font-extrabold tracking-[-.04em]" style={{ background: b.tint, color: b.ink }}>{b.logo ? <img loading="lazy" decoding="async" src={b.logo} alt={b.name} className="h-full w-full object-cover" /> : b.init}</div>
-            <div className="min-w-0"><div className="label">{b.city}, {b.country}{b.founded ? ` · since ${b.founded}` : ""}</div><div className="mt-[3px] truncate text-[12px] text-ink/50">{brandTier(followers)} · {b.batch} batch · ships from {b.shipsFrom}</div></div>
+            <div className="min-w-0"><InlineEdit kind="text" label="Location" placeholder="City, CC" value={`${b.city}, ${b.country}`} onSave={async (next) => { const [city, country] = (next ?? "").split(",").map((s) => s.trim()); return await save({ city: city ?? b.city, country: (country ?? b.country).toUpperCase().slice(0, 2) }); }}><div className="label">{b.city}, {b.country}{b.founded ? ` · since ${b.founded}` : ""}</div></InlineEdit><div className="mt-[3px] truncate text-[12px] text-ink/50">{brandTier(followers)} · {b.batch} batch · ships from {b.shipsFrom}</div></div>
             <div className="ml-auto flex flex-none gap-2">
-              {isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[11px] font-semibold text-paper">Edit in dashboard</Link>}
+              {isOwner && <Link href="/dashboard" className="rounded-pill bg-ink px-4 py-2 text-[11px] font-semibold text-paper">Dashboard</Link>}
               <ShareBrand b={b} className="press grid h-[38px] w-[38px] place-items-center rounded-md bg-cream text-ink/70" />
             </div>
           </div>
-          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1>{b.verified && <Verified size={20} />}{(b.plan === "premium" || b.plan === "signature") && <span className="rounded-pill px-3 py-1 text-[10px] font-semibold uppercase tracking-[.14em] text-paper" style={{ background: planOf(b.plan).badgeBg }}>{planOf(b.plan).badge}</span>}</div>
-          <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
+          <div className="mb-2 flex flex-wrap items-center gap-[9px]"><InlineEdit kind="text" label="Brand name" value={b.name} onSave={async (next) => await save({ name: (next ?? b.name).trim() || b.name })}><h1 className="text-[36px] md:text-[52px] leading-[.95]" style={{fontFamily: b.headlineFont === "sans" ? "var(--font-jakarta), system-ui, sans-serif" : "var(--font-instrument), Georgia, serif", fontWeight: b.headlineFont === "sans" ? 800 : 400, letterSpacing: b.headlineFont === "sans" ? "-.03em" : "-.015em"}}>{b.name}</h1></InlineEdit>{b.verified && <Verified size={20} />}{(b.plan === "premium" || b.plan === "signature") && <span className="rounded-pill px-3 py-1 text-[10px] font-semibold uppercase tracking-[.14em] text-paper" style={{ background: planOf(b.plan).badgeBg }}>{planOf(b.plan).badge}</span>}</div>
+          {(b.motto || isOwner) && (
+            <InlineEdit kind="text" label="Motto" clearable placeholder="A short manifesto." value={b.motto} onSave={async (next) => await save({ motto: next })}>
+              {b.motto ? <p className="mb-3 max-w-[520px] text-[24px] md:text-[30px] leading-[1.05] tracking-[-.015em] text-ink" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.motto}</p> : <p className="mb-3 text-[13px] italic text-ink/40">Add a motto — one line in big serif.</p>}
+            </InlineEdit>
+          )}
+          <InlineEdit kind="textarea" label="Tagline" value={b.tagline} onSave={async (next) => await save({ tagline: (next ?? b.tagline).trim() || b.tagline })}>
+            <p className="mb-5 max-w-[460px] text-[14px] md:text-[15px] leading-[1.55] text-ink/60">{b.tagline}</p>
+          </InlineEdit>
           <div className="mb-6 flex flex-wrap gap-2">
             {styleOverlap(b.styles, styleTags) > 0 && <span className="rounded-pill bg-sage px-[14px] py-2 text-[11px] font-semibold text-paper">For you · {styleOverlap(b.styles, styleTags)} shared style{styleOverlap(b.styles, styleTags) === 1 ? "" : "s"}</span>}
             {[...b.styles.map((s) => [s, `/brands?style=${encodeURIComponent(s)}`]), ...b.values.slice(0, 3).map((v) => [v, `/explore?q=${encodeURIComponent(v)}`]), [`Made in ${b.madeIn}`, `/brands`], [`$${b.priceBand[0]}–$${b.priceBand[1]}`, `/explore?q=${encodeURIComponent("under $" + b.priceBand[1])}`], [`${b.sizeRange[0]}–${b.sizeRange[1]}`, "/explore"]].map(([t, href]) => <Link key={t} href={href} className="rounded-pill bg-cream px-[14px] py-2 text-[11px] font-semibold text-ink/72">{t}</Link>)}
@@ -61,23 +77,77 @@ export default function BrandView({ slug }: { slug: string }) {
             </div>
           </div>
         </div>
-        <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · 16:9" wide className="order-1 h-[220px] rounded-lg md:h-[300px] lg:order-2 lg:h-auto lg:min-h-[400px]" />
+        <div className="order-1 lg:order-2">
+          <InlineEdit kind="image" label="Cover image URL" clearable placeholder="https://…" value={b.cover} onSave={async (next) => await save({ cover: next })} className="block w-full">
+            <Placeholder src={b.cover} alt={`${b.name} cover`} label="Brand cover · 16:9" wide className="h-[220px] rounded-lg md:h-[300px] lg:h-auto lg:min-h-[400px]" />
+          </InlineEdit>
+          {isOwner && (
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <InlineEdit kind="image" label="Cover video URL" clearable placeholder="MP4 or YouTube/Vimeo…" value={b.coverVideo} onSave={async (next) => await save({ coverVideo: next })}>
+                <span className="mono block truncate rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60">{b.coverVideo ?? "+ Cover video"}</span>
+              </InlineEdit>
+              <InlineEdit
+                kind="select" label="Hero layout" value={b.heroStyle ?? "cover"}
+                options={[{value:"cover",label:"Cover · storefront + image"},{value:"portrait",label:"Portrait · full-bleed on top"},{value:"split",label:"Split · 50/50"},{value:"story-first",label:"Story first · giant serif"}]}
+                onSave={async (next) => await save({ heroStyle: (next as Brand["heroStyle"]) ?? "cover" })}
+              >
+                <span className="mono block truncate rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60">Layout · {b.heroStyle ?? "cover"}</span>
+              </InlineEdit>
+              <InlineEdit
+                kind="select" label="Pattern" value={b.pattern ?? "none"}
+                options={[{value:"none",label:"None"},{value:"grid",label:"Grid"},{value:"dot",label:"Dot"},{value:"arch",label:"Arch"},{value:"wave",label:"Wave"},{value:"grain",label:"Grain"}]}
+                onSave={async (next) => await save({ pattern: (next as Brand["pattern"]) ?? "none" })}
+              >
+                <span className="mono block truncate rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60">Pattern · {b.pattern ?? "none"}</span>
+              </InlineEdit>
+              <InlineEdit
+                kind="select" label="Headline font" value={b.headlineFont ?? "serif"}
+                options={[{value:"serif",label:"Serif · Instrument"},{value:"sans",label:"Sans · Jakarta"}]}
+                onSave={async (next) => await save({ headlineFont: (next as "serif" | "sans") ?? "serif" })}
+              >
+                <span className="mono block truncate rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60">Font · {b.headlineFont ?? "serif"}</span>
+              </InlineEdit>
+              <InlineEdit kind="color" label="Accent" value={b.accent ?? ""} onSave={async (next) => await save({ accent: next })} clearable>
+                <span className="flex items-center gap-2 rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60"><span className="inline-block h-4 w-4 rounded-sm" style={{ background: b.accent ?? "var(--sage)" }} />Accent</span>
+              </InlineEdit>
+              <InlineEdit kind="color" label="Accent 2" value={b.accent2 ?? ""} onSave={async (next) => await save({ accent2: next })} clearable>
+                <span className="flex items-center gap-2 rounded-sm bg-cream px-2 py-[6px] text-[10.5px] text-ink/60"><span className="inline-block h-4 w-4 rounded-sm" style={{ background: b.accent2 ?? "transparent", boxShadow: b.accent2 ? "none" : "inset 0 0 0 1px rgba(18,26,36,.2)" }} />{b.accent2 ? "Accent 2" : "+ Accent 2"}</span>
+              </InlineEdit>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="card mt-4 flex gap-5 rounded-lg px-[18px] py-[14px] sm:hidden">
         {([[own.length, "Items"] as [React.ReactNode, string], [followers.toLocaleString(), "Followers"], ...(avgRating ? [[avgRating, "Rating"] as [React.ReactNode, string]] : [])]).map(([v, l]) => <div key={l}><div className="text-[16px] font-bold tracking-[-.03em]">{v}</div><div className="label !text-[9.5px]">{l}</div></div>)}
       </div>
 
-      {(b.intro || b.quote) && (
+      {(b.intro || b.quote || isOwner) && (
         <section className="mt-8 grid gap-4 md:grid-cols-[1.5fr_1fr] items-start">
-          {b.intro && <div className="card rounded-lg p-6 md:p-8 text-[15px] leading-[1.65] text-ink/75" style={{whiteSpace:"pre-wrap"}}>{b.intro}</div>}
-          {b.quote && (
-            <div className="rounded-lg p-6 md:p-8 text-paper" style={{ background: b.accent ?? "var(--sage)" }}>
-              <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-paper/70">In their own words</div>
-              <blockquote className="text-[22px] md:text-[26px] leading-[1.2] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>&ldquo;{b.quote}&rdquo;</blockquote>
-              {b.quoteBy && <div className="mt-4 text-[12px] text-paper/70">— {b.quoteBy}</div>}
-            </div>
-          )}
+          <InlineEdit kind="textarea" label="Intro paragraph" clearable placeholder="A longer intro that lives at the top of your brand page." value={b.intro} onSave={async (next) => await save({ intro: next })}>
+            {b.intro
+              ? <div className="card rounded-lg p-6 md:p-8 text-[15px] leading-[1.65] text-ink/75" style={{whiteSpace:"pre-wrap"}}>{b.intro}</div>
+              : isOwner
+                ? <div className="card rounded-lg p-6 md:p-8 text-[13px] italic text-ink/40">Add an intro paragraph.</div>
+                : null}
+          </InlineEdit>
+          <div className="flex flex-col gap-3">
+            <InlineEdit kind="textarea" label="Pull quote" clearable placeholder='"A short quote from press or a customer."' value={b.quote} onSave={async (next) => await save({ quote: next })}>
+              {b.quote ? (
+                <div className="rounded-lg p-6 md:p-8 text-paper" style={{ background: b.accent ?? "var(--sage)" }}>
+                  <div className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-paper/70">In their own words</div>
+                  <blockquote className="text-[22px] md:text-[26px] leading-[1.2] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>&ldquo;{b.quote}&rdquo;</blockquote>
+                </div>
+              ) : isOwner ? (
+                <div className="rounded-lg border border-dashed border-ink/25 p-6 text-[13px] italic text-ink/40">Add a pull quote.</div>
+              ) : null}
+            </InlineEdit>
+            {b.quote && (
+              <InlineEdit kind="text" label="Attribution" clearable placeholder="— Their name / Where it ran" value={b.quoteBy} onSave={async (next) => await save({ quoteBy: next })}>
+                {b.quoteBy ? <div className="text-[12px] text-ink/60">— {b.quoteBy}</div> : isOwner ? <div className="text-[12px] italic text-ink/40">Add attribution.</div> : null}
+              </InlineEdit>
+            )}
+          </div>
         </section>
       )}
       {(drop || promo) && (
@@ -134,7 +204,9 @@ export default function BrandView({ slug }: { slug: string }) {
           <div className="card rounded-lg p-6 md:p-[38px]">
             <Label className="mb-[18px]">The story</Label>
             <h3 className="mb-4 text-[26px] md:text-[32px] leading-[1.1] tracking-[-.015em]" style={{fontFamily:"var(--font-instrument), Georgia, serif"}}>{b.tagline}</h3>
-            {(b.story ?? "").split(/\n+/).map((para, i) => <p key={i} className="mb-[14px] text-[14.5px] leading-[1.7] text-ink/68">{para}</p>)}
+            <InlineEdit kind="textarea" label="Full story" value={b.story ?? ""} onSave={async (next) => await save({ story: (next ?? "").trim() })}>
+              <div>{(b.story ?? "").split(/\n+/).map((para, i) => <p key={i} className="mb-[14px] text-[14.5px] leading-[1.7] text-ink/68">{para}</p>)}</div>
+            </InlineEdit>
             <div className="mt-3 flex flex-wrap gap-2">
               {b.values.map((t, i) => <span key={t} className={`rounded-pill px-[18px] py-[10px] text-[12px] font-semibold ${i === 0 ? "bg-moss" : i === 1 ? "bg-sand" : "bg-cream"}`}>{t}</span>)}
             </div>
@@ -158,5 +230,6 @@ export default function BrandView({ slug }: { slug: string }) {
         </div>
       )}
     </Page>
+    </OwnerEditLayer>
   );
 }

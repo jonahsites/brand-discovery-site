@@ -18,6 +18,9 @@ export default function Checkout() {
   // reads). Sync them once — but only into fields the shopper hasn't already typed into.
   useEffect(() => {
     if (!hydrated) return;
+    // Name/email arrive a tick late from the persisted store — this sync fills the
+    // shipping form once and does not loop, so it's an accepted effect-driven setState.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAddr((prev) => ({
       ...prev,
       name: prev.name || session.name || account?.name || "",
