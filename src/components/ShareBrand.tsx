@@ -16,9 +16,11 @@ export default function ShareBrand({ b, className, label }: { b: Brand; classNam
   const isOwner = session.role === "brand" && session.brand === b.slug;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [style, setStyle] = useState<"bold" | "mag" | "clean">("bold");
+  const [caption, setCaption] = useState(`Check me out on Kindred → find my new drop here: `);
   const url = typeof location !== "undefined" ? `${location.origin}/brand/${b.slug}` : `/brand/${b.slug}`;
-  const posterUrl = `/brand/${b.slug}/poster?v=${b.plan ?? "basic"}`;
-  const caption = `Check me out on Kindred — ${url}`;
+  const posterUrl = `/brand/${b.slug}/poster?style=${style}&v=${b.plan ?? "basic"}`;
+  const shareText = `${caption.trim()} ${url}`;
 
   useEffect(() => {
     if (!open) return;
@@ -41,11 +43,11 @@ export default function ShareBrand({ b, className, label }: { b: Brand; classNam
         const blob = await res.blob();
         const file = new File([blob], `${b.slug}-kindred.png`, { type: "image/png" });
         const withFile = (navigator as Navigator & { canShare?: (d: ShareData) => boolean }).canShare?.({ files: [file] });
-        if (withFile) { await navigator.share({ files: [file], title: b.name, text: caption, url }); amplify(); return; }
+        if (withFile) { await navigator.share({ files: [file], title: b.name, text: shareText, url }); amplify(); return; }
       }
-      if (typeof navigator !== "undefined" && "share" in navigator) { await navigator.share({ title: b.name, text: caption, url }); amplify(); return; }
+      if (typeof navigator !== "undefined" && "share" in navigator) { await navigator.share({ title: b.name, text: shareText, url }); amplify(); return; }
     } catch { /* user cancelled or the API refused — fall through */ }
-    const composeUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
+    const composeUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     window.open(composeUrl, "_blank", "noopener,noreferrer");
     amplify();
   };
@@ -69,8 +71,27 @@ export default function ShareBrand({ b, className, label }: { b: Brand; classNam
                 <button onClick={() => setOpen(false)} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-md bg-cream text-ink/60"><IconClose size={16} /></button>
               </div>
 
-              <div className="mb-4 overflow-hidden rounded-md" style={{ background: b.accent ?? "var(--sage)" }}>
+              <div className="mb-3 overflow-hidden rounded-md" style={{ background: b.accent ?? "var(--sage)" }}>
                 <img src={posterUrl} alt={`Share poster for ${b.name}`} className="block h-auto w-full" width={1080} height={1350} />
+              </div>
+
+              <div className="mb-3">
+                <div className="mb-[6px] text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Style</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { key: "bold", label: "Bold" },
+                    { key: "mag", label: "Editorial" },
+                    { key: "clean", label: "Clean" },
+                  ] as const).map((s) => (
+                    <button key={s.key} type="button" onClick={() => setStyle(s.key)} className={`press rounded-md px-2 py-[8px] text-[11.5px] font-semibold ${style === s.key ? "bg-ink text-paper" : "bg-cream text-ink"}`}>{s.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="mb-[6px] text-[10px] font-semibold uppercase tracking-[.14em] text-ink/50">Caption</div>
+                <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={2} maxLength={220} className="w-full resize-none rounded-sm bg-white px-3 py-[9px] text-[13px] leading-[1.45] outline-none shadow-[inset_0_0_0_1px_rgba(var(--ink-rgb),.12)] focus:shadow-[inset_0_0_0_1.5px_rgba(var(--ink-rgb),.55)]" />
+                <div className="mono mt-1 text-right text-[10px] text-ink/40">The link gets appended automatically</div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
