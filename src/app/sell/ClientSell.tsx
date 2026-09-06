@@ -20,7 +20,7 @@ const input = inputCls;
 
 export default function Sell() {
   const router = useRouter();
-  const { upsertBrand, setSession, brands, toast } = useApp();
+  const { upsertBrand, upsertProduct, setSession, brands, toast } = useApp();
   const [step, setStep] = useState(-1);
   const [launching, setLaunching] = useState(false);
   const [launchErr, setLaunchErr] = useState("");
@@ -30,6 +30,8 @@ export default function Sell() {
     categories: [] as string[], priceMin: "60", priceMax: "240", sizeMin: "S", sizeMax: "XL",
     materials: [] as string[], values: [] as string[], madeIn: "", batch: "small" as Batch,
     shipsFrom: "", shipsTo: [] as string[], story: "", tint: 0, plan: "basic" as import("@/lib/data").PlanKey,
+    cover: "", logo: "",
+    firstName: "", firstPrice: "", firstCategory: "", firstImage: "",
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
   const [promo, setPromo] = useState("");
@@ -47,10 +49,11 @@ export default function Sell() {
     !!(f.materials.length >= 1 && f.values.length >= 1 && f.madeIn.trim()),
     !!(f.shipsFrom.trim() && f.shipsTo.length >= 1),
     f.story.trim().length >= 40,
+    !!(f.cover.trim() && f.logo.trim() && f.firstName.trim() && Number(f.firstPrice) > 0 && f.firstCategory.trim() && f.firstImage.trim()),
     true,   // review
     !!f.plan, // plan (default basic is set)
   ];
-  const completeness = Math.round((valid.slice(0, 7).filter(Boolean).length / 7) * 100);
+  const completeness = Math.round((valid.slice(0, 8).filter(Boolean).length / 8) * 100);
 
   const launch = async () => {
     if (launching) return;
@@ -62,6 +65,7 @@ export default function Sell() {
       items: 0, followers: 0, verified: false, tint, ink, founded: Number(f.founded) || undefined, website: f.website.trim() || undefined, story: f.story.trim(),
       styles: f.styles, moods: f.moods, categories: f.categories, materials: f.materials, values: f.values, madeIn: f.madeIn.trim(), batch: f.batch, gender: f.gender,
       priceBand: [Number(f.priceMin), Number(f.priceMax)], sizeRange: [f.sizeMin, f.sizeMax], shipsTo: f.shipsTo, shipsFrom: f.shipsFrom.trim(), createdAt: new Date().toISOString(), plan: f.plan,
+      cover: f.cover.trim() || undefined, logo: f.logo.trim() || undefined,
     };
     // Wait for the Supabase write to succeed before navigating away. If it fails (RLS, network,
     // dupe slug) we stay on /sell and surface the error so the brand doesn't end up in a state
@@ -73,6 +77,16 @@ export default function Sell() {
       toast(`Couldn't launch: ${res.error}`);
       return;
     }
+    // Ship the first piece so shoppers don't land on an empty catalogue.
+    const productSlug = slugify(`${f.name}-${f.firstName}`);
+    upsertProduct({
+      slug: productSlug, brand: slug, name: f.firstName.trim(),
+      price: Number(f.firstPrice), category: f.firstCategory.trim(),
+      image: f.firstImage.trim(),
+      sizes: [f.sizeMin, f.sizeMax], materials: f.materials.slice(0, 2),
+      tags: f.styles.slice(0, 3), stock: 12,
+      createdAt: new Date().toISOString(),
+    });
     setSession({ role: "brand", name: f.name.trim(), brand: slug });
     // Route to the celebration takeover — dismissing lands the owner on their
     // own page in edit mode. The dashboard welcome card still fires the next
@@ -149,7 +163,36 @@ export default function Sell() {
             <Field label={`Your story · ${f.story.trim().length}/40 characters${f.story.trim().length >= 40 ? " ✓" : ""}`}><textarea className={clsx(input, "min-h-[180px] resize-y leading-[1.6]")} value={f.story} onChange={(e) => set("story", e.target.value)} placeholder="Started in 2021 when we bought a roll of deadstock cotton duck from a shuttered sailmaker two streets over…" /></Field>
           </Section>}
 
-          {step === 6 && <Section title="Ready to go live." body="Here is what shoppers can filter and search you by. You can edit any of it from the dashboard.">
+          {step === 6 && <Section title="Give your page a face." body="Shoppers scroll fast. A cover image, a logo mark, and one product cover is what turns your brand from a name into a place.">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Cover image URL · wide, 16:9 works best"><input className={input} value={f.cover} onChange={(e) => set("cover", e.target.value)} placeholder="https://…" /></Field>
+              <Field label="Logo / mark URL · square, at least 200x200"><input className={input} value={f.logo} onChange={(e) => set("logo", e.target.value)} placeholder="https://…" /></Field>
+            </div>
+            {(f.cover || f.logo) && (
+              <div className="mt-2 grid gap-3 md:grid-cols-[1fr_120px]">
+                {f.cover && <div className="aspect-[16/9] overflow-hidden rounded-md bg-cream"><img src={f.cover} alt="Cover preview" className="h-full w-full object-cover" /></div>}
+                {f.logo && <div className="aspect-square overflow-hidden rounded-md bg-cream"><img src={f.logo} alt="Logo preview" className="h-full w-full object-cover" /></div>}
+              </div>
+            )}
+            <div className="mt-6 rounded-md bg-cream p-5">
+              <div className="label mb-3">Your first piece</div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Name"><input className={input} value={f.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder="Waxed Chore Coat" /></Field>
+                <Field label="Price · USD"><input className={input} value={f.firstPrice} onChange={(e) => set("firstPrice", e.target.value)} inputMode="numeric" placeholder="285" /></Field>
+                <Field label="Category">
+                  <select className={input} value={f.firstCategory} onChange={(e) => set("firstCategory", e.target.value)}>
+                    <option value="">Pick one…</option>
+                    {f.categories.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Product image URL"><input className={input} value={f.firstImage} onChange={(e) => set("firstImage", e.target.value)} placeholder="https://…" /></Field>
+              </div>
+              {f.firstImage && <div className="mt-3 aspect-[4/5] w-[180px] overflow-hidden rounded-md bg-paper"><img src={f.firstImage} alt="Piece preview" className="h-full w-full object-cover" /></div>}
+              <div className="mono mt-3 text-[10.5px] text-ink/45">You can add more pieces from the dashboard right after launching.</div>
+            </div>
+          </Section>}
+
+          {step === 7 && <Section title="Ready to go live." body="Here is what shoppers can filter and search you by. You can edit any of it from the dashboard.">
             <div className="grid gap-3 md:grid-cols-2 text-[13px]">
               {[["Name", f.name], ["Where", `${f.city}, ${f.country}`], ["Aesthetic", f.styles.join(", ")], ["Moods", f.moods.join(", ")], ["Categories", f.categories.join(", ")], ["Price", `$${f.priceMin}–$${f.priceMax}`], ["Sizes", `${f.sizeMin}–${f.sizeMax}`], ["Materials", f.materials.join(", ")], ["Values", f.values.join(", ")], ["Made in", f.madeIn], ["Ships", `${f.shipsFrom} → ${f.shipsTo.join(", ")}`], ["For", f.gender.join(", ")]].map(([k, v]) => (
                 <div key={k} className="rounded-sm bg-cream px-4 py-3"><div className="label mb-1 !text-[9.5px]">{k}</div><div className="font-medium">{v || <span className="text-ink/35">—</span>}</div></div>
@@ -157,7 +200,7 @@ export default function Sell() {
             </div>
           </Section>}
 
-          {step === 7 && <Section title="Pick your placement." body="One-time fee to be on Kindred — no monthly subscription, no per-order cut. Same fee whether you sell one piece or ten thousand.">
+          {step === 8 && <Section title="Pick your placement." body="One-time fee to be on Kindred — no monthly subscription, no per-order cut. Same fee whether you sell one piece or ten thousand.">
             <div className="grid gap-3 md:grid-cols-3">
               {PLANS.map((pl) => { const on = f.plan === pl.key; return (
                 <button key={pl.key} type="button" onClick={() => set("plan", pl.key)} className={clsx("press flex h-full flex-col rounded-md p-5 text-left transition-colors", on ? "bg-ink text-paper" : "bg-cream")}>
@@ -191,9 +234,9 @@ export default function Sell() {
           </Section>}
 
           <div className="mt-8 flex flex-col md:flex-row md:items-center gap-3">
-            {step < 7 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 6 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={() => { void launch(); }} disabled={completeness < 100 || launching} className={clsx((completeness < 100 || launching) && "opacity-40")}>{launching ? "Launching…" : skipped ? "Launch brand page · free" : `Reserve $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
+            {step < 8 ? <Button size="lg" onClick={() => setStep(step + 1)} disabled={!valid[step]} className={clsx(!valid[step] && "opacity-40")}>{step === 7 ? "Continue to plan" : "Continue"}</Button> : <Button size="lg" onClick={() => { void launch(); }} disabled={completeness < 100 || launching} className={clsx((completeness < 100 || launching) && "opacity-40")}>{launching ? "Launching…" : skipped ? "Launch brand page · free" : `Reserve $${(PLANS.find((p) => p.key === f.plan) ?? PLANS[0]).price} · Launch brand page`}</Button>}
             {step >= 0 && <button onClick={() => setStep(step - 1)} className="text-[13px] font-semibold text-ink/50">Back</button>}
-            <span className="text-[12.5px] text-ink/45 md:ml-auto">{step === 7 ? "One-time fee — no monthly, no per-order." : (!valid[step] && step < 6 ? "Fill in the required bits to continue" : "")}</span>
+            <span className="text-[12.5px] text-ink/45 md:ml-auto">{step === 8 ? "One-time fee — no monthly, no per-order." : (!valid[step] && step < 7 ? "Fill in the required bits to continue" : "")}</span>
           </div>
           {launchErr && <div className="mt-3 rounded-md bg-rust/10 px-4 py-3 text-[12.5px] text-rust">Couldn&apos;t save: {launchErr}</div>}
         </div>
